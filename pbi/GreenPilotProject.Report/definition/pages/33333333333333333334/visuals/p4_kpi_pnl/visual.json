@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p4_kpi_pnl",
+  "position": {
+    "x": 960.0,
+    "y": 20.0,
+    "z": 1200,
+    "height": 130.0,
+    "width": 440.0,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Actual Cost Expensed (P&L)"
+                }
+              },
+              "queryRef": "_Measures.Actual Cost Expensed (P&L)",
+              "nativeQueryRef": "Actual Cost Expensed (P&L)"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

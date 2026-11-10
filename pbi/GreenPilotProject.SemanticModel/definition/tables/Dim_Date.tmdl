@@ -1,0 +1,120 @@
+table Dim_Date
+	lineageTag: 63d474a1-5cf4-44c0-8eaf-2125bde723b7
+	dataCategory: Time
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: Short Date
+		lineageTag: ea0cbb0b-c063-4b0d-9800-ea164b2f24fb
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DateKey
+		dataType: int64
+		formatString: 0
+		lineageTag: f89e941b-95ee-4cef-891e-589d886a9bff
+		summarizeBy: count
+		sourceColumn: DateKey
+
+		annotation SummarizationSetBy = Automatic
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: 1dd413ee-d4b9-4c1b-9af3-13e964959fbe
+		summarizeBy: sum
+		sourceColumn: Year
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quarter
+		dataType: string
+		lineageTag: e52deba2-ee62-4dfd-9027-b1f2cd31361a
+		summarizeBy: none
+		sourceColumn: Quarter
+
+		annotation SummarizationSetBy = Automatic
+
+	column Month
+		dataType: int64
+		formatString: 0
+		lineageTag: e115e1a3-744a-489a-9442-52edbca78318
+		summarizeBy: sum
+		sourceColumn: Month
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthName
+		dataType: string
+		lineageTag: d50966a3-a749-4f1b-8914-ba76373c0779
+		summarizeBy: none
+		sourceColumn: MonthName
+		sortByColumn: Month
+
+		changedProperty = SortByColumn
+
+		annotation SummarizationSetBy = Automatic
+
+	column Period
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 21c19b81-b07e-4bb3-9547-5029bf0f02fe
+		summarizeBy: none
+		sourceColumn: Period
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column WeekNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: 6d3c969c-e762-4052-8f02-dbcaf33cda19
+		summarizeBy: sum
+		sourceColumn: WeekNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column WeekStart
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 3a5d5cee-9f04-4b10-b746-0694b3a7141b
+		summarizeBy: none
+		sourceColumn: WeekStart
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column DayOfWeek
+		dataType: string
+		lineageTag: cf6243b6-54c4-4061-b46f-1a25925d3b0e
+		summarizeBy: none
+		sourceColumn: DayOfWeek
+
+		annotation SummarizationSetBy = Automatic
+
+	column IsWorkingDay
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 8f0ea8f6-3222-4f61-b649-ee17a643ba41
+		summarizeBy: none
+		sourceColumn: IsWorkingDay
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_Date = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Dim_Date.csv"), [Delimiter = ";", Columns = 11, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"Date", type date}, {"DateKey", Int64.Type}, {"Year", Int64.Type}, {"Quarter", type text}, {"Month", Int64.Type}, {"MonthName", type text}, {"Period", type date}, {"WeekNumber", Int64.Type}, {"WeekStart", type date}, {"DayOfWeek", type text}, {"IsWorkingDay", type logical}})
+				in
+				  #"Changed column type"
+

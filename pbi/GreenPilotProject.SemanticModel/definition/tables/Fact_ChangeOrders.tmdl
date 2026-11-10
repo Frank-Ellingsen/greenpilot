@@ -1,0 +1,68 @@
+table Fact_ChangeOrders
+	lineageTag: e8192a01-4912-4a0e-bc21-8201bca91201
+
+	column change_order_id
+		dataType: string
+		lineageTag: 71291823-0182-491a-8219-cba019283012
+		summarizeBy: none
+		sourceColumn: change_order_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column wbs_id
+		dataType: string
+		lineageTag: 82910293-1293-4a0b-9320-dcba19283023
+		summarizeBy: none
+		sourceColumn: wbs_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column submitted_date
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 93019203-2394-4b1c-a431-edcb29384134
+		summarizeBy: none
+		sourceColumn: submitted_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column status
+		dataType: string
+		lineageTag: 04192034-3405-4c2d-b542-fedc30495245
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column requested_amount_nok
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 15203145-4516-4d3e-c653-0fed41506356
+		summarizeBy: sum
+		sourceColumn: requested_amount_nok
+
+		annotation SummarizationSetBy = Automatic
+
+	column approved_amount_nok
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 26314256-5627-4e4f-d764-1afe52617467
+		summarizeBy: sum
+		sourceColumn: approved_amount_nok
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Fact_ChangeOrders = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Fact_ChangeOrders.csv"), [Delimiter = ";", Columns = 6, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"change_order_id", type text}, {"wbs_id", type text}, {"submitted_date", type date}, {"status", type text}, {"requested_amount_nok", type number}, {"approved_amount_nok", type number}})
+				in
+				  #"Changed column type"
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,27 @@
+employee_id;employee_name;role;department
+E001;Synthetic Employee 01;Technician;Operations
+E002;Synthetic Employee 02;Scientist;Finance
+E003;Synthetic Employee 03;Controller;R&D
+E004;Synthetic Employee 04;Project Manager;Operations
+E005;Synthetic Employee 05;Engineer;Finance
+E006;Synthetic Employee 06;Technician;R&D
+E007;Synthetic Employee 07;Scientist;Operations
+E008;Synthetic Employee 08;Controller;Finance
+E009;Synthetic Employee 09;Project Manager;R&D
+E010;Synthetic Employee 10;Engineer;Operations
+E011;Synthetic Employee 11;Technician;Finance
+E012;Synthetic Employee 12;Scientist;R&D
+E013;Synthetic Employee 13;Controller;Operations
+E014;Synthetic Employee 14;Project Manager;Finance
+E015;Synthetic Employee 15;Engineer;R&D
+E016;Synthetic Employee 16;Technician;Operations
+E017;Synthetic Employee 17;Scientist;Finance
+E018;Synthetic Employee 18;Controller;R&D
+E019;Synthetic Employee 19;Project Manager;Operations
+E020;Synthetic Employee 20;Engineer;Finance
+E021;Synthetic Employee 21;Technician;R&D
+E022;Synthetic Employee 22;Scientist;Operations
+E023;Synthetic Employee 23;Controller;Finance
+E024;Synthetic Employee 24;Project Manager;R&D
+E025;Synthetic Employee 25;Engineer;Operations
+E026;Synthetic Employee 26;Technician;Finance

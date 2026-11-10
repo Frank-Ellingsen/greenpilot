@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p4_kpi_rate",
+  "position": {
+    "x": 1420.0,
+    "y": 20.0,
+    "z": 1300,
+    "height": 130.0,
+    "width": 460.0,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Capitalization Rate %"
+                }
+              },
+              "queryRef": "_Measures.Capitalization Rate %",
+              "nativeQueryRef": "Capitalization Rate %"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,104 @@
+table Dim_Activity
+	lineageTag: 236ffc23-ac31-45b9-9ad7-5238fb5ad2a0
+
+	column activity_id
+		dataType: string
+		lineageTag: 521d8859-7c4c-4d7f-9c52-4d76f8aed36e
+		summarizeBy: none
+		sourceColumn: activity_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_name
+		dataType: string
+		lineageTag: bb5d8911-0f79-444b-a8db-5449f448c8cc
+		summarizeBy: none
+		sourceColumn: activity_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column wbs_id
+		dataType: string
+		lineageTag: e40d5db2-53d6-4426-a4ad-50969af724a4
+		summarizeBy: none
+		sourceColumn: wbs_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column planned_start
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 6ac09eb0-f265-4092-b377-c9e6d4491397
+		summarizeBy: none
+		sourceColumn: planned_start
+
+		variation Variation
+			isDefault
+			relationship: 080ab22b-e8e6-4d65-a839-74329dc256a3
+			defaultHierarchy: LocalDateTable_e320f2b5-0581-4ea4-a792-4ecabbf8411c.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column planned_finish
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: e803b1c2-681a-405f-adb8-996afe35462c
+		summarizeBy: none
+		sourceColumn: planned_finish
+
+		variation Variation
+			isDefault
+			relationship: 972615e7-fa1d-43d3-a819-3cca11267b91
+			defaultHierarchy: LocalDateTable_1cdfd7b0-9e9e-4951-ae7d-ceee539d0bea.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column status
+		dataType: string
+		lineageTag: f211d1d9-e5c1-4b33-8c4a-a24de1866444
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column progress_pct
+		dataType: int64
+		formatString: 0
+		lineageTag: 1a4a75b8-36ef-4c2b-bd20-5573a07f8745
+		summarizeBy: sum
+		sourceColumn: progress_pct
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_status_group
+		dataType: string
+		lineageTag: 3f81e9b2-65d1-4e7a-9c41-8e01bb2f7c09
+		summarizeBy: none
+		sourceColumn: activity_status_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column planned_duration_days
+		dataType: int64
+		formatString: 0
+		lineageTag: dcd1537f-abce-4760-9a9f-6213f93e3d9d
+		summarizeBy: sum
+		sourceColumn: planned_duration_days
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_Activity = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Dim_Activity.csv"), [Delimiter = ";", Columns = 9, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"activity_id", type text}, {"activity_name", type text}, {"wbs_id", type text}, {"planned_start", type date}, {"planned_finish", type date}, {"status", type text}, {"progress_pct", Int64.Type}, {"activity_status_group", type text}, {"planned_duration_days", Int64.Type}})
+				in
+				  #"Changed column type"
+
+	annotation PBI_ResultType = Table

@@ -1,0 +1,55 @@
+table Fact_CapacityCalendar
+	lineageTag: 892040c1-cdd6-4928-b72d-5c1705bc30d5
+
+	column employee_id
+		dataType: string
+		lineageTag: effa57d0-d432-4996-bf6d-fc12159f08c6
+		summarizeBy: none
+		sourceColumn: employee_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column week_start
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 27d9b43d-0695-4bda-830f-9c093666a61d
+		summarizeBy: none
+		sourceColumn: week_start
+
+		variation Variation
+			isDefault
+			relationship: 470113ac-0d5d-4677-b780-878a0340a973
+			defaultHierarchy: LocalDateTable_baa1bbd1-758b-4579-a60c-7a88ef6726bd.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column contract_capacity_hours
+		dataType: int64
+		formatString: 0
+		lineageTag: 9fb92a17-7e68-4553-8f5c-e6209c1cde9d
+		summarizeBy: sum
+		sourceColumn: contract_capacity_hours
+
+		annotation SummarizationSetBy = Automatic
+
+	column absence_hours
+		dataType: int64
+		formatString: 0
+		lineageTag: b991df71-8b71-48c1-bc1a-afa3e4b5ce37
+		summarizeBy: sum
+		sourceColumn: absence_hours
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Fact_CapacityCalendar = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Fact_CapacityCalendar.csv"), [Delimiter = ";", Columns = 4, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"employee_id", type text}, {"week_start", type date}, {"contract_capacity_hours", Int64.Type}, {"absence_hours", Int64.Type}})
+				in
+				  #"Changed column type"
+

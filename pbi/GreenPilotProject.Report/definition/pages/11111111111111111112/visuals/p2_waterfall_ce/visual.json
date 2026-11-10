@@ -1,0 +1,56 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p2_waterfall_ce",
+  "position": {
+    "x": 940.0,
+    "y": 540.0,
+    "z": 1300,
+    "height": 510.0,
+    "width": 940.0,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "waterfallChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_CostElement"
+                    }
+                  },
+                  "Property": "cost_element_name"
+                }
+              },
+              "queryRef": "Dim_CostElement.cost_element_name",
+              "nativeQueryRef": "cost_element_name",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Cost Variance (CV)"
+                }
+              },
+              "queryRef": "_Measures.Cost Variance (CV)",
+              "nativeQueryRef": "Cost Variance (CV)"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

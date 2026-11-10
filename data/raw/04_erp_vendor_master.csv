@@ -1,0 +1,21 @@
+﻿vendor_id;vendor_name;country;currency
+V001;Synthetic Vendor 01;SE;EUR
+V002;Synthetic Vendor 02;DE;USD
+V003;Synthetic Vendor 03;US;NOK
+V004;Synthetic Vendor 04;NO;EUR
+V005;Synthetic Vendor 05;SE;USD
+V006;Synthetic Vendor 06;DE;NOK
+V007;Synthetic Vendor 07;US;EUR
+V008;Synthetic Vendor 08;NO;USD
+V009;Synthetic Vendor 09;SE;NOK
+V010;Synthetic Vendor 10;DE;EUR
+V011;Synthetic Vendor 11;US;USD
+V012;Synthetic Vendor 12;NO;NOK
+V013;Synthetic Vendor 13;SE;EUR
+V014;Synthetic Vendor 14;DE;USD
+V015;Synthetic Vendor 15;US;NOK
+V016;Synthetic Vendor 16;NO;EUR
+V017;Synthetic Vendor 17;SE;USD
+V018;Synthetic Vendor 18;DE;NOK
+V019;Synthetic Vendor 19;US;EUR
+V020;Synthetic Vendor 20;NO;USD

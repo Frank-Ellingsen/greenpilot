@@ -1,0 +1,10 @@
+Category;Check;Status;Severity;Details
+Integrity;GL Master Foreign Keys;PASS;HIGH;Alle GL-poster har gyldig WBS og Cost Element.
+Integrity;PO Vendor Integrity;PASS;HIGH;Alle PO-leverandører eksisterer i Dim_Vendor.
+Integrity;Timesheet Employee Integrity;PASS;HIGH;100% konsistens mellom timelister og ansattmaster.
+Valuta;FX Normalization;PASS;INFO;PO, AP og GR er omregnet til NOK ved månedlige FX-satser.
+3-Way Match;Over-Invoiced Lines;FAIL;HIGH;Funnet 3 linjer overfakturert utover PO-ramme. Totalt avvik: NOK 7,040.82
+3-Way Match;Uninvoiced Goods Receipts;INFO;MEDIUM;Funnet 70 varemottak levert uten mottatt faktura. Påløpt udekket kostnad: NOK 7,391,746.01
+Cut-off;GL Posting Date <= Data Date;PASS;HIGH;Alle bokføringer er innenfor prosjektets Data Date (2026-11-01).
+Cut-off;Timesheet Date <= Data Date;PASS;HIGH;Alle timelister er innenfor Data Date.
+HR Audit;Weekend Hours;PASS;LOW;Ingen timer logget på lørdag eller søndag.

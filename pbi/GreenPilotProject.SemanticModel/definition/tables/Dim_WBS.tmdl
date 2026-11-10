@@ -1,0 +1,80 @@
+table Dim_WBS
+	lineageTag: 1943fddf-33de-45ee-9783-acaf31468c02
+
+	column wbs_id
+		dataType: string
+		lineageTag: f466bb14-c2f8-486f-ae5d-f678077de30f
+		summarizeBy: none
+		sourceColumn: wbs_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column project_id
+		dataType: string
+		lineageTag: e88c6e11-a919-45e0-b955-7475b6f31871
+		summarizeBy: none
+		sourceColumn: project_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column wbs_name
+		dataType: string
+		lineageTag: 20c22c1f-26ab-415a-9ea7-d949c36dfd95
+		summarizeBy: none
+		sourceColumn: wbs_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column parent_wbs_id
+		dataType: string
+		lineageTag: 2191839a-b471-44f0-9609-62340dd31033
+		summarizeBy: none
+		sourceColumn: parent_wbs_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column ias38_phase
+		dataType: string
+		lineageTag: a71d7adf-6346-4c4b-a521-56e6057e90bd
+		summarizeBy: none
+		sourceColumn: ias38_phase
+
+		annotation SummarizationSetBy = Automatic
+
+	column ias38_treatment
+		dataType: string
+		lineageTag: 8ce1bbfb-7275-4293-8438-c70db80290cb
+		summarizeBy: none
+		sourceColumn: ias38_treatment
+
+		annotation SummarizationSetBy = Automatic
+
+	column accounting_bucket
+		dataType: string
+		lineageTag: 7f3cb5d1-c0f5-4e8c-936b-bdacb196731e
+		summarizeBy: none
+		sourceColumn: accounting_bucket
+
+		annotation SummarizationSetBy = Automatic
+
+	column eligible_auc
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: aca0dcf1-ffbc-4cd3-b910-5af12f9d67e3
+		summarizeBy: none
+		sourceColumn: eligible_auc
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_WBS = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Dim_WBS.csv"), [Delimiter = ";", Columns = 8, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"wbs_id", type text}, {"project_id", type text}, {"wbs_name", type text}, {"parent_wbs_id", type text}, {"ias38_phase", type text}, {"ias38_treatment", type text}, {"accounting_bucket", type text}, {"eligible_auc", type logical}})
+				in
+				  #"Changed column type"
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,141 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p1_wbs_matrix",
+  "position": {
+    "x": 1225.0,
+    "y": 150.0,
+    "z": 2100,
+    "height": 905.0,
+    "width": 655.0,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_WBS"
+                    }
+                  },
+                  "Property": "wbs_id"
+                }
+              },
+              "queryRef": "Dim_WBS.wbs_id",
+              "nativeQueryRef": "wbs_id",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_WBS"
+                    }
+                  },
+                  "Property": "wbs_name"
+                }
+              },
+              "queryRef": "Dim_WBS.wbs_name",
+              "nativeQueryRef": "wbs_name",
+              "active": true
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Budget at Completion (BAC)"
+                }
+              },
+              "queryRef": "_Measures.Budget at Completion (BAC)",
+              "nativeQueryRef": "Budget at Completion (BAC)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Planned Value (PV)"
+                }
+              },
+              "queryRef": "_Measures.Planned Value (PV)",
+              "nativeQueryRef": "Planned Value (PV)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Actual Cost (AC)"
+                }
+              },
+              "queryRef": "_Measures.Actual Cost (AC)",
+              "nativeQueryRef": "Actual Cost (AC)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Earned Value (EV)"
+                }
+              },
+              "queryRef": "_Measures.Earned Value (EV)",
+              "nativeQueryRef": "Earned Value (EV)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Cost Variance (CV)"
+                }
+              },
+              "queryRef": "_Measures.Cost Variance (CV)",
+              "nativeQueryRef": "Cost Variance (CV)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Cost Performance Index (CPI)"
+                }
+              },
+              "queryRef": "_Measures.Cost Performance Index (CPI)",
+              "nativeQueryRef": "Cost Performance Index (CPI)"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

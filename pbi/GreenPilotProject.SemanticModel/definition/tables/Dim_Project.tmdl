@@ -1,0 +1,102 @@
+table Dim_Project
+	lineageTag: 5e155a64-fda8-4bd3-8b22-dd4277be4bfc
+
+	column project_id
+		dataType: string
+		lineageTag: f105c9c7-e3bf-4cd6-903e-93c87ce94293
+		summarizeBy: none
+		sourceColumn: project_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column project_name
+		dataType: string
+		lineageTag: f89e5927-1e4c-4f3b-b92a-9e726dfa5fac
+		summarizeBy: none
+		sourceColumn: project_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column company_code
+		dataType: string
+		lineageTag: bdbe3431-3b56-4551-bb7c-6cb0b3c3dfe9
+		summarizeBy: none
+		sourceColumn: company_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column currency
+		dataType: string
+		lineageTag: 0f320c19-9685-472d-bc24-64efbcbaa671
+		summarizeBy: none
+		sourceColumn: currency
+
+		annotation SummarizationSetBy = Automatic
+
+	column baseline_start
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: c64a3f10-f7f5-4a2e-8a69-16cb1e6ee871
+		summarizeBy: none
+		sourceColumn: baseline_start
+
+		variation Variation
+			isDefault
+			relationship: c0d620fd-b5af-44df-bf6e-8749b569524b
+			defaultHierarchy: LocalDateTable_b5a1f12b-3d55-4407-b5c1-1a98bd1e5803.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column baseline_finish
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 8c165dba-2537-4952-9be3-c669d0651770
+		summarizeBy: none
+		sourceColumn: baseline_finish
+
+		variation Variation
+			isDefault
+			relationship: 9177d661-29f4-44a4-9862-d5b958792502
+			defaultHierarchy: LocalDateTable_1613d398-481b-4b64-9e74-78f1c14e6039.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column data_date
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 08527bed-81c1-487f-9031-38e6d03976dd
+		summarizeBy: none
+		sourceColumn: data_date
+
+		variation Variation
+			isDefault
+			relationship: 9f3eff24-09de-42fc-b86e-45a40daa6646
+			defaultHierarchy: LocalDateTable_d1c9200d-470f-4d71-9bb5-554e08814c58.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column baseline_budget_nok
+		dataType: int64
+		formatString: 0
+		lineageTag: 5c6e9eaf-2e60-4f1d-b9eb-a2c48adece46
+		summarizeBy: sum
+		sourceColumn: baseline_budget_nok
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_Project = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Dim_Project.csv"), [Delimiter = ";", Columns = 8, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"project_id", type text}, {"project_name", type text}, {"company_code", type text}, {"currency", type text}, {"baseline_start", type date}, {"baseline_finish", type date}, {"data_date", type date}, {"baseline_budget_nok", Int64.Type}})
+				in
+				  #"Changed column type"
+

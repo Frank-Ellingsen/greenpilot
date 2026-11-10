@@ -1,0 +1,55 @@
+table Config_VarianceThresholds
+	lineageTag: b8394e10-91a2-4a0e-bc41-10cba7e95123
+
+	column Metric
+		dataType: string
+		lineageTag: 712da1c0-0872-4672-8812-421731518f01
+		summarizeBy: none
+		sourceColumn: Metric
+
+		annotation SummarizationSetBy = Automatic
+
+	column Yellow_Limit
+		dataType: string
+		lineageTag: 24719e71-97b4-42b8-bd2e-5f3c09b83b12
+		summarizeBy: none
+		sourceColumn: Yellow_Limit
+
+		annotation SummarizationSetBy = Automatic
+
+	column Red_Limit
+		dataType: string
+		lineageTag: c314b98c-8f19-4c6e-b6a2-97217dbd4182
+		summarizeBy: none
+		sourceColumn: Red_Limit
+
+		annotation SummarizationSetBy = Automatic
+
+	column Trigger_Type
+		dataType: string
+		lineageTag: ea8b3401-2e65-4f76-8804-916e78921204
+		summarizeBy: none
+		sourceColumn: Trigger_Type
+
+		annotation SummarizationSetBy = Automatic
+
+	column Controller_Action
+		dataType: string
+		lineageTag: a73f8a02-23c1-4b72-a7cf-f1784ef30198
+		summarizeBy: none
+		sourceColumn: Controller_Action
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Config_VarianceThresholds = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Config_VarianceThresholds.csv"), [Delimiter = ";", Columns = 5, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"Metric", type text}, {"Yellow_Limit", type text}, {"Red_Limit", type text}, {"Trigger_Type", type text}, {"Controller_Action", type text}})
+				in
+				  #"Changed column type"
+
+	annotation PBI_ResultType = Table
+

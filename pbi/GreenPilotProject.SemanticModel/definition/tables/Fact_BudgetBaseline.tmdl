@@ -1,0 +1,58 @@
+table Fact_BudgetBaseline
+	lineageTag: 6573824e-8cab-427f-9305-46baa12219ae
+
+	column project_id
+		dataType: string
+		lineageTag: cccdb0c2-6d8b-463d-961c-3471781bf4ab
+		summarizeBy: none
+		sourceColumn: project_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column wbs_id
+		dataType: string
+		lineageTag: e51d0267-2aca-44b9-bee3-667d1ad6b9fb
+		summarizeBy: none
+		sourceColumn: wbs_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_element
+		dataType: string
+		lineageTag: 7b19a9b9-5a9b-4309-bcfe-8df53f170f4a
+		summarizeBy: none
+		sourceColumn: cost_element
+
+		annotation SummarizationSetBy = Automatic
+
+	column period
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 9bfa0a2c-d454-48b6-9088-4964b93f1dc2
+		summarizeBy: none
+		sourceColumn: period
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column baseline_budget_nok
+		dataType: double
+		lineageTag: 929f031b-8e33-494f-a54a-b113b590d087
+		summarizeBy: sum
+		sourceColumn: baseline_budget_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition Fact_BudgetBaseline = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Fact_BudgetBaseline.csv"), [Delimiter = ";", Columns = 5, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"project_id", type text}, {"wbs_id", type text}, {"cost_element", type text}, {"period", type date}, {"baseline_budget_nok", type number}})
+				in
+				  #"Changed column type"
+

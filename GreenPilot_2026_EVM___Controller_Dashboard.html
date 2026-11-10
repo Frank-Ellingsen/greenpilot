@@ -1,0 +1,2909 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="artifact-type" content="dashboard">
+  <meta name="design-style" content="carbon">
+  <title>Elkem GreenPilot 2026 — Prosjektstyring & EVM Kontrollpanel</title>
+
+  <!-- Google Fonts: IBM Plex Sans & IBM Plex Mono (Allowed CDN) -->
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600&display=swap" rel="stylesheet">
+
+  <!-- Chart.js 4.5.1 (Allowed CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+
+  <!-- Lucide Icons (Allowed CDN) -->
+  <script src="https://unpkg.com/lucide@1.43.0/dist/umd/lucide.min.js"></script>
+
+  <style>
+    :root {
+      color-scheme: light;
+
+      /* Page and surfaces */
+      --background: #ffffff;
+      --surface-container-low: #f4f4f4;
+      --surface-container: #f4f4f4;
+      --surface-container-high: #e0e0e0;
+      --surface-card: #ffffff;
+
+      /* Ink */
+      --on-surface: #161616;
+      --on-surface-variant: #525252;
+      --on-surface-muted: #8d8d8d;
+
+      /* Rules & Borders */
+      --outline: #8d8d8d;
+      --outline-variant: #e0e0e0;
+
+      /* Accents */
+      --primary: #0f62fe;
+      --on-primary: #ffffff;
+      --primary-container: #d0e2ff;
+      --on-primary-container: #161616;
+      --secondary: #6f6f6f;
+      --tertiary: #198038;
+      --error: #da1e28;
+      --on-error: #ffffff;
+
+      /* Semantic status colors */
+      --positive: #198038;
+      --positive-bg: #defbe6;
+      --positive-border: #42be65;
+      --warning: #b28600;
+      --warning-bg: #fdf3d1;
+      --warning-border: #f1c21b;
+      --danger: #da1e28;
+      --danger-bg: #fff1f1;
+      --danger-border: #fa4d56;
+      --focus: #0f62fe;
+
+      /* Data series */
+      --data-1: #0f62fe;   /* Blue: PV */
+      --data-2: #198038;   /* Green: EV */
+      --data-3: #da1e28;   /* Red: AC */
+      --data-4: #8a3ffc;   /* Purple: Forecast */
+      --data-5: #0072c3;   /* Cyan: Early */
+      --data-6: #ba4e00;   /* Orange: Late */
+      --data-context: #8d8d8d;
+
+      /* Fonts */
+      --font-headline: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-label: 'IBM Plex Mono', monospace;
+
+      /* Shape */
+      --rounded: 0.125rem;
+      --rounded-lg: 0.25rem;
+      --rounded-full: 0.75rem;
+
+      /* Style effects */
+      --shadow-1: 0 2px 6px rgb(0 0 0 / 0.08);
+      --shadow-2: 0 4px 12px rgb(0 0 0 / 0.12);
+      --rule: 1px solid var(--outline-variant);
+      --field-rule: 1px solid var(--outline);
+      --indicator: 2px solid var(--primary);
+
+      /* Spacing scale */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 1rem;
+      --space-lg: 1.5rem;
+      --space-xl: 2.5rem;
+      --space-2xl: 4rem;
+
+      /* Motion */
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+      --dur-micro: 120ms;
+      --dur-short: 220ms;
+      --dur-long: 420ms;
+
+      /* Type scale */
+      --display-size: clamp(1.6rem, 1.3rem + 1.2vw, 2.1rem);
+      --headline-size: clamp(1.2rem, 1.05rem + 0.5vw, 1.45rem);
+      --subhead-size: clamp(1rem, 0.95rem + 0.25vw, 1.15rem);
+      --body-size: clamp(0.875rem, 0.85rem + 0.15vw, 0.95rem);
+      --label-size: 0.75rem;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background-color: var(--background);
+      color: var(--on-surface);
+      font-family: var(--font-body);
+      font-size: var(--body-size);
+      line-height: 1.5;
+      overflow-x: clip;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Masthead Header */
+    .app-header {
+      background-color: var(--on-surface);
+      color: var(--background);
+      border-bottom: 2px solid var(--primary);
+      padding: var(--space-md) var(--space-lg);
+    }
+
+    .header-inner {
+      max-width: 1540px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .brand-tag {
+      background: var(--primary);
+      color: var(--on-primary);
+      font-family: var(--font-label);
+      font-size: var(--label-size);
+      font-weight: 600;
+      padding: 0.2rem 0.5rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: var(--rounded);
+    }
+
+    .brand-title {
+      font-family: var(--font-headline);
+      font-size: var(--headline-size);
+      font-weight: 300;
+      letter-spacing: -0.01em;
+      color: #f4f4f4;
+    }
+
+    .brand-title strong {
+      font-weight: 600;
+      color: var(--background);
+    }
+
+    .brand-subtitle {
+      font-size: 0.8rem;
+      color: #c6c6c6;
+      font-family: var(--font-label);
+      letter-spacing: 0.04em;
+    }
+
+    .header-metadata {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      align-items: center;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+    }
+
+    .meta-label {
+      color: #8d8d8d;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .meta-val {
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    .status-badge-urgent {
+      background: #fa4d56;
+      color: #ffffff;
+      font-family: var(--font-label);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.3rem 0.6rem;
+      border-radius: var(--rounded);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    /* Main Container */
+    .app-main {
+      max-width: 1540px;
+      margin: 0 auto;
+      padding: var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-lg);
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+      background: var(--surface-container-high);
+      border-bottom: 2px solid var(--outline-variant);
+    }
+
+    .tab-btn {
+      background: var(--surface-container-low);
+      color: var(--on-surface-variant);
+      border: none;
+      padding: var(--space-sm) var(--space-md);
+      font-family: var(--font-headline);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+      position: relative;
+    }
+
+    .tab-btn:hover {
+      background: #ebebeb;
+      color: var(--on-surface);
+    }
+
+    .tab-btn.active {
+      background: var(--background);
+      color: var(--primary);
+      font-weight: 600;
+      border-top: 2px solid var(--primary);
+      margin-top: -2px;
+    }
+
+    .tab-btn:focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: -2px;
+    }
+
+    .tab-badge {
+      font-family: var(--font-label);
+      font-size: 0.7rem;
+      background: var(--surface-container-high);
+      color: var(--on-surface);
+      padding: 0.1rem 0.35rem;
+      border-radius: var(--rounded);
+    }
+
+    .tab-btn.active .tab-badge {
+      background: var(--primary-container);
+      color: var(--primary);
+    }
+
+    /* Card Panels */
+    .panel {
+      background: var(--surface-card);
+      border: var(--rule);
+      border-radius: var(--rounded);
+      box-shadow: var(--shadow-1);
+      padding: var(--space-md);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: var(--space-sm);
+      margin-bottom: var(--space-md);
+      border-bottom: var(--rule);
+    }
+
+    .panel-title {
+      font-family: var(--font-headline);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--on-surface);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-desc {
+      font-size: 0.8rem;
+      color: var(--on-surface-variant);
+    }
+
+    /* KPI Grid & Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+
+    .kpi-card {
+      background: var(--surface-container-low);
+      border: var(--rule);
+      border-radius: var(--rounded);
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .kpi-card.hero-indicator {
+      border-left: 3px solid var(--primary);
+    }
+
+    .kpi-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.25rem;
+    }
+
+    .kpi-label {
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--on-surface-variant);
+    }
+
+    .kpi-val {
+      font-family: var(--font-label);
+      font-size: 1.45rem;
+      font-weight: 600;
+      color: var(--on-surface);
+      line-height: 1.15;
+    }
+
+    .kpi-unit {
+      font-size: 0.72rem;
+      color: var(--on-surface-muted);
+      margin-left: 0.2rem;
+      font-weight: 400;
+    }
+
+    .kpi-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.35rem;
+      font-size: 0.72rem;
+      font-family: var(--font-label);
+      border-top: 1px dotted var(--outline-variant);
+      padding-top: 0.25rem;
+    }
+
+    /* RAG Badges */
+    .rag-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-family: var(--font-label);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.15rem 0.4rem;
+      border-radius: var(--rounded);
+      line-height: 1;
+    }
+
+    .rag-red {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid var(--danger-border);
+    }
+
+    .rag-amber {
+      background: var(--warning-bg);
+      color: var(--warning);
+      border: 1px solid var(--warning-border);
+    }
+
+    .rag-green {
+      background: var(--positive-bg);
+      color: var(--positive);
+      border: 1px solid var(--positive-border);
+    }
+
+    /* WBS Filter Bar */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      align-items: center;
+      margin-bottom: var(--space-md);
+      padding: var(--space-sm);
+      background: var(--surface-container);
+      border-radius: var(--rounded);
+    }
+
+    .filter-label {
+      font-family: var(--font-label);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--on-surface-variant);
+      margin-right: var(--space-xs);
+    }
+
+    .filter-chip {
+      background: var(--background);
+      border: 1px solid var(--outline-variant);
+      color: var(--on-surface);
+      padding: 0.25rem 0.6rem;
+      font-family: var(--font-headline);
+      font-size: 0.8rem;
+      cursor: pointer;
+      border-radius: var(--rounded);
+      transition: background-color var(--dur-micro) var(--ease-out);
+    }
+
+    .filter-chip:hover {
+      background: var(--surface-container-high);
+    }
+
+    .filter-chip.active {
+      background: var(--primary);
+      color: var(--on-primary);
+      border-color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Data Table Styling */
+    .data-table-wrap {
+      overflow-x: auto;
+      border: var(--rule);
+      border-radius: var(--rounded);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      text-align: left;
+    }
+
+    .data-table th {
+      background: var(--surface-container-high);
+      color: var(--on-surface);
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 2px solid var(--outline);
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--outline-variant);
+      color: var(--on-surface);
+      font-family: var(--font-body);
+      white-space: nowrap;
+    }
+
+    .data-table tr:nth-child(even) {
+      background: var(--surface-container-low);
+    }
+
+    .data-table tr:hover {
+      background: var(--primary-container);
+      cursor: pointer;
+    }
+
+    .data-table td.num {
+      text-align: right;
+      font-family: var(--font-label);
+    }
+
+    .data-table th.num {
+      text-align: right;
+    }
+
+    /* Chart Canvas Container */
+    .chart-container {
+      position: relative;
+      height: 380px;
+      min-height: 380px;
+      width: 100%;
+      margin: var(--space-sm) 0;
+    }
+
+    /* Controls Row */
+    .controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-sm);
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md);
+      font-size: 0.8rem;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+      accent-color: var(--primary);
+    }
+
+    /* Callout & Alert Banners */
+    .banner {
+      padding: var(--space-md);
+      border-radius: var(--rounded);
+      margin-bottom: var(--space-md);
+      display: flex;
+      gap: var(--space-md);
+      align-items: flex-start;
+      border-left: 4px solid transparent;
+    }
+
+    .banner-danger {
+      background: var(--danger-bg);
+      border-left-color: var(--danger);
+      color: var(--on-surface);
+    }
+
+    .banner-warning {
+      background: var(--warning-bg);
+      border-left-color: var(--warning);
+      color: var(--on-surface);
+    }
+
+    .banner-info {
+      background: var(--primary-container);
+      border-left-color: var(--primary);
+      color: var(--on-surface);
+    }
+
+    .banner-title {
+      font-family: var(--font-headline);
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .banner-text {
+      font-size: 0.85rem;
+      color: var(--on-surface-variant);
+      line-height: 1.45;
+    }
+
+    /* Gantt Chart Layout */
+    .gantt-wrapper {
+      border: var(--rule);
+      border-radius: var(--rounded);
+      background: var(--background);
+      overflow-x: auto;
+    }
+
+    .gantt-header {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      background: var(--surface-container-high);
+      border-bottom: 2px solid var(--outline);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .gantt-timeline-head {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      border-left: 1px solid var(--outline-variant);
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      text-align: center;
+      padding: 0.4rem 0;
+      background: var(--surface-container-high);
+    }
+
+    .gantt-month-col {
+      border-right: 1px solid var(--outline-variant);
+      padding: 0.2rem;
+      color: var(--on-surface);
+    }
+
+    .gantt-body {
+      max-height: 540px;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .gantt-row {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      border-bottom: 1px solid var(--outline-variant);
+      font-size: 0.8rem;
+      min-height: 34px;
+      align-items: center;
+      transition: background-color var(--dur-micro) var(--ease-out);
+    }
+
+    .gantt-row:hover {
+      background-color: var(--surface-container-low);
+    }
+
+    .gantt-row.critical-path {
+      background-color: rgba(218, 30, 40, 0.04);
+    }
+
+    .gantt-row-meta {
+      padding: 0.35rem 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      border-right: 1px solid var(--outline-variant);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .gantt-id-title {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .gantt-id {
+      font-family: var(--font-label);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .gantt-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--on-surface);
+    }
+
+    .gantt-track {
+      position: relative;
+      height: 100%;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+    }
+
+    .gantt-grid-lines {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      pointer-events: none;
+    }
+
+    .gantt-grid-col {
+      border-right: 1px dashed var(--outline-variant);
+      height: 100%;
+    }
+
+    .gantt-cutoff-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: calc(10 / 12 * 100%);
+      width: 2px;
+      background: var(--danger);
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .gantt-bar-item {
+      position: absolute;
+      height: 18px;
+      border-radius: var(--rounded);
+      background: var(--surface-container-high);
+      border: 1px solid var(--outline);
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      z-index: 2;
+      overflow: hidden;
+      transition: transform var(--dur-micro) var(--ease-out);
+    }
+
+    .gantt-bar-item:hover {
+      transform: scaleY(1.15);
+      z-index: 3;
+      box-shadow: var(--shadow-1);
+    }
+
+    .gantt-bar-progress {
+      height: 100%;
+      background: var(--primary);
+      transition: width var(--dur-short) var(--ease-out);
+    }
+
+    .gantt-bar-item.status-Completed .gantt-bar-progress {
+      background: var(--positive);
+    }
+
+    .gantt-bar-item.status-Critical .gantt-bar-progress {
+      background: var(--danger);
+    }
+
+    .gantt-bar-label {
+      position: absolute;
+      left: 6px;
+      font-family: var(--font-label);
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--on-surface);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* What-If Simulator Styling */
+    .simulator-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-md);
+      margin-top: var(--space-sm);
+    }
+
+    @media (max-width: 900px) {
+      .simulator-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sim-slider-row {
+      margin-bottom: var(--space-md);
+    }
+
+    .sim-slider-head {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.25rem;
+      font-size: 0.8rem;
+    }
+
+    .sim-slider-head span:first-child {
+      font-weight: 500;
+    }
+
+    .sim-slider-head span:last-child {
+      font-family: var(--font-label);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .range-input {
+      width: 100%;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .sim-results-card {
+      background: var(--surface-container-low);
+      border: var(--rule);
+      border-radius: var(--rounded);
+      padding: var(--space-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .sim-result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.35rem 0;
+      border-bottom: 1px dotted var(--outline-variant);
+      font-size: 0.82rem;
+    }
+
+    .sim-result-val {
+      font-family: var(--font-label);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    /* Action Matrix */
+    .action-matrix {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+      margin-top: var(--space-sm);
+    }
+
+    .action-item {
+      background: var(--surface-card);
+      border: var(--rule);
+      border-left: 4px solid var(--outline);
+      border-radius: var(--rounded);
+      padding: var(--space-sm) var(--space-md);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      transition: border-color var(--dur-short) var(--ease-out);
+    }
+
+    .action-item.pri-kristisk { border-left-color: var(--danger); }
+    .action-item.pri-hoy { border-left-color: var(--warning); }
+    .action-item.pri-medium { border-left-color: var(--primary); }
+
+    .action-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .action-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--on-surface);
+    }
+
+    .action-meta {
+      display: flex;
+      gap: var(--space-sm);
+      font-family: var(--font-label);
+      font-size: 0.7rem;
+      color: var(--on-surface-variant);
+    }
+
+    .action-desc {
+      font-size: 0.8rem;
+      color: var(--on-surface-variant);
+      line-height: 1.4;
+    }
+
+    .action-impact {
+      font-size: 0.75rem;
+      font-family: var(--font-label);
+      color: var(--positive);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    /* Modal / Inspector Drawer */
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-md);
+    }
+
+    .drawer-backdrop.open {
+      display: flex;
+    }
+
+    .drawer-card {
+      background: var(--background);
+      border: var(--rule);
+      border-radius: var(--rounded);
+      box-shadow: var(--shadow-2);
+      width: 100%;
+      max-width: 650px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: var(--space-lg);
+      position: relative;
+    }
+
+    .drawer-close-btn {
+      position: absolute;
+      top: var(--space-md);
+      right: var(--space-md);
+      background: none;
+      border: none;
+      color: var(--on-surface-variant);
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 0.25rem;
+    }
+
+    /* Button styles */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.85rem;
+      font-family: var(--font-headline);
+      font-size: 0.82rem;
+      font-weight: 500;
+      border-radius: var(--rounded);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background-color var(--dur-micro) var(--ease-out);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+    .btn-primary:hover {
+      background: #0353e9;
+    }
+
+    .btn-secondary {
+      background: var(--surface-container);
+      border-color: var(--outline-variant);
+      color: var(--on-surface);
+    }
+    .btn-secondary:hover {
+      background: var(--surface-container-high);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: var(--on-error);
+    }
+
+    /* Helper Utilities */
+    .text-positive { color: var(--positive); }
+    .text-danger { color: var(--danger); }
+    .text-warning { color: var(--warning); }
+    .font-mono { font-family: var(--font-label); }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .app-main { padding: var(--space-sm); }
+      .header-inner { flex-direction: column; align-items: flex-start; }
+      .gantt-header, .gantt-row { grid-template-columns: 200px 1fr; }
+      .chart-container { height: 300px; min-height: 300px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Masthead -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <span class="brand-tag">Elkem ASA</span>
+        <div>
+          <h1 class="brand-title"><strong>GreenPilot 2026</strong> (GP2026) — Prosjektstyring & EVM Kontrollpanel</h1>
+          <div class="brand-subtitle">Pilotanlegg for lavutslipps-silisium og biokarbonteknologi | FoU-Portefølje</div>
+        </div>
+      </div>
+
+      <div class="header-metadata">
+        <div class="meta-item">
+          <span class="meta-label">Statusdato (Cutoff)</span>
+          <span class="meta-val">01.11.2026 (M10)</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Siste ERP-avstemming</span>
+          <span class="meta-val">31.10.2026</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Baseline-budsjett (BAC)</span>
+          <span class="meta-val">NOK 20 000 000</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Prosjektleder / Controller</span>
+          <span class="meta-val">P-CAM / Technology Controls</span>
+        </div>
+        <div class="status-badge-urgent" title="Kritisk kostnads- og tidsavvik krever lederinngripen">
+          <i data-lucide="alert-triangle" style="width:16px; height:16px;"></i>
+          <span>RAG: RØD STATUS</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Work Area -->
+  <main class="app-main">
+
+    <!-- Tab Navigation -->
+    <nav class="nav-tabs" role="tablist">
+      <button class="tab-btn active" onclick="switchTab('scorecard')" id="tabBtn-scorecard" role="tab" aria-selected="true">
+        <i data-lucide="layout-grid" style="width:16px; height:16px;"></i>
+        <span>1. KPI-Scorecard & WBS</span>
+        <span class="tab-badge">EVM</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('scurve')" id="tabBtn-scurve" role="tab" aria-selected="false">
+        <i data-lucide="trending-up" style="width:16px; height:16px;"></i>
+        <span>2. Dynamisk S-Kurve & Prognose</span>
+        <span class="tab-badge">PV / EV / AC</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('banana')" id="tabBtn-banana" role="tab" aria-selected="false">
+        <i data-lucide="git-commit" style="width:16px; height:16px;"></i>
+        <span>3. Banana Chart (P6 Fremdriftskonvolutt)</span>
+        <span class="tab-badge">Early vs. Late</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('gantt')" id="tabBtn-gantt" role="tab" aria-selected="false">
+        <i data-lucide="gantt-chart" style="width:16px; height:16px;"></i>
+        <span>4. Interaktivt Gantt-diagram</span>
+        <span class="tab-badge">102 Aktiviteter</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('rootcause')" id="tabBtn-rootcause" role="tab" aria-selected="false">
+        <i data-lucide="stethoscope" style="width:16px; height:16px;"></i>
+        <span>5. Rotårsaker & Tiltaksplan</span>
+        <span class="tab-badge">Simulator</span>
+      </button>
+    </nav>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: KPI SCORECARD & WBS DRILLDOWN -->
+    <!-- ========================================== -->
+    <section id="tab-scorecard" class="tab-panel">
+
+      <!-- Executive Summary Callout -->
+      <div class="banner banner-danger">
+        <i data-lucide="alert-octagon" style="width:24px; height:24px; color: var(--danger); flex-shrink:0;"></i>
+        <div>
+          <div class="banner-title">Månedlig Ledelsesvarsel — Prosjektstatus per 01.11.2026</div>
+          <div class="banner-text">
+            GreenPilot 2026 er <strong>NOK 1 900 000 over budsjett</strong> (CPI 0.331) og <strong>NOK 1 400 000 bak planlagt verdi</strong> (SPI 1.156, ~3.5 uker forsinket). Kritisk ratio (CR) er <strong>0.814</strong>, som utløser umiddelbar PMO-alarm (< 0.90). To-Complete Performance Index (TCPI) mot opprinnelig budsjett er <strong>>2.000</strong>, som er urealistisk å hente inn. Sluttprognose (EAC) estimeres til <strong>NOK 22 500 000 – 23 000 000</strong>.
+          </div>
+        </div>
+      </div>
+
+      <!-- Core EVM KPI Cards (Row 1: Performance Variables) -->
+      <div class="kpi-grid">
+        <div class="kpi-card hero-indicator">
+          <div class="kpi-top">
+            <span class="kpi-label">BAC — Baseline Budsjett</span>
+            <span class="rag-badge rag-green">Låst Baseline</span>
+          </div>
+          <div class="kpi-val" id="kpi-bac">20 000 000<span class="kpi-unit">NOK</span></div>
+          <div class="kpi-footer">
+            <span>Total godkjent ramme</span>
+            <span>100.0%</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">ACWP / AC — Faktisk Kostnad</span>
+            <span class="rag-badge rag-red">+11.1% v. EV</span>
+          </div>
+          <div class="kpi-val text-danger" id="kpi-ac">57 968 041<span class="kpi-unit">NOK</span></div>
+          <div class="kpi-footer">
+            <span>Bokført ERP per 31.10</span>
+            <span>85.5% av BAC</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">BCWP / EV — Opptjent Verdi</span>
+            <span class="rag-badge rag-amber">Fysisk fullført</span>
+          </div>
+          <div class="kpi-val" id="kpi-ev">19 215 686<span class="kpi-unit">NOK</span></div>
+          <div class="kpi-footer">
+            <span>Vektet P6-fremdrift</span>
+            <span>76.0% av BAC</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">BCWS / PV — Planlagt Verdi</span>
+            <span class="rag-badge rag-green">Mål per 01.11</span>
+          </div>
+          <div class="kpi-val" id="kpi-pv">16 616 336<span class="kpi-unit">NOK</span></div>
+          <div class="kpi-footer">
+            <span>Planlagt til dato</span>
+            <span>83.0% av BAC</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">CPI — Kostnadseffektivitet</span>
+            <span class="rag-badge rag-red" id="kpi-cpi-rag">RAG: RØD</span>
+          </div>
+          <div class="kpi-val text-danger" id="kpi-cpi">0.331</div>
+          <div class="kpi-footer">
+            <span>EV / AC (Mål: &ge; 1.0)</span>
+            <span>-0.111 avvik</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">SPI — Fremdriftseffektivitet</span>
+            <span class="rag-badge rag-amber" id="kpi-spi-rag">RAG: GUL</span>
+          </div>
+          <div class="kpi-val text-warning" id="kpi-spi">1.156</div>
+          <div class="kpi-footer">
+            <span>EV / PV (Mål: &ge; 1.0)</span>
+            <span>-0.084 avvik</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">CV — Kostnadsavvik</span>
+            <span class="rag-badge rag-red">Underforbruk/Tap</span>
+          </div>
+          <div class="kpi-val text-danger" id="kpi-cv">-38 752 355<span class="kpi-unit">NOK</span></div>
+          <div class="kpi-footer">
+            <span>EV - AC</span>
+            <span>-12.5% vs EV</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">SV — Tidsavvik i Verdi</span>
+            <span class="rag-badge rag-amber">Etterslep</span>
+          </div>
+          <div class="kpi-val text-warning" id="kpi-sv">+2 599 351<span class="kpi-unit">NOK</span></div>
+          <div class="kpi-footer">
+            <span>EV - PV</span>
+            <span>~24 virkedager</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strategic Forecasting Cards (Row 2) -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">EAC — Typisk Prognose</span>
+            <span class="rag-badge rag-red">Overskridelse</span>
+          </div>
+          <div class="kpi-val text-danger" id="kpi-eac">22 500 000<span class="kpi-unit">NOK</span></div>
+          <div class="kpi-footer">
+            <span>Formel: BAC / CPI</span>
+            <span>+2.50 MNOK</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">EAC — Sammensatt (CPI &times; SPI)</span>
+            <span class="rag-badge rag-red">Worst Case</span>
+          </div>
+          <div class="kpi-val text-danger">23 000 000<span class="kpi-unit">NOK</span></div>
+          <div class="kpi-footer">
+            <span>Inkl. forsinkelseskostnad</span>
+            <span>+3.00 MNOK</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">ETC — Gjenstående Kapitalbehov</span>
+            <span class="rag-badge rag-amber">Behov Q4</span>
+          </div>
+          <div class="kpi-val" id="kpi-etc">5 400 000<span class="kpi-unit">NOK</span></div>
+          <div class="kpi-footer">
+            <span>EAC - AC</span>
+            <span>Gjenværende arbeid</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">VAC — Sluttavvik</span>
+            <span class="rag-badge rag-red">Defisitt</span>
+          </div>
+          <div class="kpi-val text-danger" id="kpi-vac">-2 500 000<span class="kpi-unit">NOK</span></div>
+          <div class="kpi-footer">
+            <span>BAC - EAC</span>
+            <span>-12.5% overskridelse</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">TCPI (BAC) — Nødvendig Effektivitet</span>
+            <span class="rag-badge rag-red">Uoppnåelig</span>
+          </div>
+          <div class="kpi-val text-danger" id="kpi-tcpibac">>2.000</div>
+          <div class="kpi-footer">
+            <span>(BAC-EV)/(BAC-AC)</span>
+            <span>Krav: +65.5% løft</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <span class="kpi-label">TCPI (EAC) — Realistisk Mål</span>
+            <span class="rag-badge rag-amber">Følger CPI</span>
+          </div>
+          <div class="kpi-val" id="kpi-tcpieac">0.331</div>
+          <div class="kpi-footer">
+            <span>(BAC-EV)/(EAC-AC)</span>
+            <span>Matcher dagens drift</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- WBS Drilldown Controls & Interactive Matrix Table -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <i data-lucide="layers" style="width:18px; height:18px; color:var(--primary);"></i>
+              WBS-Avstemming & Styringsmatrise
+            </div>
+            <div class="panel-desc">Klikk på en arbeidspakke for å filtrere hele kontrollpanelet (Scorecard, Gantt og S-kurve)</div>
+          </div>
+
+          <div class="filter-bar" style="margin-bottom:0;">
+            <span class="filter-label">Velg WBS:</span>
+            <button class="filter-chip active" onclick="filterByWbs('ALL')" id="wbsChip-ALL">Alle WBS (Konsolidert)</button>
+            <button class="filter-chip" onclick="filterByWbs('WBS-100')" id="wbsChip-WBS-100">WBS-100 Forprosjekt</button>
+            <button class="filter-chip" onclick="filterByWbs('WBS-200')" id="wbsChip-WBS-200">WBS-200 Pilotovn</button>
+            <button class="filter-chip" onclick="filterByWbs('WBS-300')" id="wbsChip-WBS-300">WBS-300 Mekanisk</button>
+            <button class="filter-chip" onclick="filterByWbs('WBS-400')" id="wbsChip-WBS-400">WBS-400 Automasjon</button>
+            <button class="filter-chip" onclick="filterByWbs('WBS-500')" id="wbsChip-WBS-500">WBS-500 Igangkjøring</button>
+            <button class="filter-chip" onclick="filterByWbs('WBS-600')" id="wbsChip-WBS-600">WBS-600 Prosjektledelse</button>
+          </div>
+        </div>
+
+        <div class="data-table-wrap">
+          <table class="data-table" id="wbsSummaryTable">
+            <thead>
+              <tr>
+                <th>WBS ID</th>
+                <th>Arbeidspakkenavn</th>
+                <th class="num">BAC (NOK)</th>
+                <th class="num">PV (NOK)</th>
+                <th class="num">EV (NOK)</th>
+                <th class="num">AC (NOK)</th>
+                <th class="num">CV (NOK)</th>
+                <th class="num">SV (NOK)</th>
+                <th class="num">CPI</th>
+                <th class="num">SPI</th>
+                <th class="num">EAC (NOK)</th>
+                <th>RAG Status</th>
+              </tr>
+            </thead>
+            <tbody id="wbsTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: DYNAMISK S-KURVE & PROGNOSE -->
+    <!-- ========================================== -->
+    <section id="tab-scurve" class="tab-panel" style="display:none;">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <i data-lucide="line-chart" style="width:18px; height:18px; color:var(--primary);"></i>
+              Akkumulert EVM S-Kurve & Fullføringsprognose (Januar – Desember 2026)
+            </div>
+            <div class="panel-desc">Visualisering av Planned Value (PV), Earned Value (EV), Actual Cost (AC) med cutoff per 01.11.2026 og EAC-prognosebaner</div>
+          </div>
+
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="toggle-pv" checked onchange="updateScurveChart()">
+              <span style="color:var(--data-1); font-weight:600;">■ PV (Planlagt)</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="toggle-ev" checked onchange="updateScurveChart()">
+              <span style="color:var(--data-2); font-weight:600;">■ EV (Opptjent)</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="toggle-ac" checked onchange="updateScurveChart()">
+              <span style="color:var(--data-3); font-weight:600;">■ AC (Faktisk)</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="toggle-eac" checked onchange="updateScurveChart()">
+              <span style="color:var(--data-4); font-weight:600;">-- EAC Prognose</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- S-Curve Canvas -->
+        <div class="chart-container">
+          <canvas id="sCurveChart"></canvas>
+        </div>
+
+        <div style="font-size:0.75rem; color:var(--on-surface-variant); margin-top:0.5rem; font-family:var(--font-label); display:flex; justify-content:space-between;">
+          <span>* Rød vertikal markør indikerer rapporterings-cutoff 01.11.2026 (Måned 10).</span>
+          <span>EAC-prognose representerer typisk kostnadsutfall basert på hittil erfart CPI (0.331).</span>
+        </div>
+      </div>
+
+      <!-- Monthly Data Table -->
+      <div class="panel" style="margin-top: var(--space-md);">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i data-lucide="calendar" style="width:18px; height:18px; color:var(--primary);"></i>
+            Måned-for-Måned EVM Regnskapstabell (Kumulativt & Periodisk)
+          </div>
+          <button class="btn btn-secondary" onclick="exportTableToCSV('monthlyTable', 'GreenPilot_EVM_Monthly.csv')">
+            <i data-lucide="download" style="width:14px; height:14px;"></i>
+            Eksporter CSV
+          </button>
+        </div>
+
+        <div class="data-table-wrap">
+          <table class="data-table" id="monthlyTable">
+            <thead>
+              <tr>
+                <th>Måned</th>
+                <th class="num">PV Per. (NOK)</th>
+                <th class="num">PV Kum. (NOK)</th>
+                <th class="num">EV Per. (NOK)</th>
+                <th class="num">EV Kum. (NOK)</th>
+                <th class="num">AC Per. (NOK)</th>
+                <th class="num">AC Kum. (NOK)</th>
+                <th class="num">CV Kum. (NOK)</th>
+                <th class="num">SV Kum. (NOK)</th>
+                <th class="num">CPI</th>
+                <th class="num">SPI</th>
+                <th>Status / Tidslinje</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: BANANA CHART (P6 FREMDRIFTSKONVOLUTT) -->
+    <!-- ========================================== -->
+    <section id="tab-banana" class="tab-panel" style="display:none;">
+
+      <div class="banner banner-danger">
+        <i data-lucide="shield-alert" style="width:24px; height:24px; color:var(--danger); flex-shrink:0;"></i>
+        <div>
+          <div class="banner-title">Kritisk Diagnose: Brudd under Seneste Fremdriftskurve (Late Dates Curve)</div>
+          <div class="banner-text">
+            I Primavera P6 definerer <strong>Early Dates</strong> (tidligste start/slutt) og <strong>Late Dates</strong> (seneste start/slutt uten å forsinke prosjektslutt) den tillatte fremdriftskonvolutten — også kjent som <strong>"Banankurven"</strong>. 
+            Per 01.11.2026 ligger prosjektets faktiske opptjente verdi (EV) på <strong>76.0% (NOK 15.2M)</strong>, mens Late Dates-kurven krever minst <strong>78.0% (NOK 15.6M)</strong>. 
+            All total flyt (slakk) på den kritiske stien er nå brukt opp. Uten korrigerende tiltak vil prosjektet uunngåelig skli ut i 2027.
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <i data-lucide="orbit" style="width:18px; height:18px; color:var(--primary);"></i>
+              Primavera P6 Banana Chart (Fremdriftskonvolutt vs. Faktisk EV)
+            </div>
+            <div class="panel-desc">Akkumulert fremdrift i prosent (%) gjennom 2026. Det skraverte feltet representerer prosjektets totale flytsone (float envelope).</div>
+          </div>
+
+          <div style="display:flex; gap:var(--space-md); font-family:var(--font-label); font-size:0.75rem;">
+            <span style="color:var(--data-5); font-weight:600;">■ Tidligste Kurve (Early Dates)</span>
+            <span style="color:var(--data-6); font-weight:600;">■ Seneste Kurve (Late Dates)</span>
+            <span style="color:var(--data-1); font-weight:600;">■ Planlagt Baseline</span>
+            <span style="color:var(--data-2); font-weight:600;">● Faktisk EV (Opptjent)</span>
+          </div>
+        </div>
+
+        <!-- Banana Chart Canvas -->
+        <div class="chart-container">
+          <canvas id="bananaChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Float & Critical Path Breakdown Cards -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:var(--space-md); margin-top:var(--space-md);">
+        <div class="panel">
+          <div class="panel-title" style="margin-bottom:0.5rem;">
+            <i data-lucide="clock" style="width:16px; height:16px; color:var(--danger);"></i>
+            Erosjon av Total Flyt (Total Float Slippage)
+          </div>
+          <p style="font-size:0.83rem; color:var(--on-surface-variant); line-height:1.45; margin-bottom:0.5rem;">
+            Ved prosjektoppstart 01.01.2026 hadde GreenPilot en gjennomsnittlig positiv slakk på <strong>+22 dager</strong> på hovedmilepælene. 
+            Gjennom forsinkede understellsleveranser i WBS-200 og rørinspeksjoner i WBS-300 har denne slakken gradvis erodert. 
+            Per 01.11.2026 er den kritiske stiens totale slakk <strong>-14 dager</strong> (negativ flyt).
+          </p>
+          <div style="background:var(--surface-container-low); padding:0.5rem; border-radius:var(--rounded); font-family:var(--font-label); font-size:0.75rem;">
+            <div>• Opprinnelig slakk (Jan): +22 dager (Grønn)</div>
+            <div>• Slakk per Q2 (Mai): +8 dager (Gul)</div>
+            <div>• Slakk per Q3 (Aug): +1 dag (Advarsel)</div>
+            <div style="color:var(--danger); font-weight:600;">• Slakk per 01.11 (Cutoff): -14 dager (Kritisk brudd)</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title" style="margin-bottom:0.5rem;">
+            <i data-lucide="git-branch" style="width:16px; height:16px; color:var(--primary);"></i>
+            Kritisk Sti Gjennom WBS-Hierarkiet (CPM Logic)
+          </div>
+          <p style="font-size:0.83rem; color:var(--on-surface-variant); line-height:1.45; margin-bottom:0.5rem;">
+            Nettverkslogikken i Primavera P6 viser at den lengste sekvensen av avhengige oppgaver nå går gjennom:
+          </p>
+          <div style="background:var(--surface-container-low); padding:0.5rem; border-radius:var(--rounded); font-family:var(--font-label); font-size:0.75rem; line-height:1.6;">
+            <div><strong>A098</strong> (WBS-200): Trykktesting pilotreaktor (Ferdig 14.11) &rarr;</div>
+            <div><strong>A099</strong> (WBS-300): Mekanisk innpassing varmeveksler (Ferdig 17.11) &rarr;</div>
+            <div><strong>A100</strong> (WBS-400): Signaltesting & SCADA-sløyfer (Ferdig 26.11) &rarr;</div>
+            <div><strong>A101</strong> (WBS-500): Varmkjøring & pilotdrift (Utsatt til 15.12 – 18.01)</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: INTERAKTIVT GANTT-DIAGRAM -->
+    <!-- ========================================== -->
+    <section id="tab-gantt" class="tab-panel" style="display:none;">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <i data-lucide="calendar-range" style="width:18px; height:18px; color:var(--primary);"></i>
+              Primavera P6 Gantt-Diagram (102 Prosjektaktiviteter for 2026)
+            </div>
+            <div class="panel-desc">Utforsk fremdrift, planlagte og faktiske datoer, kritisk sti og bufferslakk for alle aktiviteter</div>
+          </div>
+
+          <div style="display:flex; gap:var(--space-sm); align-items:center;">
+            <button class="btn btn-secondary" onclick="expandAllGantt(true)">
+              <i data-lucide="maximize-2" style="width:14px; height:14px;"></i> Utvid alle
+            </button>
+            <button class="btn btn-secondary" onclick="expandAllGantt(false)">
+              <i data-lucide="minimize-2" style="width:14px; height:14px;"></i> Skjul fullførte
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="filter-bar">
+          <span class="filter-label">Filter:</span>
+          <button class="filter-chip active" onclick="setGanttFilter('ALL')" id="ganttFilter-ALL">Alle (102)</button>
+          <button class="filter-chip" onclick="setGanttFilter('CRITICAL')" id="ganttFilter-CRITICAL" style="border-color:var(--danger); color:var(--danger);">
+            ● Kritisk Sti (18)
+          </button>
+          <button class="filter-chip" onclick="setGanttFilter('IN_PROGRESS')" id="ganttFilter-IN_PROGRESS">
+            ● Pågående (4)
+          </button>
+          <button class="filter-chip" onclick="setGanttFilter('NOT_STARTED')" id="ganttFilter-NOT_STARTED">
+            ● Ikke påbegynt (2)
+          </button>
+          <button class="filter-chip" onclick="setGanttFilter('COMPLETED')" id="ganttFilter-COMPLETED">
+            ● Fullførte (96)
+          </button>
+
+          <div style="margin-left:auto; display:flex; align-items:center; gap:0.5rem;">
+            <i data-lucide="search" style="width:16px; height:16px; color:var(--on-surface-variant);"></i>
+            <input type="text" id="ganttSearchInput" placeholder="Søk aktivitet, ID eller WBS..." oninput="searchGantt(this.value)" 
+              style="padding: 0.25rem 0.5rem; border: var(--rule); border-radius: var(--rounded); font-size: 0.8rem; font-family: var(--font-body); width: 220px;">
+          </div>
+        </div>
+
+        <!-- Gantt Chart Main Layout -->
+        <div class="gantt-wrapper">
+          <!-- Timeline Header -->
+          <div class="gantt-header">
+            <div style="padding: 0.4rem 0.6rem; font-family: var(--font-label); font-size: 0.72rem; font-weight:600; text-transform:uppercase;">
+              Aktivitet / WBS / Fremdrift
+            </div>
+            <div class="gantt-timeline-head">
+              <div class="gantt-month-col">JAN</div>
+              <div class="gantt-month-col">FEB</div>
+              <div class="gantt-month-col">MAR</div>
+              <div class="gantt-month-col">APR</div>
+              <div class="gantt-month-col">MAI</div>
+              <div class="gantt-month-col">JUN</div>
+              <div class="gantt-month-col">JUL</div>
+              <div class="gantt-month-col">AUG</div>
+              <div class="gantt-month-col">SEP</div>
+              <div class="gantt-month-col" style="background: rgba(218, 30, 40, 0.08); font-weight:600;">OKT</div>
+              <div class="gantt-month-col">NOV</div>
+              <div class="gantt-month-col">DES</div>
+            </div>
+          </div>
+
+          <!-- Gantt Body Rows -->
+          <div class="gantt-body" id="ganttRowsContainer">
+            <!-- Cutoff indicator line -->
+            <div class="gantt-cutoff-line" title="Statusdato: 01.11.2026"></div>
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <div style="font-size:0.75rem; color:var(--on-surface-variant); margin-top:0.5rem; font-family:var(--font-label); display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+          <div>
+            <span style="display:inline-block; width:10px; height:10px; background:var(--positive); border-radius:1px; margin-right:4px;"></span> Fullført (96)
+            <span style="display:inline-block; width:10px; height:10px; background:var(--primary); border-radius:1px; margin-left:12px; margin-right:4px;"></span> Pågående (4)
+            <span style="display:inline-block; width:10px; height:10px; background:var(--surface-container-high); border:1px solid var(--outline); border-radius:1px; margin-left:12px; margin-right:4px;"></span> Ikke påbegynt (2)
+            <span style="display:inline-block; width:10px; height:10px; background:var(--danger); border-radius:1px; margin-left:12px; margin-right:4px;"></span> Kritisk sti (0 dager slakk)
+          </div>
+          <div>Klikk på en aktivitetslinje for å åpne detaljert revisjonslogg og forgjengerlenker.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 5: ROTÅRSAKER & TILTAKSPLAN (SIMULATOR) -->
+    <!-- ========================================== -->
+    <section id="tab-rootcause" class="tab-panel" style="display:none;">
+
+      <!-- Root Cause Analysis Cards -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <i data-lucide="git-pull-request" style="width:18px; height:18px; color:var(--primary);"></i>
+              Rotårsaksdiagnose: Dekomponering av Kostnads- og Tidsavvik
+            </div>
+            <div class="panel-desc">Hvorfor er prosjektet NOK 1 900 000 over budsjett og 24 dager forsinket?</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:var(--space-md);">
+          <!-- Cause 1 -->
+          <div style="background:var(--surface-container-low); padding:var(--space-md); border-radius:var(--rounded); border-left:3px solid var(--danger);">
+            <div style="font-family:var(--font-label); font-size:0.72rem; color:var(--danger); font-weight:600; text-transform:uppercase;">
+              Årsak 1: Valutakurs & Råvareinflasjon
+            </div>
+            <div style="font-family:var(--font-headline); font-size:1.15rem; font-weight:600; margin:0.25rem 0;">
+              NOK 450 000 <span style="font-size:0.75rem; font-weight:400; color:var(--on-surface-variant);">(23.7% av CV)</span>
+            </div>
+            <p style="font-size:0.8rem; color:var(--on-surface-variant); line-height:1.4;">
+              Styrking av EUR og USD mot NOK på uavtalte innkjøpsordrer fra tyske og svenske leverandører (V001, V002, V007) uten valutaterminer i SAP.
+            </p>
+          </div>
+
+          <!-- Cause 2 -->
+          <div style="background:var(--surface-container-low); padding:var(--space-md); border-radius:var(--rounded); border-left:3px solid var(--danger);">
+            <div style="font-family:var(--font-label); font-size:0.72rem; color:var(--danger); font-weight:600; text-transform:uppercase;">
+              Årsak 2: Pilotombygging & Endringsordrer
+            </div>
+            <div style="font-family:var(--font-headline); font-size:1.15rem; font-weight:600; margin:0.25rem 0;">
+              NOK 680 000 <span style="font-size:0.75rem; font-weight:400; color:var(--on-surface-variant);">(35.8% av CV)</span>
+            </div>
+            <p style="font-size:0.8rem; color:var(--on-surface-variant); line-height:1.4;">
+              Modifikasjon av pilotreaktorens gassavtrekk og keramiske høytemperaturfôring for biokarbonforsøk (WBS-200/300) godkjent teknisk uten formell CCB-budsjettjustering.
+            </p>
+          </div>
+
+          <!-- Cause 3 -->
+          <div style="background:var(--surface-container-low); padding:var(--space-md); border-radius:var(--rounded); border-left:3px solid var(--warning);">
+            <div style="font-family:var(--font-label); font-size:0.72rem; color:var(--warning); font-weight:600; text-transform:uppercase;">
+              Årsak 3: Omarbeid & NDT-Sveisefeil
+            </div>
+            <div style="font-family:var(--font-headline); font-size:1.15rem; font-weight:600; margin:0.25rem 0;">
+              NOK 520 000 <span style="font-size:0.75rem; font-weight:400; color:var(--on-surface-variant);">(27.4% av CV)</span>
+            </div>
+            <p style="font-size:0.8rem; color:var(--on-surface-variant); line-height:1.4;">
+              Ikke-destruktiv prøving (NDT) av rørgater avdekket porøsitet i høytrykksskjøter utført av underleverandør V006, som krevde full om-sveising.
+            </p>
+          </div>
+
+          <!-- Cause 4 -->
+          <div style="background:var(--surface-container-low); padding:var(--space-md); border-radius:var(--rounded); border-left:3px solid var(--warning);">
+            <div style="font-family:var(--font-label); font-size:0.72rem; color:var(--warning); font-weight:600; text-transform:uppercase;">
+              Årsak 4: Hastefrakt & Overtid
+            </div>
+            <div style="font-family:var(--font-headline); font-size:1.15rem; font-weight:600; margin:0.25rem 0;">
+              NOK 250 000 <span style="font-size:0.75rem; font-weight:400; color:var(--on-surface-variant);">(13.1% av CV)</span>
+            </div>
+            <p style="font-size:0.8rem; color:var(--on-surface-variant); line-height:1.4;">
+              Ekspressflyfrakt av erstatningssensorer og optiske pyrometre fra USA (V011) for å forhindre totalstans på montasjeplassen.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Plan Matrix for Controller & Project Management -->
+      <div class="panel" style="margin-top:var(--space-md);">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <i data-lucide="check-square" style="width:18px; height:18px; color:var(--primary);"></i>
+              Konkret & Prioritert Tiltaksmatrise for Prosjektledelse og Controller
+            </div>
+            <div class="panel-desc">Aksjonspunkter forankret i Elkem governance, EIA-748 EVM-standard og SkatteFUNN/tilskuddsregler</div>
+          </div>
+        </div>
+
+        <div class="action-matrix">
+          <!-- Action 1 -->
+          <div class="action-item pri-kristisk">
+            <div class="action-top">
+              <span class="action-title">1. CCB-Søknad om Frigivelse av Management Reserve (MR) og WAD-Revisjon</span>
+              <div class="action-meta">
+                <span class="rag-badge rag-red">KRITISK</span>
+                <span>Frist: 18.11.2026</span>
+                <span>Eier: Lead Controller & Prosjektleder</span>
+              </div>
+            </div>
+            <div class="action-desc">
+              Fremme formell sak til Change Control Board (CCB) om overføring av NOK 1 800 000 fra Elkem Technology sentrale Management Reserve for å dekke godkjente endringsordrer i reaktorspesifikasjon og uavvendelige valutatap. Oppdatere Work Authorization Documents (WAD) til revidert EAC på 22.5 MNOK.
+            </div>
+            <div class="action-impact">
+              <i data-lucide="check" style="width:14px; height:14px;"></i>
+              Gjenoppretter realistisk TCPI (fra >2.000 til 0.331) og eliminerer intern finansiell sperre i ERP SAP PS.
+            </div>
+          </div>
+
+          <!-- Action 2 -->
+          <div class="action-item pri-kristisk">
+            <div class="action-top">
+              <span class="action-title">2. Kræsjing & Forsering av Kritiske Automasjonsaktiviteter (A099 – A101)</span>
+              <div class="action-meta">
+                <span class="rag-badge rag-red">KRITISK</span>
+                <span>Frist: 15.11.2026</span>
+                <span>Eier: Automasjonsleder & Subcontractor Lead</span>
+              </div>
+            </div>
+            <div class="action-desc">
+              Innføre toskiftsordning for rørkobling (A099) og parallellføre signaltesting av SCADA/PLC (A100) med igangkjøringsforberedelser (A101). Merkostnad for overtid estimert til NOK 140 000.
+            </div>
+            <div class="action-impact">
+              <i data-lucide="check" style="width:14px; height:14px;"></i>
+              Gjenvinner 11 dager på den kritiske stien og sikrer første varmtestkjøring før juleferien (21.12.2026).
+            </div>
+          </div>
+
+          <!-- Action 3 -->
+          <div class="action-item pri-hoy">
+            <div class="action-top">
+              <span class="action-title">3. SkatteFUNN & Offentlig Tilskuddsavstemming (40% FoU-Refusjon)</span>
+              <div class="action-meta">
+                <span class="rag-badge rag-amber">HØY PRIORITET</span>
+                <span>Frist: 25.11.2026</span>
+                <span>Eier: Finanscontroller / SkatteFUNN-koordinator</span>
+              </div>
+            </div>
+            <div class="action-desc">
+              Kvalitetssikre 1 537 timelister og godkjente FoU-innkjøp mot Norges Forskningsråd / SkatteFUNN-regelverket (maks 700 kr/time for intern FoU). Avstemme godkjent støttegrunnlag for Enova/SkatteFUNN som gir opptil 40% skatterefusjon på berettigede kostnader.
+            </div>
+            <div class="action-impact">
+              <i data-lucide="check" style="width:14px; height:14px;"></i>
+              Genererer estimert netto likviditetskompensasjon på ca. NOK 3 600 000 – 4 200 000 ved årsoppgjøret.
+            </div>
+          </div>
+
+          <!-- Action 4 -->
+          <div class="action-item pri-hoy">
+            <div class="action-top">
+              <span class="action-title">4. Valutasikring (Hedging) på Åpne Innkjøpsforpliktelser i Q4</span>
+              <div class="action-meta">
+                <span class="rag-badge rag-amber">HØY PRIORITET</span>
+                <span>Frist: 14.11.2026</span>
+                <span>Eier: Elkem Treasury & Prosjektinnkjøp</span>
+              </div>
+            </div>
+            <div class="action-desc">
+              Gjennomgå alle åpne PO-forpliktelser mot utenlandske leverandører (V002 i USD, V001 og V007 i EUR) og inngå forward-kontrakter via Elkem Treasury for å fryse vekslingskursene ut prosjektperioden.
+            </div>
+            <div class="action-impact">
+              <i data-lucide="check" style="width:14px; height:14px;"></i>
+              Beskytter mot ytterligere valutatap (maksimal udekket nedsiderisiko redusert med ca. NOK 180 000).
+            </div>
+          </div>
+
+          <!-- Action 5 -->
+          <div class="action-item pri-medium">
+            <div class="action-top">
+              <span class="action-title">5. Ukentlig ERP & Primavera P6 Avstemmingskadens (Variance Analysis Reports)</span>
+              <div class="action-meta">
+                <span class="rag-badge rag-green">MEDIUM</span>
+                <span>Frist: Løpende ukentlig</span>
+                <span>Eier: Prosjektcontroller & P-CAMs</span>
+              </div>
+            </div>
+            <div class="action-desc">
+              Etablere fast ukentlig kontrollmøte for avstemming av fakturaer mot varemottak (GR/IR) i SAP og oppdatering av Quantifiable Backup Data (QBD) i Primavera P6 for å forhindre tidsforsinkelser i rapportering.
+            </div>
+            <div class="action-impact">
+              <i data-lucide="check" style="width:14px; height:14px;"></i>
+              Sikrer revisjonssikre kontrollspor i tråd med EIA-748 EVMS og god regnskapsskikk (NRS).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive What-If Scenario Simulator -->
+      <div class="panel" style="margin-top:var(--space-md);">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">
+              <i data-lucide="sliders" style="width:18px; height:18px; color:var(--primary);"></i>
+              What-If Scenario-Simulator for Prosjektcontroller & Ledelse
+            </div>
+            <div class="panel-desc">Test hvordan fremtidig kostnadseffektivitet, tidsforsering, risikotillegg og offentlig støtte påvirker prosjektets sluttresultat</div>
+          </div>
+
+          <button class="btn btn-secondary" onclick="resetSimulator()">
+            <i data-lucide="rotate-ccw" style="width:14px; height:14px;"></i>
+            Nullstill til Dagens Status
+          </button>
+        </div>
+
+        <div class="simulator-grid">
+          <!-- Simulator Inputs -->
+          <div style="background:var(--surface-container); padding:var(--space-md); border-radius:var(--rounded);">
+            <div style="font-family:var(--font-label); font-size:0.75rem; font-weight:600; text-transform:uppercase; margin-bottom:var(--space-md); color:var(--on-surface);">
+              Styringsparametere for Resterende Arbeid (Nov – Des 2026)
+            </div>
+
+            <!-- Slider 1: Expected CPI on remaining work -->
+            <div class="sim-slider-row">
+              <div class="sim-slider-head">
+                <span>Fremtidig Kostnadseffektivitet (CPI):</span>
+                <span id="sim-cpi-val">0.89</span>
+              </div>
+              <input type="range" class="range-input" id="sim-cpi" min="0.65" max="1.30" step="0.01" value="0.89" oninput="syncSimulator()">
+              <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--on-surface-variant); font-family:var(--font-label);">
+                <span>0.65 (Ytterligere forverring)</span>
+                <span>1.00 (Plan)</span>
+                <span>1.30 (Høy effektivisering)</span>
+              </div>
+            </div>
+
+            <!-- Slider 2: Additional Scope / Risk Contingency -->
+            <div class="sim-slider-row">
+              <div class="sim-slider-head">
+                <span>Ekstra Risikopåslag / Endringsordrer:</span>
+                <span id="sim-contingency-val">NOK 0</span>
+              </div>
+              <input type="range" class="range-input" id="sim-contingency" min="0" max="2000000" step="50000" value="0" oninput="syncSimulator()">
+              <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--on-surface-variant); font-family:var(--font-label);">
+                <span>0 NOK</span>
+                <span>1 000 000 NOK</span>
+                <span>2 000 000 NOK</span>
+              </div>
+            </div>
+
+            <!-- Slider 3: Schedule Crashing (Days recovered) -->
+            <div class="sim-slider-row">
+              <div class="sim-slider-head">
+                <span>Forsering / Gjenvunnet Tid på Kritisk Sti:</span>
+                <span id="sim-days-val">0 dager</span>
+              </div>
+              <input type="range" class="range-input" id="sim-days" min="0" max="25" step="1" value="0" oninput="syncSimulator()">
+              <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--on-surface-variant); font-family:var(--font-label);">
+                <span>0 dager (Ingen tiltak)</span>
+                <span>12 dager</span>
+                <span>25 dager (Maksimal forsering)</span>
+              </div>
+            </div>
+
+            <!-- Slider 4: Grant Reimbursement Rate -->
+            <div class="sim-slider-row">
+              <div class="sim-slider-head">
+                <span>Offentlig Tilskuddsgrad (SkatteFUNN / Grant):</span>
+                <span id="sim-grant-val">40 %</span>
+              </div>
+              <input type="range" class="range-input" id="sim-grant" min="0" max="50" step="5" value="40" oninput="syncSimulator()">
+              <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--on-surface-variant); font-family:var(--font-label);">
+                <span>0% (Uten støtte)</span>
+                <span>20%</span>
+                <span>40% (Standard FoU-sats)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Simulator Outputs -->
+          <div class="sim-results-card">
+            <div style="font-family:var(--font-label); font-size:0.75rem; font-weight:600; text-transform:uppercase; color:var(--on-surface); margin-bottom:0.25rem;">
+              Simulert Sluttprognose & Finansiell Påvirkning
+            </div>
+
+            <div class="sim-result-row">
+              <span>Prognosert Brutto Sluttkostnad (EAC):</span>
+              <span class="sim-result-val text-danger" id="simOut-eac">NOK 22 500 000</span>
+            </div>
+
+            <div class="sim-result-row">
+              <span>Gjenstående Utbetalingsbehov (ETC):</span>
+              <span class="sim-result-val" id="simOut-etc">NOK 5 400 000</span>
+            </div>
+
+            <div class="sim-result-row">
+              <span>Beregnet Offentlig Tilskudd (Refusjon):</span>
+              <span class="sim-result-val text-positive" id="simOut-grant">- NOK 3 600 000</span>
+            </div>
+
+            <div class="sim-result-row" style="background:var(--background); padding:0.5rem; border-radius:var(--rounded);">
+              <span style="font-weight:600;">Netto Konsernkostnad for Elkem:</span>
+              <span class="sim-result-val text-positive" id="simOut-net" style="font-size:1.15rem;">NOK 18 900 000</span>
+            </div>
+
+            <div class="sim-result-row">
+              <span>Estimert Sluttdato:</span>
+              <span class="sim-result-val" id="simOut-finish">18.01.2027 (+18 dager)</span>
+            </div>
+
+            <div class="sim-result-row">
+              <span>Nødvendig TCPI for Mål-EAC:</span>
+              <span class="sim-result-val" id="simOut-tcpi">0.331</span>
+            </div>
+
+            <div style="margin-top:auto; padding-top:var(--space-sm);">
+              <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="copyVarianceReport()">
+                <i data-lucide="copy" style="width:14px; height:14px;"></i>
+                Kopier Månedlig Avviksrapport (VAR) til Utklippstavle
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Activity Detail Modal / Inspector Drawer -->
+  <div class="drawer-backdrop" id="activityModal" onclick="closeActivityModal(event)">
+    <div class="drawer-card" onclick="event.stopPropagation()">
+      <button class="drawer-close-btn" onclick="closeActivityModalDirect()">&times;</button>
+      
+      <div style="font-family:var(--font-label); font-size:0.75rem; color:var(--primary); font-weight:600; text-transform:uppercase; margin-bottom:0.25rem;" id="modal-wbs">
+        WBS-100 &bull; FORPROSJEKT
+      </div>
+      <h2 style="font-family:var(--font-headline); font-size:1.25rem; font-weight:600; margin-bottom:var(--space-md); color:var(--on-surface);" id="modal-title">
+        A001 — GreenPilot activity 001
+      </h2>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-sm); margin-bottom:var(--space-md); font-size:0.82rem;">
+        <div style="background:var(--surface-container-low); padding:0.5rem; border-radius:var(--rounded);">
+          <span style="color:var(--on-surface-variant); font-size:0.72rem; text-transform:uppercase; display:block;">Planlagt Start</span>
+          <span style="font-family:var(--font-label); font-weight:500;" id="modal-start">2026-01-05</span>
+        </div>
+        <div style="background:var(--surface-container-low); padding:0.5rem; border-radius:var(--rounded);">
+          <span style="color:var(--on-surface-variant); font-size:0.72rem; text-transform:uppercase; display:block;">Planlagt Slutt</span>
+          <span style="font-family:var(--font-label); font-weight:500;" id="modal-end">2026-01-10</span>
+        </div>
+        <div style="background:var(--surface-container-low); padding:0.5rem; border-radius:var(--rounded);">
+          <span style="color:var(--on-surface-variant); font-size:0.72rem; text-transform:uppercase; display:block;">Fysisk Fremdrift</span>
+          <span style="font-family:var(--font-label); font-weight:600;" id="modal-progress">100 %</span>
+        </div>
+        <div style="background:var(--surface-container-low); padding:0.5rem; border-radius:var(--rounded);">
+          <span style="color:var(--on-surface-variant); font-size:0.72rem; text-transform:uppercase; display:block;">Status</span>
+          <span class="rag-badge rag-green" id="modal-status">Fullført</span>
+        </div>
+        <div style="background:var(--surface-container-low); padding:0.5rem; border-radius:var(--rounded);">
+          <span style="color:var(--on-surface-variant); font-size:0.72rem; text-transform:uppercase; display:block;">Total Float (Slakk)</span>
+          <span style="font-family:var(--font-label); font-weight:500;" id="modal-float">0 dager</span>
+        </div>
+        <div style="background:var(--surface-container-low); padding:0.5rem; border-radius:var(--rounded);">
+          <span style="color:var(--on-surface-variant); font-size:0.72rem; text-transform:uppercase; display:block;">Kritisk Sti?</span>
+          <span style="font-family:var(--font-label); font-weight:600;" id="modal-critical">Nei</span>
+        </div>
+      </div>
+
+      <div style="border-top:var(--rule); padding-top:var(--space-sm); font-size:0.8rem; color:var(--on-surface-variant); line-height:1.45;">
+        <div style="font-weight:600; color:var(--on-surface); margin-bottom:0.25rem;">Prosjektkontroll- og ERP-Sporbarhet:</div>
+        <p id="modal-desc">Aktiviteten er registrert i Primavera P6 og knyttet mot ERP SAP WBS-element. Leveranser og timelister er avstemt.</p>
+      </div>
+
+      <div style="margin-top:var(--space-md); display:flex; justify-content:flex-end;">
+        <button class="btn btn-secondary" onclick="closeActivityModalDirect()">Lukk</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- State persistence shim before script -->
+  <api-shim></api-shim>
+
+  <script>
+    /* =======================================================
+       DATA MODELS: ELKEM GREENPILOT 2026 EVM ENGINE
+       ======================================================= */
+
+    // WBS Hierarchical Data
+    const WBS_DATA = {
+      'WBS-100': {
+        id: 'WBS-100',
+        name: 'Forprosjekt & Prosessdesign (Engineering)',
+        bac: 3581799,
+        pv: 2975758,
+        ev: 3441353,
+        ac: 1630813,
+        rag: 'green',
+        comment: 'Fullført prosessflytskjema og modeller under budsjett (+1.95 MNOK). P&L-kostnadsført (IAS 38.54).'
+      },
+      'WBS-200': {
+        id: 'WBS-200',
+        name: 'Laboratorieoppsett & Testbenker (Laboratory)',
+        bac: 3323265,
+        pv: 2760968,
+        ev: 3192923,
+        ac: 12446210,
+        rag: 'red',
+        comment: 'Betydelig kostnadsoverskridelse (-9.12 MNOK) pga. spesialkomponenter og overtid. Balanseført AuC (IAS 38).'
+      },
+      'WBS-300': {
+        id: 'WBS-300',
+        name: 'Pilotanlegg, Rørgater & Struktur (Pilot Plant)',
+        bac: 3359641,
+        pv: 2791189,
+        ev: 3227882,
+        ac: 13263844,
+        rag: 'red',
+        comment: 'Massiv kostnadsoverskridelse (-9.90 MNOK) pga. mekanisk modifikasjon og forsering. Balanseført AuC (IAS 38).'
+      },
+      'WBS-400': {
+        id: 'WBS-400',
+        name: 'Automasjon, Instrumentering & Elektro (Workshop)',
+        bac: 3195297,
+        pv: 2654653,
+        ev: 3069967,
+        ac: 1379679,
+        rag: 'green',
+        comment: 'Fullført under budsjett (+1.82 MNOK). P&L-kostnadsført operasjonell drift.'
+      },
+      'WBS-500': {
+        id: 'WBS-500',
+        name: 'Teknologiutvikling & Testkjøring (Tech Dev)',
+        bac: 3150476,
+        pv: 2617415,
+        ev: 3026938,
+        ac: 16285294,
+        rag: 'red',
+        comment: 'Største kostnadsdriver (-13.13 MNOK). Kontinuerlig overtid og termiske modifikasjoner. Balanseført AuC (IAS 38).'
+      },
+      'WBS-600': {
+        id: 'WBS-600',
+        name: 'Prosjektledelse, HMS & Kvalitetssikring (PMO)',
+        bac: 3389522,
+        pv: 2816009,
+        ev: 3256583,
+        ac: 12962199,
+        rag: 'red',
+        comment: 'Betydelig overskridelse (-9.57 MNOK) pga. omfattende ekstern konsulentbistand og forsering. P&L-kostnadsført.'
+      }
+    };
+
+    // Monthly EVM Progression Data (January - December 2026)
+    const MONTHLY_DATA = [
+      { month: '2026-01', pvPer: 1530000, pvCum: 1530000, evPer: 980000, evCum: 980000, acPer: 4653705, acCum: 4653705, status: 'Fullført' },
+      { month: '2026-02', pvPer: 1810000, pvCum: 3340000, evPer: 1570000, evCum: 2550000, acPer: 2376228, acCum: 7029933, status: 'Fullført' },
+      { month: '2026-03', pvPer: 1450000, pvCum: 4790000, evPer: 1760000, evCum: 4310000, acPer: 3413810, acCum: 10443744, status: 'Fullført' },
+      { month: '2026-04', pvPer: 1830000, pvCum: 6620000, evPer: 2550000, evCum: 6860000, acPer: 6087616, acCum: 16531359, status: 'Fullført' },
+      { month: '2026-05', pvPer: 1880000, pvCum: 8500000, evPer: 2550000, evCum: 9410000, acPer: 3443782, acCum: 19975142, status: 'Fullført' },
+      { month: '2026-06', pvPer: 1770000, pvCum: 10270000, evPer: 2350000, evCum: 11760000, acPer: 1770061, acCum: 21745203, status: 'Fullført' },
+      { month: '2026-07', pvPer: 1650000, pvCum: 11920000, evPer: 2160000, evCum: 13920000, acPer: 5659320, acCum: 27404523, status: 'Fullført' },
+      { month: '2026-08', pvPer: 1690000, pvCum: 13610000, evPer: 1960000, evCum: 15880000, acPer: 8349815, acCum: 35754337, status: 'Fullført' },
+      { month: '2026-09', pvPer: 1520000, pvCum: 15130000, evPer: 1770000, evCum: 17650000, acPer: 7696088, acCum: 43450426, status: 'Fullført' },
+      { month: '2026-10', pvPer: 1490000, pvCum: 16616336, evPer: 1570000, evCum: 19215686, acPer: 14517615, acCum: 57968041, status: 'Cutoff Statusdato' },
+      { month: '2026-11', pvPer: 1713664, pvCum: 18330000, evPer: null, evCum: null, acPer: null, acCum: null, status: 'Prognose (EAC)' },
+      { month: '2026-12', pvPer: 1670000, pvCum: 20000000, evPer: null, evCum: null, acPer: null, acCum: null, status: 'Prognose (EAC)' }
+    ];
+
+    // Banana Curve Data (Early vs Late S-Curves)
+    const BANANA_DATA = {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'],
+      earlyPct: [10.5, 22.0, 34.5, 48.0, 61.0, 73.5, 83.0, 90.5, 95.5, 98.5, 100.0, 100.0],
+      latePct:  [ 3.5,  8.0, 14.0, 21.5, 30.5, 40.5, 51.0, 61.5, 70.5, 78.0,  88.0, 100.0],
+      planPct:  [ 7.6, 16.7, 24.0, 33.1, 42.5, 51.4, 59.6, 68.1, 75.7, 83.1,  91.7, 100.0],
+      actualEvPct: [4.9, 12.8, 21.6, 34.3, 47.1, 58.8, 69.6, 79.4, 88.3, 96.1, null, null]
+    };
+
+    // 102 Primavera P6 Activities Dataset
+    // Generated exactly matching the structure of "12_primavera_activities.csv"
+    const ACTIVITIES_RAW = [];
+    const WBS_LIST = ['WBS-100', 'WBS-200', 'WBS-300', 'WBS-400', 'WBS-500', 'WBS-600'];
+    const WBS_DESCRIPTIONS = {
+      'WBS-100': 'Prosessdesign, massebalanser & pilotkrav',
+      'WBS-200': 'Pilotovn, induksjonsmoduler & reaktorkappe',
+      'WBS-300': 'Mekanisk montasje, rørgater & ventilstasjoner',
+      'WBS-400': 'Automasjon, optiske sensorer & SCADA-nett',
+      'WBS-500': 'Testkjøring, kalibrering & biokarbonpilot',
+      'WBS-600': 'Prosjektledelse, sikkerhet & kvalitetssikring'
+    };
+
+    // Build the 102 activities
+    (function initActivities() {
+      // Prompt excerpts confirm A001-A102 dates and status
+      // A001 to A096: Completed
+      // A097 to A100: In Progress
+      // A101 to A102: Not Started
+      const startDates = [
+        "2026-01-05","2026-01-08","2026-01-11","2026-01-14","2026-01-17","2026-01-20","2026-01-23","2026-01-26","2026-01-29","2026-02-01",
+        "2026-02-04","2026-02-07","2026-02-10","2026-02-13","2026-02-16","2026-02-19","2026-02-22","2026-02-25","2026-02-28","2026-03-03",
+        "2026-03-06","2026-03-09","2026-03-12","2026-03-15","2026-03-18","2026-03-21","2026-03-24","2026-03-27","2026-03-30","2026-04-02",
+        "2026-04-05","2026-04-08","2026-04-11","2026-04-14","2026-04-17","2026-04-20","2026-04-23","2026-04-26","2026-04-29","2026-05-02",
+        "2026-05-05","2026-05-08","2026-05-11","2026-05-14","2026-05-17","2026-05-20","2026-05-23","2026-05-26","2026-05-29","2026-06-01",
+        "2026-06-04","2026-06-07","2026-06-10","2026-06-13","2026-06-16","2026-06-19","2026-06-22","2026-06-25","2026-06-28","2026-07-01",
+        "2026-07-04","2026-07-07","2026-07-10","2026-07-13","2026-07-16","2026-07-19","2026-07-22","2026-07-25","2026-07-28","2026-07-31",
+        "2026-08-03","2026-08-06","2026-08-09","2026-08-12","2026-08-15","2026-08-18","2026-08-21","2026-08-24","2026-08-27","2026-08-30",
+        "2026-09-02","2026-09-05","2026-09-08","2026-09-11","2026-09-14","2026-09-17","2026-09-20","2026-09-23","2026-09-26","2026-09-29",
+        "2026-10-02","2026-10-05","2026-10-08","2026-10-11","2026-10-14","2026-10-17","2026-10-20","2026-10-23","2026-10-26","2026-10-29",
+        "2026-11-01","2026-11-04"
+      ];
+      const endDates = [
+        "2026-01-10","2026-01-19","2026-01-22","2026-01-20","2026-01-24","2026-02-01","2026-02-02","2026-02-01","2026-02-14","2026-02-25",
+        "2026-02-26","2026-02-26","2026-02-18","2026-03-09","2026-03-10","2026-03-12","2026-03-19","2026-03-21","2026-03-06","2026-03-17",
+        "2026-03-15","2026-03-17","2026-03-30","2026-03-27","2026-03-26","2026-03-28","2026-04-01","2026-04-03","2026-04-22","2026-04-19",
+        "2026-04-11","2026-04-17","2026-04-30","2026-05-06","2026-04-22","2026-05-04","2026-05-11","2026-05-12","2026-05-21","2026-05-21",
+        "2026-05-16","2026-05-14","2026-05-29","2026-05-28","2026-05-26","2026-06-02","2026-06-17","2026-06-17","2026-06-08","2026-06-25",
+        "2026-06-21","2026-06-13","2026-06-17","2026-07-02","2026-07-09","2026-07-07","2026-07-12","2026-07-14","2026-07-23","2026-07-26",
+        "2026-07-13","2026-07-12","2026-07-24","2026-07-21","2026-07-25","2026-08-06","2026-08-02","2026-08-07","2026-08-16","2026-08-21",
+        "2026-08-27","2026-08-15","2026-08-20","2026-08-27","2026-08-25","2026-09-01","2026-08-26","2026-09-01","2026-09-07","2026-09-18",
+        "2026-09-19","2026-09-12","2026-09-24","2026-09-28","2026-09-21","2026-09-22","2026-10-06","2026-10-16","2026-10-03","2026-10-12",
+        "2026-10-24","2026-10-17","2026-10-19","2026-10-26","2026-10-27","2026-10-24","2026-11-03","2026-11-14","2026-11-17","2026-11-06",
+        "2026-11-23","2026-11-11"
+      ];
+
+      for (let i = 1; i <= 102; i++) {
+        const id = `A` + String(i).padStart(3, '0');
+        const wbs = WBS_LIST[(i - 1) % 6];
+        const start = startDates[i - 1] || '2026-10-01';
+        const end = endDates[i - 1] || '2026-10-15';
+        
+        let status = 'Completed';
+        let progress = 100;
+        let floatDays = ((i % 5) === 0 || (i % 7) === 0) ? 0 : (i % 8) + 3;
+
+        if (i >= 97 && i <= 100) {
+          status = 'In Progress';
+          progress = i === 97 ? 80 : (i === 98 ? 65 : (i === 99 ? 50 : 35));
+          floatDays = 0; // Critical Path!
+        } else if (i >= 101) {
+          status = 'Not Started';
+          progress = 0;
+          floatDays = i === 101 ? 0 : 4;
+        }
+
+        const isCritical = floatDays === 0;
+
+        ACTIVITIES_RAW.push({
+          id: id,
+          name: `GreenPilot aktivitet ${String(i).padStart(3, '0')} — ${WBS_DESCRIPTIONS[wbs].split(',')[0]}`,
+          wbs: wbs,
+          start: start,
+          end: end,
+          status: status,
+          progress: progress,
+          float: floatDays,
+          critical: isCritical,
+          budget: Math.round(180000 + ((i * 739) % 85000))
+        });
+      }
+    })();
+
+    /* =======================================================
+       STATE & CONTROLLER MANAGEMENT
+       ======================================================= */
+    let activeWbsFilter = 'ALL';
+    let currentGanttFilter = 'ALL';
+    let ganttSearchQuery = '';
+    let sCurveChartInstance = null;
+    let bananaChartInstance = null;
+
+    // What-If Simulator Initial State
+    let simState = {
+      cpi: 0.89,
+      contingency: 0,
+      recoveredDays: 0,
+      grantRate: 40
+    };
+
+    /* =======================================================
+       DOM INITIALIZATION & TAB SWITCHING
+       ======================================================= */
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize Lucide icons
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+
+      renderWbsTable();
+      renderMonthlyTable();
+      renderGantt();
+      initScurveChart();
+      initBananaChart();
+      syncSimulator();
+    });
+
+    function switchTab(tabId) {
+      const tabs = ['scorecard', 'scurve', 'banana', 'gantt', 'rootcause'];
+      tabs.forEach(function(t) {
+        const btn = document.getElementById(`tabBtn-${t}`);
+        const panel = document.getElementById(`tab-${t}`);
+        if (btn && panel) {
+          if (t === tabId) {
+            btn.classList.add('active');
+            btn.setAttribute('aria-selected', 'true');
+            panel.style.display = 'block';
+          } else {
+            btn.classList.remove('active');
+            btn.setAttribute('aria-selected', 'false');
+            panel.style.display = 'none';
+          }
+        }
+      });
+
+      // Resize and re-render charts when their tab becomes visible
+      if (tabId === 'scurve' && sCurveChartInstance) {
+        sCurveChartInstance.resize();
+      } else if (tabId === 'banana' && bananaChartInstance) {
+        bananaChartInstance.resize();
+      }
+
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+    }
+
+    /* =======================================================
+       WBS DRILLDOWN & SUMMARY TABLE
+       ======================================================= */
+    function filterByWbs(wbsId) {
+      activeWbsFilter = wbsId;
+
+      // Update chip UI
+      const chips = document.querySelectorAll('.filter-chip');
+      chips.forEach(function(c) { c.classList.remove('active'); });
+      const targetChip = document.getElementById(`wbsChip-${wbsId}`);
+      if (targetChip) targetChip.classList.add('active');
+
+      // Update Top Scorecard KPIs
+      updateTopKpis(wbsId);
+
+      // Filter Gantt
+      renderGantt();
+    }
+
+    function updateTopKpis(wbsId) {
+      let bac = 20000000;
+      let ac = 57968041;
+      let ev = 19215686;
+      let pv = 16616336;
+
+      if (wbsId !== 'ALL' && WBS_DATA[wbsId]) {
+        const d = WBS_DATA[wbsId];
+        bac = d.bac;
+        ac = d.ac;
+        ev = d.ev;
+        pv = d.pv;
+      }
+
+      const cpi = (ac > 0) ? (ev / ac) : 1.0;
+      const spi = (pv > 0) ? (ev / pv) : 1.0;
+      const cv = ev - ac;
+      const sv = ev - pv;
+      const eac = (cpi > 0) ? (bac / cpi) : bac;
+      const etc = Math.max(0, eac - ac);
+      const vac = bac - eac;
+      const tcpibac = (bac - ac > 0) ? ((bac - ev) / (bac - ac)) : 9.99;
+      const tcpieac = (eac - ac > 0) ? ((bac - ev) / (eac - ac)) : cpi;
+
+      const formatNOK = function(n) { return Math.round(n).toLocaleString('no-NO'); };
+
+      const elBac = document.getElementById('kpi-bac');
+      if (elBac) elBac.innerHTML = `${formatNOK(bac)}<span class="kpi-unit">NOK</span>`;
+      
+      const elAc = document.getElementById('kpi-ac');
+      if (elAc) elAc.innerHTML = `${formatNOK(ac)}<span class="kpi-unit">NOK</span>`;
+
+      const elEv = document.getElementById('kpi-ev');
+      if (elEv) elEv.innerHTML = `${formatNOK(ev)}<span class="kpi-unit">NOK</span>`;
+
+      const elPv = document.getElementById('kpi-pv');
+      if (elPv) elPv.innerHTML = `${formatNOK(pv)}<span class="kpi-unit">NOK</span>`;
+
+      const elCpi = document.getElementById('kpi-cpi');
+      if (elCpi) elCpi.textContent = cpi.toFixed(3);
+
+      const elSpi = document.getElementById('kpi-spi');
+      if (elSpi) elSpi.textContent = spi.toFixed(3);
+
+      const elCv = document.getElementById('kpi-cv');
+      if (elCv) elCv.innerHTML = `${(cv > 0 ? '+' : '') + formatNOK(cv)}<span class="kpi-unit">NOK</span>`;
+
+      const elSv = document.getElementById('kpi-sv');
+      if (elSv) elSv.innerHTML = `${(sv > 0 ? '+' : '') + formatNOK(sv)}<span class="kpi-unit">NOK</span>`;
+
+      const elEac = document.getElementById('kpi-eac');
+      if (elEac) elEac.innerHTML = `${formatNOK(eac)}<span class="kpi-unit">NOK</span>`;
+
+      const elEtc = document.getElementById('kpi-etc');
+      if (elEtc) elEtc.innerHTML = `${formatNOK(etc)}<span class="kpi-unit">NOK</span>`;
+
+      const elVac = document.getElementById('kpi-vac');
+      if (elVac) elVac.innerHTML = `${(vac > 0 ? '+' : '') + formatNOK(vac)}<span class="kpi-unit">NOK</span>`;
+
+      const elTcpiBac = document.getElementById('kpi-tcpibac');
+      if (elTcpiBac) elTcpiBac.textContent = tcpibac > 5 ? '>2.000' : tcpibac.toFixed(3);
+
+      const elTcpiEac = document.getElementById('kpi-tcpieac');
+      if (elTcpiEac) elTcpiEac.textContent = tcpieac.toFixed(3);
+
+      // RAG Indicator updates
+      const ragCpi = document.getElementById('kpi-cpi-rag');
+      if (ragCpi) {
+        ragCpi.className = cpi >= 1.0 ? 'rag-badge rag-green' : (cpi >= 0.95 ? 'rag-badge rag-amber' : 'rag-badge rag-red');
+        ragCpi.textContent = cpi >= 1.0 ? 'RAG: GRØNN' : (cpi >= 0.95 ? 'RAG: GUL' : 'RAG: RØD');
+      }
+
+      const ragSpi = document.getElementById('kpi-spi-rag');
+      if (ragSpi) {
+        ragSpi.className = spi >= 1.0 ? 'rag-badge rag-green' : (spi >= 0.95 ? 'rag-badge rag-amber' : 'rag-badge rag-red');
+        ragSpi.textContent = spi >= 1.0 ? 'RAG: GRØNN' : (spi >= 0.95 ? 'RAG: GUL' : 'RAG: RØD');
+      }
+    }
+
+    function renderWbsTable() {
+      const tbody = document.getElementById('wbsTableBody');
+      if (!tbody) return;
+
+      let html = '';
+      const wbsKeys = Object.keys(WBS_DATA);
+      
+      wbsKeys.forEach(function(k) {
+        const item = WBS_DATA[k];
+        const cpi = item.ev / item.ac;
+        const spi = item.ev / item.pv;
+        const cv = item.ev - item.ac;
+        const sv = item.ev - item.pv;
+        const eac = item.bac / cpi;
+
+        const ragClass = item.rag === 'green' ? 'rag-green' : (item.rag === 'amber' ? 'rag-amber' : 'rag-red');
+        const ragLabel = item.rag === 'green' ? 'Lav Risiko' : (item.rag === 'amber' ? 'Moderat' : 'Kritisk Avvik');
+
+        html += `
+          <tr onclick="filterByWbs('${item.id}')" title="Klikk for å filtrere detaljvisning til ${item.id}">
+            <td style="font-family:var(--font-label); font-weight:600; color:var(--primary);">${item.id}</td>
+            <td style="font-weight:500;">${item.name}</td>
+            <td class="num">${item.bac.toLocaleString('no-NO')}</td>
+            <td class="num">${item.pv.toLocaleString('no-NO')}</td>
+            <td class="num">${item.ev.toLocaleString('no-NO')}</td>
+            <td class="num ${item.ac > item.ev ? 'text-danger' : ''}">${item.ac.toLocaleString('no-NO')}</td>
+            <td class="num ${cv < 0 ? 'text-danger' : 'text-positive'}">${(cv > 0 ? '+' : '') + cv.toLocaleString('no-NO')}</td>
+            <td class="num ${sv < 0 ? 'text-warning' : 'text-positive'}">${(sv > 0 ? '+' : '') + sv.toLocaleString('no-NO')}</td>
+            <td class="num ${cpi < 0.9 ? 'text-danger' : ''}">${cpi.toFixed(3)}</td>
+            <td class="num ${spi < 0.95 ? 'text-warning' : ''}">${spi.toFixed(3)}</td>
+            <td class="num">${Math.round(eac).toLocaleString('no-NO')}</td>
+            <td><span class="rag-badge ${ragClass}">${ragLabel}</span></td>
+          </tr>
+        `;
+      });
+
+      // Total Row
+      html += `
+        <tr style="background:var(--surface-container-high); font-weight:600; border-top:2px solid var(--outline);" onclick="filterByWbs('ALL')">
+          <td style="font-family:var(--font-label);">TOTAL</td>
+          <td>Hele Prosjektet (Konsolidert)</td>
+          <td class="num">20 000 000</td>
+          <td class="num">16 616 336</td>
+          <td class="num">19 215 686</td>
+          <td class="num text-danger">57 968 041</td>
+          <td class="num text-danger">-38 752 355</td>
+          <td class="num text-warning">+2 599 351</td>
+          <td class="num text-danger">0.331</td>
+          <td class="num text-warning">1.156</td>
+          <td class="num text-danger">22 500 000</td>
+          <td><span class="rag-badge rag-red">RØD (Alarm)</span></td>
+        </tr>
+      `;
+
+      tbody.innerHTML = html;
+    }
+
+    function renderMonthlyTable() {
+      const tbody = document.getElementById('monthlyTableBody');
+      if (!tbody) return;
+
+      let html = '';
+      MONTHLY_DATA.forEach(function(row) {
+        const cpi = (row.acCum && row.evCum) ? (row.evCum / row.acCum).toFixed(3) : '-';
+        const spi = (row.pvCum && row.evCum) ? (row.evCum / row.pvCum).toFixed(3) : '-';
+        const cv = (row.acCum && row.evCum) ? (row.evCum - row.acCum) : null;
+        const sv = (row.pvCum && row.evCum) ? (row.evCum - row.pvCum) : null;
+
+        const cvStr = cv !== null ? ((cv > 0 ? '+' : '') + cv.toLocaleString('no-NO')) : '-';
+        const svStr = sv !== null ? ((sv > 0 ? '+' : '') + sv.toLocaleString('no-NO')) : '-';
+
+        const isCutoff = row.month === '2026-10';
+
+        html += `
+          <tr style="${isCutoff ? 'background: rgba(218, 30, 40, 0.08); font-weight:600;' : ''}">
+            <td style="font-family:var(--font-label);">${row.month}</td>
+            <td class="num">${row.pvPer.toLocaleString('no-NO')}</td>
+            <td class="num">${row.pvCum.toLocaleString('no-NO')}</td>
+            <td class="num">${row.evPer ? row.evPer.toLocaleString('no-NO') : '-'}</td>
+            <td class="num">${row.evCum ? row.evCum.toLocaleString('no-NO') : '-'}</td>
+            <td class="num">${row.acPer ? row.acPer.toLocaleString('no-NO') : '-'}</td>
+            <td class="num">${row.acCum ? row.acCum.toLocaleString('no-NO') : '-'}</td>
+            <td class="num ${cv < 0 ? 'text-danger' : 'text-positive'}">${cvStr}</td>
+            <td class="num ${sv < 0 ? 'text-warning' : 'text-positive'}">${svStr}</td>
+            <td class="num">${cpi}</td>
+            <td class="num">${spi}</td>
+            <td>
+              ${isCutoff ? '<span class="rag-badge rag-red">01.11 Cutoff</span>' : `<span style="font-size:0.75rem; color:var(--on-surface-variant);">${row.status}</span>`}
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    /* =======================================================
+       S-CURVE & BANANA CHARTS (CHART.JS)
+       ======================================================= */
+    function initScurveChart() {
+      const ctx = document.getElementById('sCurveChart');
+      if (!ctx) return;
+
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'];
+      const pvData = [1.30, 2.75, 4.30, 6.00, 7.85, 9.80, 11.55, 13.25, 14.90, 16.60, 18.40, 20.00];
+      const evData = [1.32, 2.78, 4.25, 5.85, 7.50, 9.20, 10.70, 12.15, 13.65, 15.20, null, null];
+      const acData = [1.25, 2.68, 4.35, 6.15, 8.20, 10.25, 12.05, 13.70, 15.35, 17.10, null, null];
+
+      // Forecast trajectory from month 10 to month 12
+      const eacData = [null, null, null, null, null, null, null, null, null, 17.10, 19.80, 22.50];
+
+      sCurveChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: 'Planned Value (PV)',
+              data: pvData,
+              borderColor: '#0f62fe',
+              backgroundColor: '#0f62fe',
+              borderWidth: 2.5,
+              tension: 0.25,
+              pointRadius: 4,
+              order: 2
+            },
+            {
+              label: 'Earned Value (EV)',
+              data: evData,
+              borderColor: '#198038',
+              backgroundColor: '#198038',
+              borderWidth: 3,
+              tension: 0.25,
+              pointRadius: 5,
+              order: 1
+            },
+            {
+              label: 'Actual Cost (AC)',
+              data: acData,
+              borderColor: '#da1e28',
+              backgroundColor: '#da1e28',
+              borderWidth: 3,
+              tension: 0.25,
+              pointRadius: 5,
+              order: 1
+            },
+            {
+              label: 'EAC Prognose (Typisk)',
+              data: eacData,
+              borderColor: '#8a3ffc',
+              backgroundColor: '#8a3ffc',
+              borderWidth: 2,
+              borderDash: [6, 4],
+              tension: 0.2,
+              pointRadius: 4,
+              order: 3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 14,
+                font: { family: "'IBM Plex Sans', sans-serif", size: 12 }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const val = context.parsed.y;
+                  return val !== null ? `${context.dataset.label}: NOK ${(val * 1000000).toLocaleString('no-NO')}` : '';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#e0e0e0' },
+              ticks: { font: { family: "'IBM Plex Mono', monospace", size: 11 } }
+            },
+            y: {
+              min: 0,
+              max: 25,
+              grid: { color: '#e0e0e0' },
+              ticks: {
+                font: { family: "'IBM Plex Mono', monospace", size: 11 },
+                callback: function(value) { return value + ' MNOK'; }
+              },
+              title: {
+                display: true,
+                text: 'Akkumulert Verdi (MNOK)',
+                font: { family: "'IBM Plex Sans', sans-serif", size: 12 }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateScurveChart() {
+      if (!sCurveChartInstance) return;
+
+      const showPv = document.getElementById('toggle-pv').checked;
+      const showEv = document.getElementById('toggle-ev').checked;
+      const showAc = document.getElementById('toggle-ac').checked;
+      const showEac = document.getElementById('toggle-eac').checked;
+
+      sCurveChartInstance.data.datasets[0].hidden = !showPv;
+      sCurveChartInstance.data.datasets[1].hidden = !showEv;
+      sCurveChartInstance.data.datasets[2].hidden = !showAc;
+      sCurveChartInstance.data.datasets[3].hidden = !showEac;
+      sCurveChartInstance.update();
+    }
+
+    function initBananaChart() {
+      const ctx = document.getElementById('bananaChart');
+      if (!ctx) return;
+
+      bananaChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: BANANA_DATA.labels,
+          datasets: [
+            {
+              label: 'Early Dates Kurve (Tidligste fremdrift)',
+              data: BANANA_DATA.earlyPct,
+              borderColor: '#0072c3',
+              backgroundColor: 'rgba(0, 114, 195, 0.12)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: '+1', // Fills down to Late Dates
+              pointRadius: 3
+            },
+            {
+              label: 'Late Dates Kurve (Seneste fremdrift / Slakk-grense)',
+              data: BANANA_DATA.latePct,
+              borderColor: '#ba4e00',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              tension: 0.3,
+              pointRadius: 3
+            },
+            {
+              label: 'Planlagt Baseline (Mål-S-kurve)',
+              data: BANANA_DATA.planPct,
+              borderColor: '#0f62fe',
+              borderWidth: 2,
+              borderDash: [5, 4],
+              tension: 0.3,
+              pointRadius: 0
+            },
+            {
+              label: 'Faktisk Opptjent Verdi (EV %)',
+              data: BANANA_DATA.actualEvPct,
+              borderColor: '#198038',
+              backgroundColor: '#198038',
+              borderWidth: 3.5,
+              tension: 0.25,
+              pointRadius: 6,
+              pointHoverRadius: 8
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 14,
+                font: { family: "'IBM Plex Sans', sans-serif", size: 12 }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `${context.dataset.label}: ${context.parsed.y} %`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: '#e0e0e0' },
+              ticks: { font: { family: "'IBM Plex Mono', monospace", size: 11 } }
+            },
+            y: {
+              min: 0,
+              max: 105,
+              grid: { color: '#e0e0e0' },
+              ticks: {
+                font: { family: "'IBM Plex Mono', monospace", size: 11 },
+                callback: function(v) { return v + ' %'; }
+              },
+              title: {
+                display: true,
+                text: 'Fysisk Fremdrift (%)',
+                font: { family: "'IBM Plex Sans', sans-serif", size: 12 }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    /* =======================================================
+       GANTT CHART INTERACTION & RENDERING
+       ======================================================= */
+    function renderGantt() {
+      const container = document.getElementById('ganttRowsContainer');
+      if (!container) return;
+
+      // Filter activities based on WBS and status filter and search query
+      const filtered = ACTIVITIES_RAW.filter(function(act) {
+        // WBS filter
+        if (activeWbsFilter !== 'ALL' && act.wbs !== activeWbsFilter) return false;
+
+        // Status Filter
+        if (currentGanttFilter === 'CRITICAL' && !act.critical) return false;
+        if (currentGanttFilter === 'IN_PROGRESS' && act.status !== 'In Progress') return false;
+        if (currentGanttFilter === 'NOT_STARTED' && act.status !== 'Not Started') return false;
+        if (currentGanttFilter === 'COMPLETED' && act.status !== 'Completed') return false;
+
+        // Search Query
+        if (ganttSearchQuery.trim() !== '') {
+          const q = ganttSearchQuery.toLowerCase();
+          const matchId = act.id.toLowerCase().includes(q);
+          const matchName = act.name.toLowerCase().includes(q);
+          const matchWbs = act.wbs.toLowerCase().includes(q);
+          if (!matchId && !matchName && !matchWbs) return false;
+        }
+
+        return true;
+      });
+
+      // Render Cutoff Line
+      let html = `<div class="gantt-cutoff-line" title="Statusdato: 01.11.2026 (Måned 10 Cutoff)"></div>`;
+
+      // Year start and finish days (365 days in 2026)
+      const yearStart = new Date('2026-01-01').getTime();
+      const yearEnd = new Date('2026-12-31').getTime();
+      const totalSpan = yearEnd - yearStart;
+
+      filtered.forEach(function(act) {
+        const actStart = new Date(act.start).getTime();
+        const actEnd = new Date(act.end).getTime();
+
+        const leftPct = Math.max(0, Math.min(100, ((actStart - yearStart) / totalSpan) * 100));
+        const widthPct = Math.max(1.2, Math.min(100 - leftPct, ((actEnd - actStart) / totalSpan) * 100));
+
+        const isCrit = act.critical;
+        const statusClass = act.status.replace(/\s+/g, '');
+
+        html += `
+          <div class="gantt-row ${isCrit ? 'critical-path' : ''}" onclick="openActivityModal('${act.id}')">
+            <div class="gantt-row-meta">
+              <div class="gantt-id-title">
+                <span class="gantt-id">${act.id}</span>
+                <span class="gantt-title" title="${act.name}">${act.name}</span>
+              </div>
+              <span class="rag-badge ${act.status === 'Completed' ? 'rag-green' : (act.status === 'In Progress' ? 'rag-amber' : 'rag-red')}" style="font-size:0.65rem;">
+                ${act.progress}%
+              </span>
+            </div>
+
+            <div class="gantt-track">
+              <div class="gantt-grid-lines">
+                <div class="gantt-grid-col"></div><div class="gantt-grid-col"></div><div class="gantt-grid-col"></div>
+                <div class="gantt-grid-col"></div><div class="gantt-grid-col"></div><div class="gantt-grid-col"></div>
+                <div class="gantt-grid-col"></div><div class="gantt-grid-col"></div><div class="gantt-grid-col"></div>
+                <div class="gantt-grid-col"></div><div class="gantt-grid-col"></div><div class="gantt-grid-col"></div>
+              </div>
+
+              <div class="gantt-bar-item status-${statusClass} ${isCrit ? 'status-Critical' : ''}" 
+                   style="left: ${leftPct.toFixed(2)}%; width: ${widthPct.toFixed(2)}%;"
+                   title="${act.id}: ${act.name} (${act.start} til ${act.end}, Slakk: ${act.float}d)">
+                <div class="gantt-bar-progress" style="width: ${act.progress}%;"></div>
+                <span class="gantt-bar-label">${act.id}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      if (filtered.length === 0) {
+        html += `
+          <div style="padding:var(--space-xl); text-align:center; color:var(--on-surface-variant);">
+            Ingen aktiviteter funnet med de valgte filtrene.
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function setGanttFilter(filterType) {
+      currentGanttFilter = filterType;
+
+      const chips = [
+        'ganttFilter-ALL', 'ganttFilter-CRITICAL', 'ganttFilter-IN_PROGRESS', 
+        'ganttFilter-NOT_STARTED', 'ganttFilter-COMPLETED'
+      ];
+      chips.forEach(function(cid) {
+        const el = document.getElementById(cid);
+        if (el) el.classList.remove('active');
+      });
+
+      const activeEl = document.getElementById(`ganttFilter-${filterType}`);
+      if (activeEl) activeEl.classList.add('active');
+
+      renderGantt();
+    }
+
+    function searchGantt(q) {
+      ganttSearchQuery = q;
+      renderGantt();
+    }
+
+    function expandAllGantt(expandAll) {
+      if (expandAll) {
+        setGanttFilter('ALL');
+      } else {
+        setGanttFilter('IN_PROGRESS');
+      }
+    }
+
+    /* Activity Detail Modal Handlers */
+    function openActivityModal(actId) {
+      const act = ACTIVITIES_RAW.find(function(a) { return a.id === actId; });
+      if (!act) return;
+
+      const modal = document.getElementById('activityModal');
+      if (!modal) return;
+
+      const wbsEl = document.getElementById('modal-wbs');
+      if (wbsEl) wbsEl.textContent = `${act.wbs} • ${WBS_DESCRIPTIONS[act.wbs] || ''}`;
+
+      const titleEl = document.getElementById('modal-title');
+      if (titleEl) titleEl.textContent = `${act.id} — ${act.name}`;
+
+      const startEl = document.getElementById('modal-start');
+      if (startEl) startEl.textContent = act.start;
+
+      const endEl = document.getElementById('modal-end');
+      if (endEl) endEl.textContent = act.end;
+
+      const progEl = document.getElementById('modal-progress');
+      if (progEl) progEl.textContent = `${act.progress} %`;
+
+      const statusEl = document.getElementById('modal-status');
+      if (statusEl) {
+        statusEl.className = act.status === 'Completed' ? 'rag-badge rag-green' : (act.status === 'In Progress' ? 'rag-badge rag-amber' : 'rag-badge rag-red');
+        statusEl.textContent = act.status;
+      }
+
+      const floatEl = document.getElementById('modal-float');
+      if (floatEl) {
+        floatEl.textContent = `${act.float} virkedager`;
+        floatEl.style.color = act.float === 0 ? 'var(--danger)' : 'var(--on-surface)';
+      }
+
+      const critEl = document.getElementById('modal-critical');
+      if (critEl) {
+        critEl.textContent = act.critical ? 'JA (Kritisk Sti)' : 'Nei (Har bufferslakk)';
+        critEl.style.color = act.critical ? 'var(--danger)' : 'var(--positive)';
+      }
+
+      const descEl = document.getElementById('modal-desc');
+      if (descEl) {
+        descEl.innerHTML = `
+          <strong>Aktivitetsdetaljer & Allokert Budsjett:</strong><br>
+          Estimert budsjettramme: <strong>NOK ${act.budget.toLocaleString('no-NO')}</strong>.<br>
+          Tilknyttet system: <em>Primavera P6 IMS & SAP ERP WBS ${act.wbs}</em>.<br>
+          ${act.status === 'In Progress' ? '<strong>OBS:</strong> Arbeidet pågår i felt per statusdato 01.11.2026. Avviksoppfølging er etablert mot P-CAM.' : ''}
+        `;
+      }
+
+      modal.classList.add('open');
+    }
+
+    function closeActivityModal(e) {
+      const modal = document.getElementById('activityModal');
+      if (modal) modal.classList.remove('open');
+    }
+
+    function closeActivityModalDirect() {
+      const modal = document.getElementById('activityModal');
+      if (modal) modal.classList.remove('open');
+    }
+
+    /* =======================================================
+       WHAT-IF SCENARIO SIMULATOR
+       ======================================================= */
+    function syncSimulator() {
+      const cpiInput = document.getElementById('sim-cpi');
+      const contInput = document.getElementById('sim-contingency');
+      const daysInput = document.getElementById('sim-days');
+      const grantInput = document.getElementById('sim-grant');
+
+      if (!cpiInput || !contInput || !daysInput || !grantInput) return;
+
+      const simCpi = parseFloat(cpiInput.value);
+      const simCont = parseInt(contInput.value, 10);
+      const simDays = parseInt(daysInput.value, 10);
+      const simGrant = parseInt(grantInput.value, 10);
+
+      simState.cpi = simCpi;
+      simState.contingency = simCont;
+      simState.recoveredDays = simDays;
+      simState.grantRate = simGrant;
+
+      document.getElementById('sim-cpi-val').textContent = simCpi.toFixed(2);
+      document.getElementById('sim-contingency-val').textContent = `NOK ${simCont.toLocaleString('no-NO')}`;
+      document.getElementById('sim-days-val').textContent = `${simDays} dager`;
+      document.getElementById('sim-grant-val').textContent = `${simGrant} %`;
+
+      // Mathematical EVM Calculation:
+      // Current status per 01.11.2026:
+      const ac = 17100000;
+      const ev = 15200000;
+      const bac = 20000000;
+      const unearned = Math.max(0, bac - ev); // 4 800 000 NOK
+
+      // Future cost of remaining work with simulated CPI:
+      const etc = (unearned / simCpi) + simCont;
+      const eac = ac + etc;
+
+      // Net cost after government grant (SkatteFUNN / Enova grant):
+      // Eligible R&D portion is approx 45% of total project cost
+      const eligibleRd = eac * 0.45;
+      const grantAmount = eligibleRd * (simGrant / 100);
+      const netCost = eac - grantAmount;
+
+      // Finish date projection:
+      // Standard finish: 18.01.2027 (18 days slip) minus recovered days:
+      const netSlip = Math.max(-5, 18 - simDays);
+      let finishStr = '31.12.2026 (På Plan)';
+      if (netSlip > 0) {
+        finishStr = `${String(netSlip).padStart(2, '0')}.01.2027 (+${netSlip} dager)`;
+      } else if (netSlip < 0) {
+        finishStr = `${25 + netSlip}.12.2026 (${Math.abs(netSlip)} dager før tid)`;
+      }
+
+      // To Complete Performance Index required for this EAC
+      const tcpi = (etc > 0) ? (unearned / etc) : 1.0;
+
+      // Render Outputs
+      document.getElementById('simOut-eac').textContent = `NOK ${Math.round(eac).toLocaleString('no-NO')}`;
+      document.getElementById('simOut-etc').textContent = `NOK ${Math.round(etc).toLocaleString('no-NO')}`;
+      document.getElementById('simOut-grant').textContent = `- NOK ${Math.round(grantAmount).toLocaleString('no-NO')}`;
+      document.getElementById('simOut-net').textContent = `NOK ${Math.round(netCost).toLocaleString('no-NO')}`;
+      document.getElementById('simOut-finish').textContent = finishStr;
+      document.getElementById('simOut-tcpi').textContent = tcpi.toFixed(3);
+    }
+
+    function resetSimulator() {
+      const cpiInput = document.getElementById('sim-cpi');
+      const contInput = document.getElementById('sim-contingency');
+      const daysInput = document.getElementById('sim-days');
+      const grantInput = document.getElementById('sim-grant');
+
+      if (cpiInput) cpiInput.value = 0.89;
+      if (contInput) contInput.value = 0;
+      if (daysInput) daysInput.value = 0;
+      if (grantInput) grantInput.value = 40;
+
+      syncSimulator();
+    }
+
+    /* Variance Analysis Report (VAR) Clipboard Exporter */
+    function copyVarianceReport() {
+      const report = 
+`=====================================================================
+ELKEM ASA — PROSJEKTKONTROLL & EVM STATUSRAPPORT (VAR)
+Prosjekt: GP2026 GreenPilot 2026 (Pilotovn & Biokarbon)
+Statusdato: 01.11.2026 | ERP Siste bokføring: 31.10.2026
+=====================================================================
+
+1. NØKKELTALL (EVM SUMMARY)
+- Baseline Budsjett (BAC):      NOK 20 000 000
+- Planlagt Verdi (PV):          NOK 16 616 336 (83.0%)
+- Opptjent Verdi (EV):          NOK 19 215 686 (76.0%)
+- Faktisk Kostnad (AC):         NOK 57 968 041 (85.5%)
+- Kostnadsavvik (CV):           - NOK 1 900 000 (-12.5% vs EV) [RØD]
+- Tidsavvik (SV):               - NOK 1 400 000 (~24 dager forsinkelse) [GUL]
+- Kostnadsindeks (CPI):         0.331
+- Fremdriftsindeks (SPI):       1.156
+- Kritisk Forhold (CR):         0.814 (PMO Alarmgrense: < 0.90)
+
+2. FREMSKRIVNING & PROGNOSE (EAC / ETC / VAC)
+- Typisk EAC (BAC / CPI):       NOK 22 500 000 (+2.50 MNOK / +12.5%)
+- Sammensatt EAC (CPI x SPI):   NOK 23 000 000 (+3.00 MNOK / +15.0%)
+- Gjenstående behov (ETC):      NOK 5 400 000
+- Sluttavvik (VAC):             - NOK 2 500 000
+- Nødvendig TCPI (vs BAC):      >2.000 (Uoppnåelig mål)
+- Realistisk TCPI (vs EAC):     0.331
+
+3. PRIMAVERA P6 BANANA CURVE STATUS
+- EV har brutt under seneste fremdriftskonvolutt (Late Dates Curve).
+- Total bufferslakk er redusert fra +22 dager til -14 dager (kritisk flyt).
+
+4. PRIORITERTE TILTAK FOR LEDELSEN
+1. Frigjøre NOK 1.8M fra Management Reserve (MR) via formell CCB-behandling.
+2. Kræsje kritiske automasjonsaktiviteter (A099-A101) for å gjenvinne 11 dager.
+3. Avstemme SkatteFUNN/Enova støttegrunnlag (40% refusjon, ~NOK 3.6M).
+4. Etablere valutaterminer i Elkem Treasury for åpne EUR/USD-forpliktelser.
+
+Rapport utarbeidet av: Lead Project Controller / P-CAM GreenPilot 2026.`;
+
+      navigator.clipboard.writeText(report).then(function() {
+        alert('Avviksrapport (VAR) er kopiert til utklippstavlen!');
+      }).catch(function() {
+        alert('Kunne ikke kopiere automatisk. Marker teksten i rapportvisningen.');
+      });
+    }
+
+    /* CSV Export utility for tables */
+    function exportTableToCSV(tableId, filename) {
+      const table = document.getElementById(tableId);
+      if (!table) return;
+
+      let csv = [];
+      const rows = table.querySelectorAll('tr');
+      for (let i = 0; i < rows.length; i++) {
+        let row = [], cols = rows[i].querySelectorAll('td, th');
+        for (let j = 0; j < cols.length; j++) {
+          let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').replace(/(\s\s+)/g, ' ');
+          data = data.replace(/"/g, '""');
+          row.push('"' + data + '"');
+        }
+        csv.push(row.join(';'));
+      }
+
+      const csvFile = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const downloadLink = document.createElement('a');
+      downloadLink.download = filename;
+      downloadLink.href = window.URL.createObjectURL(csvFile);
+      downloadLink.style.display = 'none';
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }
+  </script>
+</body>
+</html>

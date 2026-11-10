@@ -1,0 +1,46 @@
+table Dim_Employee
+	lineageTag: 44364e60-98fb-4d04-b87a-3fb7e3a2dd3e
+
+	column employee_id
+		dataType: string
+		lineageTag: 5df3f0e8-b318-45c6-a4c8-364471723e83
+		summarizeBy: none
+		sourceColumn: employee_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column employee_name
+		dataType: string
+		lineageTag: e51c7a4e-7b82-45fd-bfc0-eeca8ad26d0e
+		summarizeBy: none
+		sourceColumn: employee_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column role
+		dataType: string
+		lineageTag: 094c7588-8b72-49ef-bf94-a23a86012d66
+		summarizeBy: none
+		sourceColumn: role
+
+		annotation SummarizationSetBy = Automatic
+
+	column department
+		dataType: string
+		lineageTag: 9e1a459a-b7b8-4799-b0a5-deeb001fcb38
+		summarizeBy: none
+		sourceColumn: department
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_Employee = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Dim_Employee.csv"), [Delimiter = ";", Columns = 4, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true])
+				in
+				  #"Promoted headers"
+
+	annotation PBI_ResultType = Table
+

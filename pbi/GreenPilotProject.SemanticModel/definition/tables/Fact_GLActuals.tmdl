@@ -1,0 +1,74 @@
+table Fact_GLActuals
+	lineageTag: 5d02a810-9209-4ab9-9ee1-82c2f9c9dd7d
+
+	column gl_line_id
+		dataType: string
+		lineageTag: 54d2db48-40e3-46c2-898a-0b043b609077
+		summarizeBy: none
+		sourceColumn: gl_line_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column posting_date
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 9dfcc8f4-4e8b-4c2f-be1f-36837f175b54
+		summarizeBy: none
+		sourceColumn: posting_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column source
+		dataType: string
+		lineageTag: dcd3aa2e-2caf-4889-b5b9-229ccf8b97a2
+		summarizeBy: none
+		sourceColumn: source
+
+		annotation SummarizationSetBy = Automatic
+
+	column source_document
+		dataType: string
+		lineageTag: 26e603fb-2141-49d1-8e34-35caf34df546
+		summarizeBy: none
+		sourceColumn: source_document
+
+		annotation SummarizationSetBy = Automatic
+
+	column wbs_id
+		dataType: string
+		lineageTag: 5f2ad1d7-6a76-4b63-8634-844409c237d7
+		summarizeBy: none
+		sourceColumn: wbs_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_element
+		dataType: string
+		lineageTag: 5c694993-2960-42d8-ad74-cbe90d429eff
+		summarizeBy: none
+		sourceColumn: cost_element
+
+		annotation SummarizationSetBy = Automatic
+
+	column amount_nok
+		dataType: double
+		lineageTag: 1bc26202-1577-446c-9d68-52dbaba28591
+		summarizeBy: sum
+		sourceColumn: amount_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition Fact_GLActuals = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Fact_GLActuals.csv"), [Delimiter = ";", Columns = 7, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"gl_line_id", type text}, {"posting_date", type date}, {"source", type text}, {"source_document", type text}, {"wbs_id", type text}, {"cost_element", type text}, {"amount_nok", type number}})
+				in
+				  #"Changed column type"
+

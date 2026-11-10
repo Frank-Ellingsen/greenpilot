@@ -1,0 +1,13 @@
+grant_budget_line_id;category;eligible_budget_nok;documentation_requirement
+G001;Internal labor;500000.0;Timesheet
+G002;External services;500000.0;Contract/receipt
+G003;Materials;500000.0;Invoice/ledger
+G004;Equipment;500000.0;Timesheet
+G005;Travel;500000.0;Contract/receipt
+G006;Other project cost;500000.0;Invoice/ledger
+G007;Internal labor;500000.0;Timesheet
+G008;External services;500000.0;Contract/receipt
+G009;Materials;500000.0;Invoice/ledger
+G010;Equipment;500000.0;Timesheet
+G011;Travel;500000.0;Contract/receipt
+G012;Other project cost;500000.0;Invoice/ledger

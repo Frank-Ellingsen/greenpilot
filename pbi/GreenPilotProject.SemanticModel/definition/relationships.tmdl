@@ -1,0 +1,162 @@
+relationship c0d620fd-b5af-44df-bf6e-8749b569524b
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Dim_Project.baseline_start
+	toColumn: LocalDateTable_b5a1f12b-3d55-4407-b5c1-1a98bd1e5803.Date
+
+relationship 9177d661-29f4-44a4-9862-d5b958792502
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Dim_Project.baseline_finish
+	toColumn: LocalDateTable_1613d398-481b-4b64-9e74-78f1c14e6039.Date
+
+relationship 9f3eff24-09de-42fc-b86e-45a40daa6646
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Dim_Project.data_date
+	toColumn: LocalDateTable_d1c9200d-470f-4d71-9bb5-554e08814c58.Date
+
+relationship AutoDetected_838e9c6e-1c27-4896-8713-9db4a4d347db
+	fromColumn: Fact_GLActuals.cost_element
+	toColumn: Dim_CostElement.cost_element
+
+relationship 3b0657df-1bec-8c54-ed29-6a2e76d04576
+	fromColumn: Fact_GLActuals.posting_date
+	toColumn: Dim_Date.Date
+
+relationship AutoDetected_0797e9de-2baa-4a79-a774-b12d7b8f69be
+	isActive: false
+	fromColumn: Fact_BudgetBaseline.project_id
+	toColumn: Dim_Project.project_id
+
+relationship AutoDetected_72c1ee37-8e7d-4977-a69b-b73933a35360
+	fromColumn: Fact_BudgetBaseline.cost_element
+	toColumn: Dim_CostElement.cost_element
+
+relationship 08d637c7-a8f3-6f87-5e3c-08b5928472f7
+	fromColumn: Fact_BudgetBaseline.period
+	toColumn: Dim_Date.Date
+
+relationship AutoDetected_f38c9f83-6ee6-4aff-9029-69d4650ba997
+	fromColumn: Fact_Timesheets.employee_id
+	toColumn: Dim_Employee.employee_id
+
+relationship 4fef8f50-77da-da1e-524a-be22c8d3d0c0
+	fromColumn: Fact_Timesheets.work_date
+	toColumn: Dim_Date.Date
+
+relationship 91a85ccb-35a0-4262-93ec-5472060046d9
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Fact_PurchaseOrders.period
+	toColumn: LocalDateTable_905a2b62-93d8-45ee-90d0-2648c832293c.Date
+
+relationship AutoDetected_7b01a481-0342-43c5-b0fd-33e2f19dc6b3
+	fromColumn: Fact_PurchaseOrders.cost_element
+	toColumn: Dim_CostElement.cost_element
+
+relationship AutoDetected_ad03750f-a7a7-47cb-889c-14f1a57290e6
+	fromColumn: Fact_PurchaseOrders.vendor_id
+	toColumn: Dim_Vendor.vendor_id
+
+relationship ec3391e6-c347-a014-09b4-94f6597c705c
+	fromColumn: Fact_PurchaseOrders.po_date
+	toColumn: Dim_Date.Date
+
+relationship 8e992310-3d15-4c95-a2ce-80a6889813b8
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Fact_APInvoices.invoice_date
+	toColumn: LocalDateTable_32721ac4-756e-4b1a-9bd7-e186c42d3ded.Date
+
+relationship 44f12a7b-9069-4761-9106-20f95882e832
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Fact_APInvoices.period
+	toColumn: LocalDateTable_532b2680-0736-435e-b7c2-ae637f031e83.Date
+
+relationship AutoDetected_c59bde25-3b56-4567-93d0-a69ac0ed00e1
+	fromColumn: Fact_APInvoices.cost_element
+	toColumn: Dim_CostElement.cost_element
+
+relationship AutoDetected_f212c833-cbd4-42bf-80ff-7c08b4aaef6c
+	fromColumn: Fact_APInvoices.vendor_id
+	toColumn: Dim_Vendor.vendor_id
+
+relationship 40eee054-bca3-401d-9633-c85af2961d17
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Fact_Journals.posting_date
+	toColumn: LocalDateTable_b82e973e-8c33-4712-baba-3a4e692f6506.Date
+
+relationship AutoDetected_9a67d2a3-38c6-492d-87c3-bd34623bafc3
+	fromColumn: Fact_Journals.cost_element
+	toColumn: Dim_CostElement.cost_element
+
+relationship 562e0f8d-3b14-43c3-9ead-e1d2f6ab8927
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Fact_GoodsReceipts.receipt_date
+	toColumn: LocalDateTable_0555e2a5-d4a9-4af0-8d9b-b54bae97490b.Date
+
+relationship AutoDetected_fc12af43-3b65-47c1-b906-76e2800324db
+	crossFilteringBehavior: bothDirections
+	fromCardinality: one
+	fromColumn: Fact_APInvoices.po_line_id
+	toColumn: Fact_GoodsReceipts.po_line_id
+
+relationship 470113ac-0d5d-4677-b780-878a0340a973
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Fact_CapacityCalendar.week_start
+	toColumn: LocalDateTable_baa1bbd1-758b-4579-a60c-7a88ef6726bd.Date
+
+relationship AutoDetected_2832a135-62ac-4a86-997d-c596bb1170c5
+	fromColumn: Fact_CapacityCalendar.employee_id
+	toColumn: Dim_Employee.employee_id
+
+relationship AutoDetected_579be3bf-c688-4435-8d83-79708466bdda
+	fromColumn: Fact_ResourceAssignments.resource_id
+	toColumn: Dim_Resource.resource_id
+
+relationship AutoDetected_3660da95-b2ec-49fa-8012-884647d41457
+	fromColumn: Dim_WBS.project_id
+	toColumn: Dim_Project.project_id
+
+relationship AutoDetected_831f33f4-edea-48c0-9e71-ce4b944a8d00
+	fromColumn: Fact_GLActuals.wbs_id
+	toColumn: Dim_WBS.wbs_id
+
+relationship AutoDetected_777f683f-07d4-4952-bba3-e1b41dfae627
+	fromColumn: Fact_BudgetBaseline.wbs_id
+	toColumn: Dim_WBS.wbs_id
+
+relationship AutoDetected_1da72a8a-0e02-4ac1-b6ee-42be71662f80
+	fromColumn: Fact_Timesheets.wbs_id
+	toColumn: Dim_WBS.wbs_id
+
+relationship AutoDetected_c31b3e42-9b25-4ab2-a913-60487699d3d8
+	fromColumn: Fact_PurchaseOrders.wbs_id
+	toColumn: Dim_WBS.wbs_id
+
+relationship AutoDetected_b0b30882-024a-4fd2-99e2-f091871faaf6
+	fromColumn: Fact_APInvoices.wbs_id
+	toColumn: Dim_WBS.wbs_id
+
+relationship AutoDetected_0d99eb63-5782-4b60-944d-be948f80cdcb
+	fromColumn: Fact_Journals.wbs_id
+	toColumn: Dim_WBS.wbs_id
+
+relationship 080ab22b-e8e6-4d65-a839-74329dc256a3
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Dim_Activity.planned_start
+	toColumn: LocalDateTable_e320f2b5-0581-4ea4-a792-4ecabbf8411c.Date
+
+relationship 972615e7-fa1d-43d3-a819-3cca11267b91
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Dim_Activity.planned_finish
+	toColumn: LocalDateTable_1cdfd7b0-9e9e-4951-ae7d-ceee539d0bea.Date
+
+relationship AutoDetected_78a8c931-9fc2-47d2-84d0-a83b2c48e555
+	fromColumn: Dim_Activity.wbs_id
+	toColumn: Dim_WBS.wbs_id
+
+relationship AutoDetected_3fe70954-eba2-4e3e-ab8f-ebb899f0e78a
+	fromColumn: Fact_ResourceAssignments.activity_id
+	toColumn: Dim_Activity.activity_id
+
+relationship Rel_Fact_ChangeOrders_Dim_WBS
+	fromColumn: Fact_ChangeOrders.wbs_id
+	toColumn: Dim_WBS.wbs_id
+

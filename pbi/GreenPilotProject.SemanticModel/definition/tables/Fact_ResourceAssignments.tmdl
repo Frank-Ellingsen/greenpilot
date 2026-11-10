@@ -1,0 +1,46 @@
+table Fact_ResourceAssignments
+	lineageTag: 1e39e2b1-b2ca-430a-ae36-ff5bbad0da79
+
+	column assignment_id
+		dataType: string
+		lineageTag: 70d50586-aaac-4393-a711-9ba6a6c95082
+		summarizeBy: none
+		sourceColumn: assignment_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_id
+		dataType: string
+		lineageTag: a2f606ac-cdb2-4f42-b92e-cc45be582682
+		summarizeBy: none
+		sourceColumn: activity_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column resource_id
+		dataType: string
+		lineageTag: a120e647-81d9-4ea4-ba8c-0e6e006d1025
+		summarizeBy: none
+		sourceColumn: resource_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column planned_hours
+		dataType: int64
+		formatString: 0
+		lineageTag: 96953cee-84d9-48ed-a000-d4849357ff90
+		summarizeBy: sum
+		sourceColumn: planned_hours
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Fact_ResourceAssignments = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Fact_ResourceAssignments.csv"), [Delimiter = ";", Columns = 4, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"assignment_id", type text}, {"activity_id", type text}, {"resource_id", type text}, {"planned_hours", Int64.Type}})
+				in
+				  #"Changed column type"
+

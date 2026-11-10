@@ -1,0 +1,106 @@
+﻿file_name;column_name;description;data_type;nullable
+00_project_master.csv;project_id;Project Id;string_or_numeric;yes
+00_project_master.csv;project_name;Project Name;string_or_numeric;yes
+00_project_master.csv;company_code;Company Code;string_or_numeric;yes
+00_project_master.csv;currency;Currency;string_or_numeric;yes
+00_project_master.csv;baseline_start;Baseline Start;string_or_numeric;yes
+00_project_master.csv;baseline_finish;Baseline Finish;string_or_numeric;yes
+00_project_master.csv;data_date;Data Date;string_or_numeric;yes
+00_project_master.csv;baseline_budget_nok;Baseline Budget Nok;string_or_numeric;yes
+01_master_wbs.csv;wbs_id;Wbs Id;string_or_numeric;yes
+01_master_wbs.csv;project_id;Project Id;string_or_numeric;yes
+01_master_wbs.csv;wbs_name;Wbs Name;string_or_numeric;yes
+01_master_wbs.csv;parent_wbs_id;Parent Wbs Id;string_or_numeric;yes
+02_master_cost_elements.csv;cost_element;Cost Element;string_or_numeric;yes
+02_master_cost_elements.csv;cost_element_name;Cost Element Name;string_or_numeric;yes
+03_erp_fx_rates.csv;period;Period;string_or_numeric;yes
+03_erp_fx_rates.csv;currency;Currency;string_or_numeric;yes
+03_erp_fx_rates.csv;nok_rate;Nok Rate;string_or_numeric;yes
+04_erp_vendor_master.csv;vendor_id;Vendor Id;string_or_numeric;yes
+04_erp_vendor_master.csv;vendor_name;Vendor Name;string_or_numeric;yes
+04_erp_vendor_master.csv;country;Country;string_or_numeric;yes
+04_erp_vendor_master.csv;currency;Currency;string_or_numeric;yes
+05_erp_budget_baseline.csv;project_id;Project Id;string_or_numeric;yes
+05_erp_budget_baseline.csv;wbs_id;Wbs Id;string_or_numeric;yes
+05_erp_budget_baseline.csv;cost_element;Cost Element;string_or_numeric;yes
+05_erp_budget_baseline.csv;period;Period;string_or_numeric;yes
+05_erp_budget_baseline.csv;baseline_budget_nok;Baseline Budget Nok;string_or_numeric;yes
+06_erp_purchase_orders.csv;po_line_id;Po Line Id;string_or_numeric;yes
+06_erp_purchase_orders.csv;po_id;Po Id;string_or_numeric;yes
+06_erp_purchase_orders.csv;vendor_id;Vendor Id;string_or_numeric;yes
+06_erp_purchase_orders.csv;wbs_id;Wbs Id;string_or_numeric;yes
+06_erp_purchase_orders.csv;cost_element;Cost Element;string_or_numeric;yes
+06_erp_purchase_orders.csv;po_date;Po Date;string_or_numeric;yes
+06_erp_purchase_orders.csv;currency;Currency;string_or_numeric;yes
+06_erp_purchase_orders.csv;amount_currency;Amount Currency;string_or_numeric;yes
+07_erp_goods_receipts.csv;receipt_id;Receipt Id;string_or_numeric;yes
+07_erp_goods_receipts.csv;po_line_id;Po Line Id;string_or_numeric;yes
+07_erp_goods_receipts.csv;receipt_date;Receipt Date;string_or_numeric;yes
+07_erp_goods_receipts.csv;amount_currency;Amount Currency;string_or_numeric;yes
+07_erp_goods_receipts.csv;receipt_type;Receipt Type;string_or_numeric;yes
+08_erp_ap_invoices.csv;invoice_line_id;Invoice Line Id;string_or_numeric;yes
+08_erp_ap_invoices.csv;invoice_id;Invoice Id;string_or_numeric;yes
+08_erp_ap_invoices.csv;vendor_id;Vendor Id;string_or_numeric;yes
+08_erp_ap_invoices.csv;po_line_id;Po Line Id;string_or_numeric;yes
+08_erp_ap_invoices.csv;invoice_date;Invoice Date;string_or_numeric;yes
+08_erp_ap_invoices.csv;currency;Currency;string_or_numeric;yes
+08_erp_ap_invoices.csv;amount_currency;Amount Currency;string_or_numeric;yes
+08_erp_ap_invoices.csv;wbs_id;Wbs Id;string_or_numeric;yes
+08_erp_ap_invoices.csv;cost_element;Cost Element;string_or_numeric;yes
+09_erp_journals.csv;journal_line_id;Journal Line Id;string_or_numeric;yes
+09_erp_journals.csv;posting_date;Posting Date;string_or_numeric;yes
+09_erp_journals.csv;journal_type;Journal Type;string_or_numeric;yes
+09_erp_journals.csv;wbs_id;Wbs Id;string_or_numeric;yes
+09_erp_journals.csv;cost_element;Cost Element;string_or_numeric;yes
+09_erp_journals.csv;amount_nok;Amount Nok;string_or_numeric;yes
+09_erp_journals.csv;reversal_reference;Reversal Reference;string_or_numeric;yes
+10_erp_gl_actuals.csv;gl_line_id;Gl Line Id;string_or_numeric;yes
+10_erp_gl_actuals.csv;posting_date;Posting Date;string_or_numeric;yes
+10_erp_gl_actuals.csv;source;Source;string_or_numeric;yes
+10_erp_gl_actuals.csv;source_document;Source Document;string_or_numeric;yes
+10_erp_gl_actuals.csv;wbs_id;Wbs Id;string_or_numeric;yes
+10_erp_gl_actuals.csv;cost_element;Cost Element;string_or_numeric;yes
+10_erp_gl_actuals.csv;amount_nok;Amount Nok;string_or_numeric;yes
+11_erp_change_orders.csv;change_order_id;Change Order Id;string_or_numeric;yes
+11_erp_change_orders.csv;wbs_id;Wbs Id;string_or_numeric;yes
+11_erp_change_orders.csv;submitted_date;Submitted Date;string_or_numeric;yes
+11_erp_change_orders.csv;status;Status;string_or_numeric;yes
+11_erp_change_orders.csv;requested_amount_nok;Requested Amount Nok;string_or_numeric;yes
+11_erp_change_orders.csv;approved_amount_nok;Approved Amount Nok;string_or_numeric;yes
+12_primavera_activities.csv;activity_id;Activity Id;string_or_numeric;yes
+12_primavera_activities.csv;activity_name;Activity Name;string_or_numeric;yes
+12_primavera_activities.csv;wbs_id;Wbs Id;string_or_numeric;yes
+12_primavera_activities.csv;planned_start;Planned Start;string_or_numeric;yes
+12_primavera_activities.csv;planned_finish;Planned Finish;string_or_numeric;yes
+12_primavera_activities.csv;status;Status;string_or_numeric;yes
+13_primavera_relationships.csv;relationship_id;Relationship Id;string_or_numeric;yes
+13_primavera_relationships.csv;predecessor_activity_id;Predecessor Activity Id;string_or_numeric;yes
+13_primavera_relationships.csv;successor_activity_id;Successor Activity Id;string_or_numeric;yes
+13_primavera_relationships.csv;relationship_type;Relationship Type;string_or_numeric;yes
+13_primavera_relationships.csv;lag_days;Lag Days;string_or_numeric;yes
+14_primavera_resources.csv;resource_id;Resource Id;string_or_numeric;yes
+14_primavera_resources.csv;resource_name;Resource Name;string_or_numeric;yes
+14_primavera_resources.csv;resource_type;Resource Type;string_or_numeric;yes
+14_primavera_resources.csv;unit;Unit;string_or_numeric;yes
+15_primavera_resource_assignments.csv;assignment_id;Assignment Id;string_or_numeric;yes
+15_primavera_resource_assignments.csv;activity_id;Activity Id;string_or_numeric;yes
+15_primavera_resource_assignments.csv;resource_id;Resource Id;string_or_numeric;yes
+15_primavera_resource_assignments.csv;planned_hours;Planned Hours;string_or_numeric;yes
+16_hr_employee_master.csv;employee_id;Employee Id;string_or_numeric;yes
+16_hr_employee_master.csv;employee_name;Employee Name;string_or_numeric;yes
+16_hr_employee_master.csv;role;Role;string_or_numeric;yes
+16_hr_employee_master.csv;department;Department;string_or_numeric;yes
+17_hr_capacity_calendar.csv;employee_id;Employee Id;string_or_numeric;yes
+17_hr_capacity_calendar.csv;week_start;Week Start;string_or_numeric;yes
+17_hr_capacity_calendar.csv;contract_capacity_hours;Contract Capacity Hours;string_or_numeric;yes
+17_hr_capacity_calendar.csv;absence_hours;Absence Hours;string_or_numeric;yes
+18_hr_timesheets.csv;timesheet_line_id;Timesheet Line Id;string_or_numeric;yes
+18_hr_timesheets.csv;employee_id;Employee Id;string_or_numeric;yes
+18_hr_timesheets.csv;work_date;Work Date;string_or_numeric;yes
+18_hr_timesheets.csv;hours;Hours;string_or_numeric;yes
+18_hr_timesheets.csv;wbs_id;Wbs Id;string_or_numeric;yes
+18_hr_timesheets.csv;activity_id;Activity Id;string_or_numeric;yes
+19_grant_agreement_budget.csv;grant_budget_line_id;Grant Budget Line Id;string_or_numeric;yes
+19_grant_agreement_budget.csv;category;Category;string_or_numeric;yes
+19_grant_agreement_budget.csv;eligible_budget_nok;Eligible Budget Nok;string_or_numeric;yes
+19_grant_agreement_budget.csv;documentation_requirement;Documentation Requirement;string_or_numeric;yes

@@ -1,0 +1,46 @@
+table Dim_Vendor
+	lineageTag: bbbfb152-76a4-4f92-b9f3-c07d36f058df
+
+	column vendor_id
+		dataType: string
+		lineageTag: 659ddb04-f978-4656-b9fb-1f4dd9398f25
+		summarizeBy: none
+		sourceColumn: vendor_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column vendor_name
+		dataType: string
+		lineageTag: ace86938-9fff-4e5f-8334-10266783bce9
+		summarizeBy: none
+		sourceColumn: vendor_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column country
+		dataType: string
+		lineageTag: b7f9694c-62fa-45ef-9280-52b37fb5005d
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	column currency
+		dataType: string
+		lineageTag: 1fbc452e-4369-422a-b581-b97ed1db4b22
+		summarizeBy: none
+		sourceColumn: currency
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_Vendor = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Dim_Vendor.csv"), [Delimiter = ";", Columns = 4, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true])
+				in
+				  #"Promoted headers"
+
+	annotation PBI_ResultType = Table
+

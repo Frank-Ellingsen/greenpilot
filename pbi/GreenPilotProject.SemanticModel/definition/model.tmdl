@@ -1,0 +1,50 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_ProTooling = ["DevMode"]
+
+annotation PBI_QueryOrder = ["Dim_Project","Dim_Resource","Dim_CostElement","Dim_Employee","Dim_Vendor","Dim_Date","Fact_GLActuals","Fact_BudgetBaseline","Fact_Timesheets","Fact_PurchaseOrders","Fact_APInvoices","Fact_Journals","Fact_GoodsReceipts","Fact_CapacityCalendar","Fact_ResourceAssignments","Dim_WBS","Dim_Activity"]
+
+ref table Dim_Project
+ref table DateTableTemplate_60d69ad4-d82e-4dc5-bd53-a9cd2e9e14c9
+ref table LocalDateTable_b5a1f12b-3d55-4407-b5c1-1a98bd1e5803
+ref table LocalDateTable_1613d398-481b-4b64-9e74-78f1c14e6039
+ref table LocalDateTable_d1c9200d-470f-4d71-9bb5-554e08814c58
+ref table Dim_Resource
+ref table Dim_CostElement
+ref table Dim_Employee
+ref table Dim_Vendor
+ref table Dim_Date
+ref table Fact_GLActuals
+ref table Fact_BudgetBaseline
+ref table Fact_Timesheets
+ref table Fact_PurchaseOrders
+ref table LocalDateTable_905a2b62-93d8-45ee-90d0-2648c832293c
+ref table Fact_APInvoices
+ref table LocalDateTable_32721ac4-756e-4b1a-9bd7-e186c42d3ded
+ref table LocalDateTable_532b2680-0736-435e-b7c2-ae637f031e83
+ref table Fact_Journals
+ref table LocalDateTable_b82e973e-8c33-4712-baba-3a4e692f6506
+ref table Fact_GoodsReceipts
+ref table LocalDateTable_0555e2a5-d4a9-4af0-8d9b-b54bae97490b
+ref table Fact_CapacityCalendar
+ref table LocalDateTable_baa1bbd1-758b-4579-a60c-7a88ef6726bd
+ref table Fact_ResourceAssignments
+ref table _Measures
+ref table Dim_WBS
+ref table Dim_Activity
+ref table Config_VarianceThresholds
+ref table Fact_ChangeOrders
+ref table LocalDateTable_e320f2b5-0581-4ea4-a792-4ecabbf8411c
+ref table LocalDateTable_1cdfd7b0-9e9e-4951-ae7d-ceee539d0bea
+
+ref cultureInfo en-US
+

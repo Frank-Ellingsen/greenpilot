@@ -1,0 +1,16 @@
+Metric;Amount_NOK;Description
+Original Budget at Completion (BAC);20000000.0;Opprinnelig godkjent baseline budsjett
+Approved / Implemented Change Orders;1474634.0;Godkjente endringsordrer som utvider baseline
+Revised Budget at Completion (BAC);21474634.0;Revidert budsjett inkludert godkjente endringer
+Pending / Submitted Change Orders;939752.0;Endringsordrer under vurdering
+Total Actual Cost (AC / GL Actuals);57968040.980000004;Totalt bokført faktisk kostnad
+ -> IAS 38 Capitalized to AuC (Development);43375028.37999999;Aktiveres i balansen som Anlegg under utførelse (WBS 200-500)
+ -> IAS 38 Expensed to P&L (Research & Closeout);14593012.6;Resultatføres direkte som driftskostnad (WBS 100 & 600)
+Total Purchase Orders Placed;106173112.16249692;Totalt bestilte innkjøpsordrer omregnet til NOK
+Invoiced Purchase Orders (AP);56946401.4322946;Inngående fakturaer registrert mot innkjøp
+Open Commitments (PO Rest);49233751.55402853;Gjenstående forpliktelser under bestilling
+Physical Progress %;96.07843137254902;Gjennomsnittlig fysisk fremdrift i aktiviteter
+Earned Value (EV) - Initial BAC;19215686.274509806;Opptjent verdi basert på opprinnelig budsjett
+Cost Performance Index (CPI) - Initial;0.3314875912598039;Kostnadsindeks (EV / AC)
+Estimate at Completion (EAC) - Initial;58752354.7054902;Forventet totalkostnad ved ferdigstillelse
+Variance at Completion (VAC) - Initial;-38752354.7054902;Forventet budsjettavvik ved ferdigstillelse

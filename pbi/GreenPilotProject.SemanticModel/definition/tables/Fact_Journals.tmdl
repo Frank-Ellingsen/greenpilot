@@ -1,0 +1,79 @@
+table Fact_Journals
+	lineageTag: 961a9350-f105-4140-81d1-9b67f5163863
+
+	column journal_line_id
+		dataType: string
+		lineageTag: dc3ffbf9-b457-41f6-aa91-3e9495c96288
+		summarizeBy: none
+		sourceColumn: journal_line_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column posting_date
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 0e5b9e46-0d5c-4865-b47e-1794b4d10940
+		summarizeBy: none
+		sourceColumn: posting_date
+
+		variation Variation
+			isDefault
+			relationship: 40eee054-bca3-401d-9633-c85af2961d17
+			defaultHierarchy: LocalDateTable_b82e973e-8c33-4712-baba-3a4e692f6506.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column journal_type
+		dataType: string
+		lineageTag: 76f55478-4218-46a4-a1dd-48c85025a971
+		summarizeBy: none
+		sourceColumn: journal_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column wbs_id
+		dataType: string
+		lineageTag: f5975c9c-13bf-404b-bb5b-c6d90264c5aa
+		summarizeBy: none
+		sourceColumn: wbs_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_element
+		dataType: string
+		lineageTag: 260a5b33-3c73-47be-88e1-416d74987a26
+		summarizeBy: none
+		sourceColumn: cost_element
+
+		annotation SummarizationSetBy = Automatic
+
+	column amount_nok
+		dataType: double
+		lineageTag: 25e3c2ee-8220-42ed-97b6-f6a00dbaae0d
+		summarizeBy: sum
+		sourceColumn: amount_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column reversal_reference
+		dataType: string
+		lineageTag: 1956d800-4d40-41a6-a89d-f9552114b754
+		summarizeBy: none
+		sourceColumn: reversal_reference
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Fact_Journals = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Fact_Journals.csv"), [Delimiter = ";", Columns = 7, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"journal_line_id", type text}, {"posting_date", type date}, {"journal_type", type text}, {"wbs_id", type text}, {"cost_element", type text}, {"amount_nok", type number}, {"reversal_reference", type text}})
+				in
+				  #"Changed column type"
+

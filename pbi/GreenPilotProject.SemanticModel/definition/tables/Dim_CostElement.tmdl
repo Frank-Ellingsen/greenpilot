@@ -1,0 +1,30 @@
+table Dim_CostElement
+	lineageTag: b4bad2a9-5cb9-425e-8104-ad20fd026512
+
+	column cost_element
+		dataType: string
+		lineageTag: 329170ae-937f-4074-b8be-2d4e01f35461
+		summarizeBy: none
+		sourceColumn: cost_element
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_element_name
+		dataType: string
+		lineageTag: 8f96a280-c989-4197-9c9d-f51e4e6690d5
+		summarizeBy: none
+		sourceColumn: cost_element_name
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_CostElement = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Dim_CostElement.csv"), [Delimiter = ";", Columns = 2, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true])
+				in
+				  #"Promoted headers"
+
+	annotation PBI_ResultType = Table
+

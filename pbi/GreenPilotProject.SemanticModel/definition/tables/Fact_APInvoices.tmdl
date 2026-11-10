@@ -1,0 +1,131 @@
+table Fact_APInvoices
+	lineageTag: ad016568-ebe2-4bbf-bf7f-17d2ce3a7913
+
+	column invoice_line_id
+		dataType: string
+		lineageTag: 27fdc9bd-99c2-4089-8577-9e75daadfae9
+		summarizeBy: none
+		sourceColumn: invoice_line_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column invoice_id
+		dataType: string
+		lineageTag: 6de0456f-ffdf-46f5-9a75-9c1f4a7f1b89
+		summarizeBy: none
+		sourceColumn: invoice_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column vendor_id
+		dataType: string
+		lineageTag: 50bdbe03-7aab-4e93-aea8-fa1427d26079
+		summarizeBy: none
+		sourceColumn: vendor_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column po_line_id
+		dataType: string
+		lineageTag: a45db7ab-26d4-4401-a17d-cc26a95bbeed
+		summarizeBy: none
+		sourceColumn: po_line_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column invoice_date
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 600b1e27-515a-42ea-991a-c53349e7324e
+		summarizeBy: none
+		sourceColumn: invoice_date
+
+		variation Variation
+			isDefault
+			relationship: 8e992310-3d15-4c95-a2ce-80a6889813b8
+			defaultHierarchy: LocalDateTable_32721ac4-756e-4b1a-9bd7-e186c42d3ded.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column currency
+		dataType: string
+		lineageTag: 23f04f7d-89e9-4bbb-9682-2e54e3c162b9
+		summarizeBy: none
+		sourceColumn: currency
+
+		annotation SummarizationSetBy = Automatic
+
+	column amount_currency
+		dataType: double
+		lineageTag: 650e434b-80cb-43cd-8d49-5b50dd8683f6
+		summarizeBy: sum
+		sourceColumn: amount_currency
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column wbs_id
+		dataType: string
+		lineageTag: 593bf8eb-ab28-4ede-8593-c624d01f7fb2
+		summarizeBy: none
+		sourceColumn: wbs_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_element
+		dataType: string
+		lineageTag: 4f531412-f1c3-428c-8d0c-ea6ee71d2005
+		summarizeBy: none
+		sourceColumn: cost_element
+
+		annotation SummarizationSetBy = Automatic
+
+	column period
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: caf31420-f943-46b9-89b7-0a930cc3a950
+		summarizeBy: none
+		sourceColumn: period
+
+		variation Variation
+			isDefault
+			relationship: 44f12a7b-9069-4761-9106-20f95882e832
+			defaultHierarchy: LocalDateTable_532b2680-0736-435e-b7c2-ae637f031e83.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column nok_rate
+		dataType: double
+		lineageTag: 7467c180-36e6-4beb-98b1-a66ec3278990
+		summarizeBy: sum
+		sourceColumn: nok_rate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column amount_nok
+		dataType: double
+		lineageTag: 20b55b95-f9b1-4f9f-b132-b40164a41942
+		summarizeBy: sum
+		sourceColumn: amount_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition Fact_APInvoices = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Fact_APInvoices.csv"), [Delimiter = ";", Columns = 12, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"invoice_line_id", type text}, {"invoice_id", type text}, {"vendor_id", type text}, {"po_line_id", type text}, {"invoice_date", type date}, {"currency", type text}, {"amount_currency", type number}, {"wbs_id", type text}, {"cost_element", type text}, {"period", type date}, {"nok_rate", type number}, {"amount_nok", type number}})
+				in
+				  #"Changed column type"
+

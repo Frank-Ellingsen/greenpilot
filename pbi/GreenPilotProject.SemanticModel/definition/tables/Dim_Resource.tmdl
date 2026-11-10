@@ -1,0 +1,46 @@
+table Dim_Resource
+	lineageTag: f071eb54-b28e-47cd-b5c5-6e14c85958be
+
+	column resource_id
+		dataType: string
+		lineageTag: c150ec94-c5ab-4c25-9dca-5be62c65bcfe
+		summarizeBy: none
+		sourceColumn: resource_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column resource_name
+		dataType: string
+		lineageTag: 89191f66-92a8-4b31-a5e9-ef3eb8a72f70
+		summarizeBy: none
+		sourceColumn: resource_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column resource_type
+		dataType: string
+		lineageTag: 67a202e7-28cf-4361-aaec-2030c464f6a2
+		summarizeBy: none
+		sourceColumn: resource_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column unit
+		dataType: string
+		lineageTag: 2dd88e2b-3cdf-4d57-8db7-4a1cf86ef470
+		summarizeBy: none
+		sourceColumn: unit
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_Resource = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Dim_Resource.csv"), [Delimiter = ";", Columns = 4, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true])
+				in
+				  #"Promoted headers"
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,7 @@
+wbs_id;project_id;wbs_name;parent_wbs_id
+WBS-100;GP2026;Engineering;
+WBS-200;GP2026;Laboratory;
+WBS-300;GP2026;Pilot Plant;
+WBS-400;GP2026;Workshop;
+WBS-500;GP2026;Technology Development;
+WBS-600;GP2026;Project Management;

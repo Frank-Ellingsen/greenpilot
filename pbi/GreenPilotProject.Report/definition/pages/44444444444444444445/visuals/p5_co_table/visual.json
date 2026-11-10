@@ -1,0 +1,98 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p5_co_table",
+  "position": {
+    "x": 40.0,
+    "y": 460.0,
+    "z": 1100,
+    "height": 590.0,
+    "width": 890.0,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_ChangeOrders"
+                    }
+                  },
+                  "Property": "change_order_id"
+                }
+              },
+              "queryRef": "Fact_ChangeOrders.change_order_id",
+              "nativeQueryRef": "change_order_id",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_ChangeOrders"
+                    }
+                  },
+                  "Property": "wbs_id"
+                }
+              },
+              "queryRef": "Fact_ChangeOrders.wbs_id",
+              "nativeQueryRef": "wbs_id",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_ChangeOrders"
+                    }
+                  },
+                  "Property": "status"
+                }
+              },
+              "queryRef": "Fact_ChangeOrders.status",
+              "nativeQueryRef": "status",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_ChangeOrders"
+                    }
+                  },
+                  "Property": "requested_amount_nok"
+                }
+              },
+              "queryRef": "Fact_ChangeOrders.requested_amount_nok",
+              "nativeQueryRef": "requested_amount_nok",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_ChangeOrders"
+                    }
+                  },
+                  "Property": "approved_amount_nok"
+                }
+              },
+              "queryRef": "Fact_ChangeOrders.approved_amount_nok",
+              "nativeQueryRef": "approved_amount_nok",
+              "active": true
+            }
+          ]
+        }
+      }
+    }
+  }
+}

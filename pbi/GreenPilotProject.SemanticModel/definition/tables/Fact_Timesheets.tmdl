@@ -1,0 +1,66 @@
+table Fact_Timesheets
+	lineageTag: a994ef92-de20-4812-b9a9-b774b1a5179c
+
+	column timesheet_line_id
+		dataType: string
+		lineageTag: 26bc655b-cee5-486a-aa60-35f34dcee621
+		summarizeBy: none
+		sourceColumn: timesheet_line_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column employee_id
+		dataType: string
+		lineageTag: 775eb19a-25c5-4a1d-9269-e9c409786d0e
+		summarizeBy: none
+		sourceColumn: employee_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column work_date
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 1c194c61-d425-4687-9556-d7f492892ff6
+		summarizeBy: none
+		sourceColumn: work_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column hours
+		dataType: double
+		lineageTag: 4780fcfc-9996-44e4-b2a2-1ea49a6090bc
+		summarizeBy: sum
+		sourceColumn: hours
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column wbs_id
+		dataType: string
+		lineageTag: bf4ae0a1-93e1-458c-be14-25898b79836a
+		summarizeBy: none
+		sourceColumn: wbs_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_id
+		dataType: string
+		lineageTag: ae39f9d4-053d-4a56-b14e-ecb98a69f0ec
+		summarizeBy: none
+		sourceColumn: activity_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Fact_Timesheets = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Fact_Timesheets.csv"), [Delimiter = ";", Columns = 6, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"timesheet_line_id", type text}, {"employee_id", type text}, {"work_date", type date}, {"hours", type number}, {"wbs_id", type text}, {"activity_id", type text}})
+				in
+				  #"Changed column type"
+

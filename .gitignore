@@ -1,0 +1,56 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Python Caches & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+
+# Windows OS Files & Shortcuts
+*.lnk
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+[Pp]ersonal [Vv]ault*
+
+# Office / Excel Temporary Lock Files
+~$*.xlsx
+~$*.xlsm
+~$*.docx
+~$*.pptx
+
+# IDEs & Editors
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Vector Database Caches & Runtime Logs
+data/chroma_db/
+*.log

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p3_kpi_po_open",
+  "position": {
+    "x": 960.0,
+    "y": 20.0,
+    "z": 1200,
+    "height": 140.0,
+    "width": 440.0,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "PO Open Commitment NOK"
+                }
+              },
+              "queryRef": "_Measures.PO Open Commitment NOK",
+              "nativeQueryRef": "PO Open Commitment NOK"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

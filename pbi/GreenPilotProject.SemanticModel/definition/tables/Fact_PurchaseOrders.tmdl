@@ -1,0 +1,144 @@
+table Fact_PurchaseOrders
+	lineageTag: 04ba9c10-c87d-4496-a2ab-1dcf153b8ebb
+
+	column po_line_id
+		dataType: string
+		lineageTag: 7b536523-8243-4efb-8d78-2c9c86808928
+		summarizeBy: none
+		sourceColumn: po_line_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column po_id
+		dataType: string
+		lineageTag: e6474dc0-e8ef-42d7-a42b-645df2154a0a
+		summarizeBy: none
+		sourceColumn: po_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column vendor_id
+		dataType: string
+		lineageTag: 20120647-5da1-47e1-9a1f-5768277508b8
+		summarizeBy: none
+		sourceColumn: vendor_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column wbs_id
+		dataType: string
+		lineageTag: 870fd7b9-bd01-452e-b33a-b89dd381a29a
+		summarizeBy: none
+		sourceColumn: wbs_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_element
+		dataType: string
+		lineageTag: ad0b41d8-74fd-4b4b-9bf4-add70e334533
+		summarizeBy: none
+		sourceColumn: cost_element
+
+		annotation SummarizationSetBy = Automatic
+
+	column po_date
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: e6da0b4c-002c-43c8-9b33-b685f0df83fd
+		summarizeBy: none
+		sourceColumn: po_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column currency
+		dataType: string
+		lineageTag: 061e8068-2f57-471c-8b7a-7b6def593743
+		summarizeBy: none
+		sourceColumn: currency
+
+		annotation SummarizationSetBy = Automatic
+
+	column amount_currency
+		dataType: double
+		lineageTag: 58aff165-5a8a-4eef-aaee-3a202b5dfbe6
+		summarizeBy: sum
+		sourceColumn: amount_currency
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column period
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 3dcd9db2-2cc7-4ae6-a72a-c5287ec770ef
+		summarizeBy: none
+		sourceColumn: period
+
+		variation Variation
+			isDefault
+			relationship: 91a85ccb-35a0-4262-93ec-5472060046d9
+			defaultHierarchy: LocalDateTable_905a2b62-93d8-45ee-90d0-2648c832293c.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column nok_rate
+		dataType: double
+		lineageTag: 4ce11478-a9d6-4220-bd2e-437ad2bbda52
+		summarizeBy: sum
+		sourceColumn: nok_rate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column amount_nok
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 5685ac6c-170d-4b8f-97e1-c220d25d3211
+		summarizeBy: sum
+		sourceColumn: amount_nok
+
+		annotation SummarizationSetBy = Automatic
+
+	column invoiced_nok
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 18dfa731-98bc-4a11-85bc-8491c10fa892
+		summarizeBy: sum
+		sourceColumn: invoiced_nok
+
+		annotation SummarizationSetBy = Automatic
+
+	column open_commitment_nok
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 72bf9412-25de-4d7a-b501-c91823ab4981
+		summarizeBy: sum
+		sourceColumn: open_commitment_nok
+
+		annotation SummarizationSetBy = Automatic
+
+	column po_status
+		dataType: string
+		lineageTag: e8a91204-7491-4cf1-8319-5a12efbc3482
+		summarizeBy: none
+		sourceColumn: po_status
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Fact_PurchaseOrders = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Fact_PurchaseOrders.csv"), [Delimiter = ";", Columns = 14, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"po_line_id", type text}, {"po_id", type text}, {"vendor_id", type text}, {"wbs_id", type text}, {"cost_element", type text}, {"po_date", type date}, {"currency", type text}, {"amount_currency", type number}, {"period", type date}, {"nok_rate", type number}, {"amount_nok", type number}, {"invoiced_nok", type number}, {"open_commitment_nok", type number}, {"po_status", type text}})
+				in
+				  #"Changed column type"
+
+	annotation PBI_ResultType = Table

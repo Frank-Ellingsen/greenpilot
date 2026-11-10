@@ -1,0 +1,91 @@
+table Fact_GoodsReceipts
+	lineageTag: e732f757-149a-4187-bfb4-cd65b0e52ff9
+
+	column receipt_id
+		dataType: string
+		lineageTag: af200e93-3bbe-4673-b6fe-abff3070c699
+		summarizeBy: none
+		sourceColumn: receipt_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column po_line_id
+		dataType: string
+		lineageTag: b907fd87-f46a-44f7-b5f4-7b4ff6669368
+		summarizeBy: none
+		sourceColumn: po_line_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column receipt_date
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 05813de1-5843-4bee-ac58-a29dd5d7b60e
+		summarizeBy: none
+		sourceColumn: receipt_date
+
+		variation Variation
+			isDefault
+			relationship: 562e0f8d-3b14-43c3-9ead-e1d2f6ab8927
+			defaultHierarchy: LocalDateTable_0555e2a5-d4a9-4af0-8d9b-b54bae97490b.'Date Hierarchy'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column amount_currency
+		dataType: double
+		lineageTag: 7088e700-7885-4be7-ad52-4c071eeb00ba
+		summarizeBy: sum
+		sourceColumn: amount_currency
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column receipt_type
+		dataType: string
+		lineageTag: 32943353-3247-4498-bf5f-09b88404cfc7
+		summarizeBy: none
+		sourceColumn: receipt_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column currency
+		dataType: string
+		lineageTag: 63c8c5ba-0ea9-42bc-9cd6-20eeeb77f2e7
+		summarizeBy: none
+		sourceColumn: currency
+
+		annotation SummarizationSetBy = Automatic
+
+	column nok_rate
+		dataType: double
+		lineageTag: 2e51ddc5-4acc-4ed2-8e50-3a35c3b0529b
+		summarizeBy: sum
+		sourceColumn: nok_rate
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column amount_nok
+		dataType: double
+		lineageTag: 5429d6f2-d13b-48b4-844a-34817e50fa73
+		summarizeBy: sum
+		sourceColumn: amount_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition Fact_GoodsReceipts = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Fact_GoodsReceipts.csv"), [Delimiter = ";", Columns = 8, QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"receipt_id", type text}, {"po_line_id", type text}, {"receipt_date", type date}, {"amount_currency", type number}, {"receipt_type", type text}, {"currency", type text}, {"nok_rate", type number}, {"amount_nok", type number}})
+				in
+				  #"Changed column type"
+

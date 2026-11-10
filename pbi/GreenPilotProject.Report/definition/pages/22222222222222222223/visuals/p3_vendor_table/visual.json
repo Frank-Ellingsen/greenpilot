@@ -1,0 +1,110 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p3_vendor_table",
+  "position": {
+    "x": 40.0,
+    "y": 180.0,
+    "z": 2000,
+    "height": 870.0,
+    "width": 1260.0,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_Vendor"
+                    }
+                  },
+                  "Property": "vendor_name"
+                }
+              },
+              "queryRef": "Dim_Vendor.vendor_name",
+              "nativeQueryRef": "vendor_name",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_PurchaseOrders"
+                    }
+                  },
+                  "Property": "currency"
+                }
+              },
+              "queryRef": "Fact_PurchaseOrders.currency",
+              "nativeQueryRef": "currency",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "PO Amount NOK"
+                }
+              },
+              "queryRef": "_Measures.PO Amount NOK",
+              "nativeQueryRef": "PO Amount NOK"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "PO Invoiced NOK"
+                }
+              },
+              "queryRef": "_Measures.PO Invoiced NOK",
+              "nativeQueryRef": "PO Invoiced NOK"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "PO Open Commitment NOK"
+                }
+              },
+              "queryRef": "_Measures.PO Open Commitment NOK",
+              "nativeQueryRef": "PO Open Commitment NOK"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_PurchaseOrders"
+                    }
+                  },
+                  "Property": "po_status"
+                }
+              },
+              "queryRef": "Fact_PurchaseOrders.po_status",
+              "nativeQueryRef": "po_status",
+              "active": true
+            }
+          ]
+        }
+      }
+    }
+  }
+}
