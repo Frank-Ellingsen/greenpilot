@@ -119,6 +119,34 @@
               },
               "queryRef": "_Measures.Capitalization Rate %",
               "nativeQueryRef": "Capitalization Rate %"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "AuC Capitalization Bar"
+                }
+              },
+              "queryRef": "_Measures.AuC Capitalization Bar",
+              "nativeQueryRef": "AuC Capitalization Bar"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "AuC Capitalization Rate RAG"
+                }
+              },
+              "queryRef": "_Measures.AuC Capitalization Rate RAG",
+              "nativeQueryRef": "AuC Capitalization Rate RAG"
             }
           ]
         }

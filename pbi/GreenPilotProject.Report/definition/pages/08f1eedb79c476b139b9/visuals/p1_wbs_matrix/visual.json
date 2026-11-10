@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p1_wbs_matrix",
   "position": {
-    "x": 1225.0,
+    "x": 1120.0,
     "y": 150.0,
     "z": 2100,
     "height": 905.0,
-    "width": 655.0,
+    "width": 760.0,
     "tabOrder": 8000
   },
   "visual": {
@@ -127,11 +127,53 @@
                       "Entity": "_Measures"
                     }
                   },
+                  "Property": "Cost Variance Bar"
+                }
+              },
+              "queryRef": "_Measures.Cost Variance Bar",
+              "nativeQueryRef": "Cost Variance Bar"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
                   "Property": "Cost Performance Index (CPI)"
                 }
               },
               "queryRef": "_Measures.Cost Performance Index (CPI)",
               "nativeQueryRef": "Cost Performance Index (CPI)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "CPI Status RAG"
+                }
+              },
+              "queryRef": "_Measures.CPI Status RAG",
+              "nativeQueryRef": "CPI Status RAG"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Physical Progress Bar"
+                }
+              },
+              "queryRef": "_Measures.Physical Progress Bar",
+              "nativeQueryRef": "Physical Progress Bar"
             }
           ]
         }

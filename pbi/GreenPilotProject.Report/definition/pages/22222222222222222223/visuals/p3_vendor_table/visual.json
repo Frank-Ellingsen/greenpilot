@@ -89,6 +89,34 @@
             },
             {
               "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "PO Commitment Exposure Bar"
+                }
+              },
+              "queryRef": "_Measures.PO Commitment Exposure Bar",
+              "nativeQueryRef": "PO Commitment Exposure Bar"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "PO Commitment Exposure RAG"
+                }
+              },
+              "queryRef": "_Measures.PO Commitment Exposure RAG",
+              "nativeQueryRef": "PO Commitment Exposure RAG"
+            },
+            {
+              "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {

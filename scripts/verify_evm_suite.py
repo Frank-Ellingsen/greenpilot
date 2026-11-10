@@ -81,14 +81,38 @@ def run_quality_gates():
     print(f"Open Commitments: NOK {open_commitments:,.2f} (Expected: 49,233,751.55)")
     assert np.isclose(open_commitments, 49233751.55, atol=0.01), f"Open commitments mismatch: {open_commitments}"
 
-    # 6. TMDL Date Integrity Rule Check
-    print("\n--- TMDL Date Integrity Rule Check ---")
+    # 6. TMDL Date Integrity & RAG / Bar Length Check
+    print("\n--- TMDL Date Integrity & Dynamic RAG / Bar Length Check ---")
     with open(r"pbi\GreenPilotProject.SemanticModel\definition\tables\_Measures.tmdl", encoding="utf-8") as f:
         tmdl_content = f.read()
     assert "DATE ( 2026, 11, 1 )" not in tmdl_content, "Hardcoded DATE(2026,11,1) found in _Measures.tmdl!"
     assert "DATE(2026, 11, 1)" not in tmdl_content, "Hardcoded DATE(2026, 11, 1) found in _Measures.tmdl!"
     assert "Dim_Project[data_date]" in tmdl_content, "Dim_Project[data_date] dynamic status date missing in _Measures.tmdl!"
     print("[OK] Zero hardcoded date literals in _Measures.tmdl; dynamic Dim_Project[data_date] verified!")
+
+    # Dynamic RAG & In-Cell Bar Length measures check
+    required_rag_and_bars = [
+        "CPI Status RAG",
+        "CPI Color RAG",
+        "SPI Status RAG",
+        "SPI Color RAG",
+        "CV Status RAG",
+        "CV Color RAG",
+        "PO Commitment Exposure RAG",
+        "PO Commitment Color RAG",
+        "AuC Capitalization Rate RAG",
+        "AuC Capitalization Color RAG",
+        "Overall Project Health RAG",
+        "Cost Variance Bar",
+        "Physical Progress Bar",
+        "Activity Progress Bar",
+        "Budget Consumption Bar",
+        "PO Commitment Exposure Bar",
+        "AuC Capitalization Bar"
+    ]
+    for m in required_rag_and_bars:
+        assert f"measure '{m}'" in tmdl_content, f"Missing required DAX measure in _Measures.tmdl: {m}"
+    print(f"[OK] All {len(required_rag_and_bars)} Dynamic RAG and In-Cell Conditional Bar measures verified in TMDL!")
 
     print("\n" + "=" * 80)
     print("ALL QUALITY GATES PASSED SUCCESSFULLY (100% SPEC COMPLIANCE)")

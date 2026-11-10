@@ -366,6 +366,253 @@ table _Measures
 		displayFolder: 07 ENDRINGSORDRE & KONTROLL
 		lineageTag: b2938475-8345-4fb4-ec54-140592cdb123
 
+	measure 'CPI Status RAG' =
+			VAR V = [Cost Performance Index (CPI)]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( V ), BLANK (),
+			    V >= 0.95, "🟢 Green (" & FORMAT ( V, "0.00" ) & ")",
+			    V >= 0.85, "🟡 Amber (" & FORMAT ( V, "0.00" ) & ")",
+			    "🔴 Red (" & FORMAT ( V, "0.00" ) & ")"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: 6115c72a-174d-4ee8-a8b4-36729bf674a2
+
+	measure 'CPI Color RAG' =
+			VAR V = [Cost Performance Index (CPI)]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( V ), BLANK (),
+			    V >= 0.95, "#15803D",
+			    V >= 0.85, "#D97706",
+			    "#BE123C"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: 1f76c3b1-3d3b-4dd8-aa1a-3987bf59dfdc
+
+	measure 'SPI Status RAG' =
+			VAR V = [Schedule Performance Index (SPI)]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( V ), BLANK (),
+			    V >= 0.95, "🟢 Green (" & FORMAT ( V, "0.00" ) & ")",
+			    V >= 0.85, "🟡 Amber (" & FORMAT ( V, "0.00" ) & ")",
+			    "🔴 Red (" & FORMAT ( V, "0.00" ) & ")"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: bdbf0abc-c01f-42d0-8e78-06613aa545e1
+
+	measure 'SPI Color RAG' =
+			VAR V = [Schedule Performance Index (SPI)]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( V ), BLANK (),
+			    V >= 0.95, "#15803D",
+			    V >= 0.85, "#D97706",
+			    "#BE123C"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: 9942664c-7bca-4e93-a1c7-91c67601031f
+
+	measure 'CV Status RAG' =
+			VAR V = [Cost Variance (CV)]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( V ), BLANK (),
+			    V >= 0, "🟢 On Budget (+" & FORMAT ( V / 1e6, "0.00" ) & "M)",
+			    V >= -1000000, "🟡 Minor Overrun (" & FORMAT ( V / 1e6, "0.00" ) & "M)",
+			    "🔴 Critical Overrun (" & FORMAT ( V / 1e6, "0.00" ) & "M)"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: 16af8ab2-b337-47eb-8a06-6c68e3de2a51
+
+	measure 'CV Color RAG' =
+			VAR V = [Cost Variance (CV)]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( V ), BLANK (),
+			    V >= 0, "#15803D",
+			    V >= -1000000, "#D97706",
+			    "#BE123C"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: 3222295a-cbbb-4351-9255-dfbebc693acf
+
+	measure 'SV Status RAG' =
+			VAR V = [Schedule Variance (SV)]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( V ), BLANK (),
+			    V >= 0, "🟢 Ahead (+" & FORMAT ( V / 1e6, "0.00" ) & "M)",
+			    V >= -500000, "🟡 Minor Delay (" & FORMAT ( V / 1e6, "0.00" ) & "M)",
+			    "🔴 Critical Delay (" & FORMAT ( V / 1e6, "0.00" ) & "M)"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: 9e4b5e40-697f-436b-bddd-44cc3b4335fa
+
+	measure 'SV Color RAG' =
+			VAR V = [Schedule Variance (SV)]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( V ), BLANK (),
+			    V >= 0, "#15803D",
+			    V >= -500000, "#D97706",
+			    "#BE123C"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: cb460689-94c0-4169-99e2-d23798418ea8
+
+	measure 'PO Commitment Exposure RAG' =
+			VAR OpenPO = [PO Open Commitment NOK]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( OpenPO ), BLANK (),
+			    OpenPO > 25000000, "🔴 High Exposure (>25M)",
+			    OpenPO > 10000000, "🟡 Moderate Exposure (10-25M)",
+			    "🟢 Controlled Exposure (<10M)"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: fd6e8b62-559c-4f15-8d54-1c31611d0c70
+
+	measure 'PO Commitment Color RAG' =
+			VAR OpenPO = [PO Open Commitment NOK]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( OpenPO ), BLANK (),
+			    OpenPO > 25000000, "#BE123C",
+			    OpenPO > 10000000, "#D97706",
+			    "#15803D"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: e439978c-3dda-45d9-8088-d8e6d092c4f6
+
+	measure 'AuC Capitalization Rate RAG' =
+			VAR Rate = [Capitalization Rate %]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( Rate ), BLANK (),
+			    Rate > 0.80, "🔴 High Impairment Risk (>80%)",
+			    Rate > 0.60, "🟡 Elevated AuC (60-80%)",
+			    "🟢 Normal (<60%)"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: fd78a71c-b3ea-4b45-b5e5-d3c3defcfbac
+
+	measure 'AuC Capitalization Color RAG' =
+			VAR Rate = [Capitalization Rate %]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( Rate ), BLANK (),
+			    Rate > 0.80, "#BE123C",
+			    Rate > 0.60, "#D97706",
+			    "#15803D"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: c9c95415-c63c-4960-b588-99eab9681843
+
+	measure 'Overall Project Health RAG' =
+			VAR CPI = [Cost Performance Index (CPI)]
+			VAR SPI = [Schedule Performance Index (SPI)]
+			VAR OpenPO = [PO Open Commitment NOK]
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    CPI < 0.80 || OpenPO > 25000000, "🔴 CRITICAL OVERRUN (CPI: " & FORMAT ( CPI, "0.00" ) & " | Open PO: " & FORMAT ( OpenPO / 1e6, "0.0" ) & "M NOK)",
+			    CPI < 0.95 || SPI < 0.95, "🟡 CAUTION (CPI: " & FORMAT ( CPI, "0.00" ) & " | SPI: " & FORMAT ( SPI, "0.00" ) & ")",
+			    "🟢 ON TRACK (CPI: " & FORMAT ( CPI, "0.00" ) & " | SPI: " & FORMAT ( SPI, "0.00" ) & ")"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: e2d6ef16-28f9-438b-a1f8-9173ec03a442
+
+	measure 'Overall Project Health Color RAG' =
+			VAR CPI = [Cost Performance Index (CPI)]
+			VAR OpenPO = [PO Open Commitment NOK]
+			RETURN
+			IF ( CPI < 0.80 || OpenPO > 25000000, "#BE123C", IF ( CPI < 0.95, "#D97706", "#15803D" ) )
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: 4b04ee03-79c3-4aba-ba66-1b57760497fb
+
+	measure 'Cost Variance Bar' =
+			VAR Val = [Cost Variance (CV)]
+			VAR MaxScale = 15000000
+			VAR BarMaxLen = 12
+			VAR Ratio = MIN ( 1.0, DIVIDE ( ABS ( Val ), MaxScale, 0 ) )
+			VAR BarLen = MAX ( 1, ROUND ( Ratio * BarMaxLen, 0 ) )
+			VAR BarStr = REPT ( "█", BarLen )
+			RETURN
+			IF (
+			    ISBLANK ( Val ),
+			    BLANK (),
+			    IF ( Val >= 0, "🟩 " & BarStr & " (+" & FORMAT ( Val / 1e6, "0.0" ) & "M)", "🟥 " & BarStr & " (" & FORMAT ( Val / 1e6, "0.0" ) & "M)" )
+			)
+		displayFolder: 10 BETINGET STOLPELENGDE
+		lineageTag: f84baccd-0dce-4af3-ae17-ffa5823cb43a
+
+	measure 'Physical Progress Bar' =
+			VAR Pct = [Physical Progress % (Current)]
+			VAR BarMax = 10
+			VAR Filled = MIN ( BarMax, MAX ( 0, ROUND ( Pct * BarMax, 0 ) ) )
+			VAR Empty = BarMax - Filled
+			RETURN
+			IF ( ISBLANK ( Pct ), BLANK (), REPT ( "█", Filled ) & REPT ( "░", Empty ) & " " & FORMAT ( Pct, "0.0%" ) )
+		displayFolder: 10 BETINGET STOLPELENGDE
+		lineageTag: bf809736-34b2-4c18-aeb9-c38bf06bbb0e
+
+	measure 'Activity Progress Bar' =
+			VAR Pct = DIVIDE ( SELECTEDVALUE ( Dim_Activity[progress_pct], 0 ), 100, 0 )
+			VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Pct * 10, 0 ) ) )
+			VAR Empty = 10 - Filled
+			RETURN
+			REPT ( "█", Filled ) & REPT ( "░", Empty ) & " " & FORMAT ( Pct, "0%" )
+		displayFolder: 10 BETINGET STOLPELENGDE
+		lineageTag: 02c3b21f-2673-49d7-85db-77fc88f72314
+
+	measure 'Budget Consumption Bar' =
+			VAR BAC = [Budget at Completion (BAC)]
+			VAR AC = [Actual Cost (AC)]
+			VAR Ratio = DIVIDE ( AC, BAC, 0 )
+			VAR BarLen = MIN ( 15, MAX ( 1, ROUND ( Ratio * 4, 0 ) ) )
+			RETURN
+			IF (
+			    ISBLANK ( Ratio ) || BAC == 0,
+			    BLANK (),
+			    IF ( Ratio > 1.0, "🟥 " & REPT ( "■", BarLen ) & " " & FORMAT ( Ratio, "0.0%" ), "🟩 " & REPT ( "■", BarLen ) & " " & FORMAT ( Ratio, "0.0%" ) )
+			)
+		displayFolder: 10 BETINGET STOLPELENGDE
+		lineageTag: 4dfd9400-e2e3-48f0-afe8-8356ea694d2e
+
+	measure 'PO Commitment Exposure Bar' =
+			VAR OpenPO = [PO Open Commitment NOK]
+			VAR TotalPO = [PO Amount NOK]
+			VAR Rate = DIVIDE ( OpenPO, TotalPO, 0 )
+			VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
+			VAR Empty = 10 - Filled
+			RETURN
+			IF ( ISBLANK ( OpenPO ) || TotalPO == 0, BLANK (), "🟧 " & REPT ( "■", Filled ) & REPT ( "□", Empty ) & " " & FORMAT ( Rate, "0.0%" ) )
+		displayFolder: 10 BETINGET STOLPELENGDE
+		lineageTag: fb0e5b0a-05fe-4d79-a18e-d2a2b1167a68
+
+	measure 'AuC Capitalization Bar' =
+			VAR Rate = [Capitalization Rate %]
+			VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
+			VAR Empty = 10 - Filled
+			RETURN
+			IF ( ISBLANK ( Rate ), BLANK (), "🟦 " & REPT ( "■", Filled ) & REPT ( "□", Empty ) & " " & FORMAT ( Rate, "0.0%" ) )
+		displayFolder: 10 BETINGET STOLPELENGDE
+		lineageTag: 74f05679-45df-4851-8ae5-91084c703c2e
+
 	column Value
 		isHidden
 		lineageTag: 81b0148e-e3ef-41c5-a937-ca34a2fb4b1f

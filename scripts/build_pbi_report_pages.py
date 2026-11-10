@@ -2,9 +2,12 @@ import os
 import shutil
 import stat
 import json
+import zipfile
 
-REPORT_DEF_DIR = r"pbi\GreenPilotProject.Report\definition"
+REPORT_ROOT = r"pbi\GreenPilotProject.Report"
+REPORT_DEF_DIR = os.path.join(REPORT_ROOT, "definition")
 PAGES_DIR = os.path.join(REPORT_DEF_DIR, "pages")
+PBIX_FILE = "GreenPilotProjectReport.pbix"
 
 def remove_readonly(func, path, excinfo):
     try:
@@ -80,6 +83,32 @@ def prepare_page(pid, display_name):
         }, f, indent=2)
     return pdir
 
+def repack_pbix():
+    if not os.path.exists(PBIX_FILE):
+        print(f"[INFO] {PBIX_FILE} not found; skipping pbix repack.")
+        return
+
+    tmp_pbix = PBIX_FILE + ".tmp"
+    with zipfile.ZipFile(PBIX_FILE, "r") as zin, zipfile.ZipFile(tmp_pbix, "w", compression=zipfile.ZIP_DEFLATED) as zout:
+        # 1. Copy non-Report entries from existing PBIX
+        for item in zin.infolist():
+            if not item.filename.startswith("Report/"):
+                zout.writestr(item, zin.read(item.filename))
+
+        # 2. Add all updated files from pbi/GreenPilotProject.Report
+        for root, _, files in os.walk(REPORT_ROOT):
+            for file in files:
+                full_path = os.path.join(root, file)
+                rel_path = os.path.relpath(full_path, REPORT_ROOT).replace("\\", "/")
+                # Skip .pbi and .platform internal files
+                if rel_path.startswith(".pbi/") or rel_path.startswith(".platform"):
+                    continue
+                zip_path = f"Report/{rel_path}"
+                zout.write(full_path, zip_path)
+
+    shutil.move(tmp_pbix, PBIX_FILE)
+    print(f"[OK] Synchronized and repacked {PBIX_FILE} with updated PBIR pages!")
+
 def build_pages():
     pages_meta = []
 
@@ -90,7 +119,7 @@ def build_pages():
     p1_dir = prepare_page(p1_id, "Executive EVM Scorecard & S-Curve")
     pages_meta.append(p1_id)
 
-    # Header / Filter: Project Slicer & Cut-off Indicator
+    # Header / Filter: Project Slicer
     slicer_proj_dict = {
         "visualType": "slicer",
         "query": {
@@ -138,9 +167,9 @@ def build_pages():
             }
         }
     }
-    write_visual(p1_dir, "p1_scurve_combo", scurve_dict, 40, 150, 1170, 905, 2000, 7000)
+    write_visual(p1_dir, "p1_scurve_combo", scurve_dict, 40, 150, 1060, 905, 2000, 7000)
 
-    # Visual 2 (Main Right): Summary Matrix showing WBS breakdown
+    # Visual 2 (Main Right): Summary Matrix with Dynamic RAG & In-Cell Conditional Bar Lengths
     matrix_dict = {
         "visualType": "pivotTable",
         "query": {
@@ -158,13 +187,16 @@ def build_pages():
                         make_projection_measure("_Measures", "Actual Cost (AC)"),
                         make_projection_measure("_Measures", "Earned Value (EV)"),
                         make_projection_measure("_Measures", "Cost Variance (CV)"),
-                        make_projection_measure("_Measures", "Cost Performance Index (CPI)")
+                        make_projection_measure("_Measures", "Cost Variance Bar"),
+                        make_projection_measure("_Measures", "Cost Performance Index (CPI)"),
+                        make_projection_measure("_Measures", "CPI Status RAG"),
+                        make_projection_measure("_Measures", "Physical Progress Bar")
                     ]
                 }
             }
         }
     }
-    write_visual(p1_dir, "p1_wbs_matrix", matrix_dict, 1225, 150, 655, 905, 2100, 8000)
+    write_visual(p1_dir, "p1_wbs_matrix", matrix_dict, 1120, 150, 760, 905, 2100, 8000)
 
     # =========================================================================
     # PAGE 2: Root Cause & Variance Driver Matrix
@@ -185,13 +217,14 @@ def build_pages():
     }
     write_visual(p2_dir, "p2_decomp_tree", decomp_dict, 40, 20, 1080, 500, 1000, 1000)
 
-    # Visual 2 (Top Right): Diagnostic & Action Card
+    # Visual 2 (Top Right): Diagnostic & Action Card with Overall RAG Badge
     diag_card_dict = {
         "visualType": "multiRowCard",
         "query": {
             "queryState": {
                 "Values": {
                     "projections": [
+                        make_projection_measure("_Measures", "Overall Project Health RAG"),
                         make_projection_measure("_Measures", "Root Cause Primary Diagnosis"),
                         make_projection_measure("_Measures", "Root Cause Driver Decomposition")
                     ]
@@ -252,7 +285,7 @@ def build_pages():
         }
         write_visual(p3_dir, vname, vdict, x, y, w, h, 1000 + idx * 100, (idx + 1) * 1000)
 
-    # Visual 2: Table of Top Exposed Vendors
+    # Visual 2: Table of Top Exposed Vendors with RAG & Conditional Bar Length
     vendor_table_dict = {
         "visualType": "tableEx",
         "query": {
@@ -264,6 +297,8 @@ def build_pages():
                         make_projection_measure("_Measures", "PO Amount NOK"),
                         make_projection_measure("_Measures", "PO Invoiced NOK"),
                         make_projection_measure("_Measures", "PO Open Commitment NOK"),
+                        make_projection_measure("_Measures", "PO Commitment Exposure Bar"),
+                        make_projection_measure("_Measures", "PO Commitment Exposure RAG"),
                         make_projection_column("Fact_PurchaseOrders", "po_status", active=True)
                     ]
                 }
@@ -309,7 +344,7 @@ def build_pages():
         }
         write_visual(p4_dir, vname, vdict, x, y, w, h, 1000 + idx * 100, (idx + 1) * 1000)
 
-    # Visual 1 (Left): Donut / Column split of AuC vs P&L
+    # Visual 1 (Left): Donut split of AuC vs P&L
     auc_donut_dict = {
         "visualType": "donutChart",
         "query": {
@@ -321,7 +356,7 @@ def build_pages():
     }
     write_visual(p4_dir, "p4_auc_donut", auc_donut_dict, 40, 170, 600, 540, 2000, 5000)
 
-    # Visual 2 (Right): Matrix by WBS and Accounting Treatment
+    # Visual 2 (Right): Matrix by WBS and Accounting Treatment with RAG & Conditional Bar
     ifrs_matrix_dict = {
         "visualType": "pivotTable",
         "query": {
@@ -338,7 +373,9 @@ def build_pages():
                         make_projection_measure("_Measures", "Actual Cost (AC)"),
                         make_projection_measure("_Measures", "Actual Cost Capitalized (AuC)"),
                         make_projection_measure("_Measures", "Actual Cost Expensed (P&L)"),
-                        make_projection_measure("_Measures", "Capitalization Rate %")
+                        make_projection_measure("_Measures", "Capitalization Rate %"),
+                        make_projection_measure("_Measures", "AuC Capitalization Bar"),
+                        make_projection_measure("_Measures", "AuC Capitalization Rate RAG")
                     ]
                 }
             }
@@ -394,7 +431,7 @@ def build_pages():
     }
     write_visual(p5_dir, "p5_co_table", co_table_dict, 40, 460, 890, 590, 1100, 2000)
 
-    # Visual 3 (Bottom Right): Remaining Activities Audit (In Progress & Not Started)
+    # Visual 3 (Bottom Right): Remaining Activities Audit with In-Cell Activity Progress Bar
     rem_act_dict = {
         "visualType": "tableEx",
         "query": {
@@ -405,6 +442,7 @@ def build_pages():
                         make_projection_column("Dim_Activity", "activity_name", active=True),
                         make_projection_column("Dim_Activity", "wbs_id", active=True),
                         make_projection_column("Dim_Activity", "status", active=True),
+                        make_projection_measure("_Measures", "Activity Progress Bar"),
                         make_projection_column("Dim_Activity", "progress_pct", active=True),
                         make_projection_column("Dim_Activity", "planned_finish", active=True)
                     ]
@@ -424,6 +462,9 @@ def build_pages():
         }, f, indent=2)
 
     print(f"Successfully generated {len(pages_meta)} clean pages in {PAGES_DIR}!")
+
+    # Repack PBIX
+    repack_pbix()
 
 if __name__ == "__main__":
     build_pages()

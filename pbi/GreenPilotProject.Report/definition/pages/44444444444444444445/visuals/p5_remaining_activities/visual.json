@@ -77,6 +77,20 @@
             },
             {
               "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Activity Progress Bar"
+                }
+              },
+              "queryRef": "_Measures.Activity Progress Bar",
+              "nativeQueryRef": "Activity Progress Bar"
+            },
+            {
+              "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {

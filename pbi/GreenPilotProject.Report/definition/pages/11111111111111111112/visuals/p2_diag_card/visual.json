@@ -23,6 +23,20 @@
                       "Entity": "_Measures"
                     }
                   },
+                  "Property": "Overall Project Health RAG"
+                }
+              },
+              "queryRef": "_Measures.Overall Project Health RAG",
+              "nativeQueryRef": "Overall Project Health RAG"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
                   "Property": "Root Cause Primary Diagnosis"
                 }
               },

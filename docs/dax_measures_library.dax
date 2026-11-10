@@ -196,3 +196,151 @@ DIVIDE ( [Actual Cost Capitalized (AuC)], [Actual Cost (AC)], 0 )
 [PO Invoiced NOK] = SUM ( Fact_PurchaseOrders[invoiced_nok] )
 [PO Open Commitment NOK] = SUM ( Fact_PurchaseOrders[open_commitment_nok] )
 [PO Open Commitment %] = DIVIDE ( [PO Open Commitment NOK], [PO Amount NOK], 0 )
+
+// 7. DYNAMISK RAG FORMATERING (STATUS & FARGEKODER)
+[CPI Status RAG] = 
+VAR V = [Cost Performance Index (CPI)]
+RETURN
+SWITCH (
+    TRUE (),
+    ISBLANK ( V ), BLANK (),
+    V >= 0.95, "🟢 Green (" & FORMAT ( V, "0.00" ) & ")",
+    V >= 0.85, "🟡 Amber (" & FORMAT ( V, "0.00" ) & ")",
+    "🔴 Red (" & FORMAT ( V, "0.00" ) & ")"
+)
+
+[CPI Color RAG] = 
+VAR V = [Cost Performance Index (CPI)]
+RETURN
+SWITCH (
+    TRUE (),
+    ISBLANK ( V ), BLANK (),
+    V >= 0.95, "#15803D",
+    V >= 0.85, "#D97706",
+    "#BE123C"
+)
+
+[SPI Status RAG] = 
+VAR V = [Schedule Performance Index (SPI)]
+RETURN
+SWITCH (
+    TRUE (),
+    ISBLANK ( V ), BLANK (),
+    V >= 0.95, "🟢 Green (" & FORMAT ( V, "0.00" ) & ")",
+    V >= 0.85, "🟡 Amber (" & FORMAT ( V, "0.00" ) & ")",
+    "🔴 Red (" & FORMAT ( V, "0.00" ) & ")"
+)
+
+[SPI Color RAG] = 
+VAR V = [Schedule Performance Index (SPI)]
+RETURN
+SWITCH (
+    TRUE (),
+    ISBLANK ( V ), BLANK (),
+    V >= 0.95, "#15803D",
+    V >= 0.85, "#D97706",
+    "#BE123C"
+)
+
+[CV Status RAG] = 
+VAR V = [Cost Variance (CV)]
+RETURN
+SWITCH (
+    TRUE (),
+    ISBLANK ( V ), BLANK (),
+    V >= 0, "🟢 On Budget (+" & FORMAT ( V / 1e6, "0.00" ) & "M)",
+    V >= -1000000, "🟡 Minor Overrun (" & FORMAT ( V / 1e6, "0.00" ) & "M)",
+    "🔴 Critical Overrun (" & FORMAT ( V / 1e6, "0.00" ) & "M)"
+)
+
+[CV Color RAG] = 
+VAR V = [Cost Variance (CV)]
+RETURN
+SWITCH (
+    TRUE (),
+    ISBLANK ( V ), BLANK (),
+    V >= 0, "#15803D",
+    V >= -1000000, "#D97706",
+    "#BE123C"
+)
+
+[PO Commitment Exposure RAG] = 
+VAR OpenPO = [PO Open Commitment NOK]
+RETURN
+SWITCH (
+    TRUE (),
+    ISBLANK ( OpenPO ), BLANK (),
+    OpenPO > 25000000, "🔴 High Exposure (>25M)",
+    OpenPO > 10000000, "🟡 Moderate Exposure (10-25M)",
+    "🟢 Controlled Exposure (<10M)"
+)
+
+[Overall Project Health RAG] = 
+VAR CPI = [Cost Performance Index (CPI)]
+VAR SPI = [Schedule Performance Index (SPI)]
+VAR OpenPO = [PO Open Commitment NOK]
+RETURN
+SWITCH (
+    TRUE (),
+    CPI < 0.80 || OpenPO > 25000000, "🔴 CRITICAL OVERRUN (CPI: " & FORMAT ( CPI, "0.00" ) & " | Open PO: " & FORMAT ( OpenPO / 1e6, "0.0" ) & "M NOK)",
+    CPI < 0.95 || SPI < 0.95, "🟡 CAUTION (CPI: " & FORMAT ( CPI, "0.00" ) & " | SPI: " & FORMAT ( SPI, "0.00" ) & ")",
+    "🟢 ON TRACK (CPI: " & FORMAT ( CPI, "0.00" ) & " | SPI: " & FORMAT ( SPI, "0.00" ) & ")"
+)
+
+// 8. BETINGET STOLPELENGDE (IN-CELL DATA BARS)
+[Cost Variance Bar] = 
+VAR Val = [Cost Variance (CV)]
+VAR MaxScale = 15000000
+VAR BarMaxLen = 12
+VAR Ratio = MIN ( 1.0, DIVIDE ( ABS ( Val ), MaxScale, 0 ) )
+VAR BarLen = MAX ( 1, ROUND ( Ratio * BarMaxLen, 0 ) )
+VAR BarStr = REPT ( "█", BarLen )
+RETURN
+IF (
+    ISBLANK ( Val ),
+    BLANK (),
+    IF ( Val >= 0, "🟩 " & BarStr & " (+" & FORMAT ( Val / 1e6, "0.0" ) & "M)", "🟥 " & BarStr & " (" & FORMAT ( Val / 1e6, "0.0" ) & "M)" )
+)
+
+[Physical Progress Bar] = 
+VAR Pct = [Physical Progress % (Current)]
+VAR BarMax = 10
+VAR Filled = MIN ( BarMax, MAX ( 0, ROUND ( Pct * BarMax, 0 ) ) )
+VAR Empty = BarMax - Filled
+RETURN
+IF ( ISBLANK ( Pct ), BLANK (), REPT ( "█", Filled ) & REPT ( "░", Empty ) & " " & FORMAT ( Pct, "0.0%" ) )
+
+[Activity Progress Bar] = 
+VAR Pct = DIVIDE ( SELECTEDVALUE ( Dim_Activity[progress_pct], 0 ), 100, 0 )
+VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Pct * 10, 0 ) ) )
+VAR Empty = 10 - Filled
+RETURN
+REPT ( "█", Filled ) & REPT ( "░", Empty ) & " " & FORMAT ( Pct, "0%" )
+
+[Budget Consumption Bar] = 
+VAR BAC = [Budget at Completion (BAC)]
+VAR AC = [Actual Cost (AC)]
+VAR Ratio = DIVIDE ( AC, BAC, 0 )
+VAR BarLen = MIN ( 15, MAX ( 1, ROUND ( Ratio * 4, 0 ) ) )
+RETURN
+IF (
+    ISBLANK ( Ratio ) || BAC == 0,
+    BLANK (),
+    IF ( Ratio > 1.0, "🟥 " & REPT ( "■", BarLen ) & " " & FORMAT ( Ratio, "0.0%" ), "🟩 " & REPT ( "■", BarLen ) & " " & FORMAT ( Ratio, "0.0%" ) )
+)
+
+[PO Commitment Exposure Bar] = 
+VAR OpenPO = [PO Open Commitment NOK]
+VAR TotalPO = [PO Amount NOK]
+VAR Rate = DIVIDE ( OpenPO, TotalPO, 0 )
+VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
+VAR Empty = 10 - Filled
+RETURN
+IF ( ISBLANK ( OpenPO ) || TotalPO == 0, BLANK (), "🟧 " & REPT ( "■", Filled ) & REPT ( "□", Empty ) & " " & FORMAT ( Rate, "0.0%" ) )
+
+[AuC Capitalization Bar] = 
+VAR Rate = [Capitalization Rate %]
+VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
+VAR Empty = 10 - Filled
+RETURN
+IF ( ISBLANK ( Rate ), BLANK (), "🟦 " & REPT ( "■", Filled ) & REPT ( "□", Empty ) & " " & FORMAT ( Rate, "0.0%" ) )
