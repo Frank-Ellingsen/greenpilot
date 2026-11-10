@@ -226,19 +226,19 @@ IF (
         "dax": """VAR Pct = [Physical Progress % (Current)]
 VAR BarMax = 10
 VAR Filled = MIN ( BarMax, MAX ( 0, ROUND ( Pct * BarMax, 0 ) ) )
-VAR Empty = BarMax - Filled
+VAR Unfilled = BarMax - Filled
 RETURN
-IF ( ISBLANK ( Pct ), BLANK (), REPT ( "█", Filled ) & REPT ( "░", Empty ) & " " & FORMAT ( Pct, "0.0%" ) )""",
+IF ( ISBLANK ( Pct ), BLANK (), REPT ( "█", Filled ) & REPT ( "░", Unfilled ) & " " & FORMAT ( Pct, "0.0%" ) )""",
         "displayFolder": "10 BETINGET STOLPELENGDE",
         "formatString": None
     },
     {
         "name": "Activity Progress Bar",
-        "dax": """VAR Pct = DIVIDE ( SELECTEDVALUE ( Dim_Activity[progress_pct], 0 ), 100, 0 )
+        "dax": """VAR Pct = DIVIDE ( AVERAGE ( Dim_Activity[progress_pct] ), 100, 0 )
 VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Pct * 10, 0 ) ) )
-VAR Empty = 10 - Filled
+VAR Unfilled = 10 - Filled
 RETURN
-REPT ( "█", Filled ) & REPT ( "░", Empty ) & " " & FORMAT ( Pct, "0%" )""",
+REPT ( "█", Filled ) & REPT ( "░", Unfilled ) & " " & FORMAT ( Pct, "0%" )""",
         "displayFolder": "10 BETINGET STOLPELENGDE",
         "formatString": None
     },
@@ -250,7 +250,7 @@ VAR Ratio = DIVIDE ( AC, BAC, 0 )
 VAR BarLen = MIN ( 15, MAX ( 1, ROUND ( Ratio * 4, 0 ) ) )
 RETURN
 IF (
-    ISBLANK ( Ratio ) || BAC == 0,
+    ISBLANK ( Ratio ) || BAC = 0,
     BLANK (),
     IF ( Ratio > 1.0, "🟥 " & REPT ( "■", BarLen ) & " " & FORMAT ( Ratio, "0.0%" ), "🟩 " & REPT ( "■", BarLen ) & " " & FORMAT ( Ratio, "0.0%" ) )
 )""",
@@ -263,9 +263,9 @@ IF (
 VAR TotalPO = [PO Amount NOK]
 VAR Rate = DIVIDE ( OpenPO, TotalPO, 0 )
 VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
-VAR Empty = 10 - Filled
+VAR Unfilled = 10 - Filled
 RETURN
-IF ( ISBLANK ( OpenPO ) || TotalPO == 0, BLANK (), "🟧 " & REPT ( "■", Filled ) & REPT ( "□", Empty ) & " " & FORMAT ( Rate, "0.0%" ) )""",
+IF ( ISBLANK ( OpenPO ) || TotalPO = 0, BLANK (), "🟧 " & REPT ( "■", Filled ) & REPT ( "□", Unfilled ) & " " & FORMAT ( Rate, "0.0%" ) )""",
         "displayFolder": "10 BETINGET STOLPELENGDE",
         "formatString": None
     },
@@ -273,9 +273,9 @@ IF ( ISBLANK ( OpenPO ) || TotalPO == 0, BLANK (), "🟧 " & REPT ( "■", Fille
         "name": "AuC Capitalization Bar",
         "dax": """VAR Rate = [Capitalization Rate %]
 VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
-VAR Empty = 10 - Filled
+VAR Unfilled = 10 - Filled
 RETURN
-IF ( ISBLANK ( Rate ), BLANK (), "🟦 " & REPT ( "■", Filled ) & REPT ( "□", Empty ) & " " & FORMAT ( Rate, "0.0%" ) )""",
+IF ( ISBLANK ( Rate ), BLANK (), "🟦 " & REPT ( "■", Filled ) & REPT ( "□", Unfilled ) & " " & FORMAT ( Rate, "0.0%" ) )""",
         "displayFolder": "10 BETINGET STOLPELENGDE",
         "formatString": None
     }

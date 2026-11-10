@@ -564,18 +564,18 @@ table _Measures
 			VAR Pct = [Physical Progress % (Current)]
 			VAR BarMax = 10
 			VAR Filled = MIN ( BarMax, MAX ( 0, ROUND ( Pct * BarMax, 0 ) ) )
-			VAR Empty = BarMax - Filled
+			VAR Unfilled = BarMax - Filled
 			RETURN
-			IF ( ISBLANK ( Pct ), BLANK (), REPT ( "█", Filled ) & REPT ( "░", Empty ) & " " & FORMAT ( Pct, "0.0%" ) )
+			IF ( ISBLANK ( Pct ), BLANK (), REPT ( "█", Filled ) & REPT ( "░", Unfilled ) & " " & FORMAT ( Pct, "0.0%" ) )
 		displayFolder: 10 BETINGET STOLPELENGDE
 		lineageTag: bf809736-34b2-4c18-aeb9-c38bf06bbb0e
 
 	measure 'Activity Progress Bar' =
-			VAR Pct = DIVIDE ( SELECTEDVALUE ( Dim_Activity[progress_pct], 0 ), 100, 0 )
+			VAR Pct = DIVIDE ( AVERAGE ( Dim_Activity[progress_pct] ), 100, 0 )
 			VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Pct * 10, 0 ) ) )
-			VAR Empty = 10 - Filled
+			VAR Unfilled = 10 - Filled
 			RETURN
-			REPT ( "█", Filled ) & REPT ( "░", Empty ) & " " & FORMAT ( Pct, "0%" )
+			REPT ( "█", Filled ) & REPT ( "░", Unfilled ) & " " & FORMAT ( Pct, "0%" )
 		displayFolder: 10 BETINGET STOLPELENGDE
 		lineageTag: 02c3b21f-2673-49d7-85db-77fc88f72314
 
@@ -586,7 +586,7 @@ table _Measures
 			VAR BarLen = MIN ( 15, MAX ( 1, ROUND ( Ratio * 4, 0 ) ) )
 			RETURN
 			IF (
-			    ISBLANK ( Ratio ) || BAC == 0,
+			    ISBLANK ( Ratio ) || BAC = 0,
 			    BLANK (),
 			    IF ( Ratio > 1.0, "🟥 " & REPT ( "■", BarLen ) & " " & FORMAT ( Ratio, "0.0%" ), "🟩 " & REPT ( "■", BarLen ) & " " & FORMAT ( Ratio, "0.0%" ) )
 			)
@@ -598,18 +598,18 @@ table _Measures
 			VAR TotalPO = [PO Amount NOK]
 			VAR Rate = DIVIDE ( OpenPO, TotalPO, 0 )
 			VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
-			VAR Empty = 10 - Filled
+			VAR Unfilled = 10 - Filled
 			RETURN
-			IF ( ISBLANK ( OpenPO ) || TotalPO == 0, BLANK (), "🟧 " & REPT ( "■", Filled ) & REPT ( "□", Empty ) & " " & FORMAT ( Rate, "0.0%" ) )
+			IF ( ISBLANK ( OpenPO ) || TotalPO = 0, BLANK (), "🟧 " & REPT ( "■", Filled ) & REPT ( "□", Unfilled ) & " " & FORMAT ( Rate, "0.0%" ) )
 		displayFolder: 10 BETINGET STOLPELENGDE
 		lineageTag: fb0e5b0a-05fe-4d79-a18e-d2a2b1167a68
 
 	measure 'AuC Capitalization Bar' =
 			VAR Rate = [Capitalization Rate %]
 			VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
-			VAR Empty = 10 - Filled
+			VAR Unfilled = 10 - Filled
 			RETURN
-			IF ( ISBLANK ( Rate ), BLANK (), "🟦 " & REPT ( "■", Filled ) & REPT ( "□", Empty ) & " " & FORMAT ( Rate, "0.0%" ) )
+			IF ( ISBLANK ( Rate ), BLANK (), "🟦 " & REPT ( "■", Filled ) & REPT ( "□", Unfilled ) & " " & FORMAT ( Rate, "0.0%" ) )
 		displayFolder: 10 BETINGET STOLPELENGDE
 		lineageTag: 74f05679-45df-4851-8ae5-91084c703c2e
 
