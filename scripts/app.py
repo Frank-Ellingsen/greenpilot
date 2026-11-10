@@ -159,11 +159,22 @@ def plot_s_curve(con, kpis):
     ))
 
     # Cut-off Vertical line at Oktober (01.11.2026 status date)
-    fig.add_vline(
-        x="Okt", line_width=2, line_dash="dot", line_color="#BE123C",
-        annotation_text="<b>Cut-off (01.11.2026)</b>",
-        annotation_position="top left",
-        annotation_font=dict(size=12, color="#BE123C")
+    # Using add_shape and add_annotation to avoid categorical axis mean/sum TypeError in Plotly
+    fig.add_shape(
+        type="line",
+        x0="Okt", x1="Okt",
+        y0=0, y1=1,
+        yref="paper",
+        line=dict(color="#BE123C", width=2, dash="dot")
+    )
+    fig.add_annotation(
+        x="Okt", y=1.0,
+        yref="paper",
+        text="<b>Cut-off (01.11.2026)</b>",
+        showarrow=False,
+        xanchor="right",
+        yanchor="bottom",
+        font=dict(size=12, color="#BE123C")
     )
 
     fig.update_layout(
