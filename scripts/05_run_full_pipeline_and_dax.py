@@ -36,7 +36,7 @@ print(f"Scripts Directory: {SCRIPTS_DIR}\n")
 pipeline_steps = [
     ("01_ingest_and_validate.py", "Steg 1: Data Ingestion & Validation"),
     ("02_data_quality_cleaning.py", "Steg 2: Data Quality & Cleaning"),
-    ("03_build_star_schema-v4.py", "Steg 3: Star Schema Modeling & Gold Layer (v4)"),
+    ("03_build_star_schema.py", "Steg 3: Star Schema Modeling & Gold Layer"),
     ("04_business_rules_evm.py", "Steg 4: Business Rules & EVM Enrichment"),
     ("build_pbi_report_pages.py", "Steg 5a: Power BI 5-Page PBIP Layout Generation"),
     ("verify_evm_suite.py", "Steg 5b: Automated EVM Quality Gates & Integrity Check")

@@ -54,3 +54,4 @@ $RECYCLE.BIN/
 # Vector Database Caches & Runtime Logs
 data/chroma_db/
 *.log
+
