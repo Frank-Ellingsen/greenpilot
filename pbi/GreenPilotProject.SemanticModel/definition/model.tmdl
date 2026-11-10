@@ -11,7 +11,7 @@ annotation __PBI_TimeIntelligenceEnabled = 1
 
 annotation PBI_ProTooling = ["DevMode"]
 
-annotation PBI_QueryOrder = ["Dim_Project","Dim_Resource","Dim_CostElement","Dim_Employee","Dim_Vendor","Dim_Date","Fact_GLActuals","Fact_BudgetBaseline","Fact_Timesheets","Fact_PurchaseOrders","Fact_APInvoices","Fact_Journals","Fact_GoodsReceipts","Fact_CapacityCalendar","Fact_ResourceAssignments","Dim_WBS","Dim_Activity"]
+annotation PBI_QueryOrder = ["Dim_Project","Dim_Resource","Dim_CostElement","Dim_Employee","Dim_Vendor","Dim_Date","Fact_GLActuals","Fact_BudgetBaseline","Fact_Timesheets","Fact_PurchaseOrders","Fact_APInvoices","Fact_Journals","Fact_GoodsReceipts","Fact_CapacityCalendar","Fact_ResourceAssignments","Dim_WBS","Dim_Activity","Config_VarianceThresholds","Fact_ChangeOrders"]
 
 ref table Dim_Project
 ref table DateTableTemplate_60d69ad4-d82e-4dc5-bd53-a9cd2e9e14c9
@@ -41,10 +41,10 @@ ref table Fact_ResourceAssignments
 ref table _Measures
 ref table Dim_WBS
 ref table Dim_Activity
-ref table Config_VarianceThresholds
-ref table Fact_ChangeOrders
 ref table LocalDateTable_e320f2b5-0581-4ea4-a792-4ecabbf8411c
 ref table LocalDateTable_1cdfd7b0-9e9e-4951-ae7d-ceee539d0bea
+ref table Config_VarianceThresholds
+ref table Fact_ChangeOrders
 
 ref cultureInfo en-US
 

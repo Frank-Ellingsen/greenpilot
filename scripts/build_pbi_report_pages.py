@@ -112,10 +112,10 @@ def build_pages():
     ]
     for idx, (vname, ent, prop, x, y, w, h) in enumerate(top_kpis):
         vdict = {
-            "visualType": "cardVisual",
+            "visualType": "card",
             "query": {
                 "queryState": {
-                    "Data": {"projections": [make_projection_measure(ent, prop)]}
+                    "Values": {"projections": [make_projection_measure(ent, prop)]}
                 }
             }
         }
@@ -173,19 +173,13 @@ def build_pages():
     p2_dir = prepare_page(p2_id, "Root Cause & Variance Driver Matrix")
     pages_meta.append(p2_id)
 
-    # Visual 1 (Top Left): Decomposition Tree (Nedbrytingstre)
+    # Visual 1 (Top Left): Clustered Bar Chart (Cost Variance by WBS)
     decomp_dict = {
-        "visualType": "decompositionTree",
+        "visualType": "clusteredBarChart",
         "query": {
             "queryState": {
-                "Analyze": {"projections": [make_projection_measure("_Measures", "Cost Variance (CV)")]},
-                "Category": {
-                    "projections": [
-                        make_projection_column("Dim_WBS", "wbs_name", active=True),
-                        make_projection_column("Dim_CostElement", "cost_element_name", active=True),
-                        make_projection_column("Dim_Vendor", "vendor_name", active=True)
-                    ]
-                }
+                "Category": {"projections": [make_projection_column("Dim_WBS", "wbs_name", active=True)]},
+                "Y": {"projections": [make_projection_measure("_Measures", "Cost Variance (CV)")]}
             }
         }
     }
@@ -193,10 +187,10 @@ def build_pages():
 
     # Visual 2 (Top Right): Diagnostic & Action Card
     diag_card_dict = {
-        "visualType": "cardVisual",
+        "visualType": "multiRowCard",
         "query": {
             "queryState": {
-                "Data": {
+                "Values": {
                     "projections": [
                         make_projection_measure("_Measures", "Root Cause Primary Diagnosis"),
                         make_projection_measure("_Measures", "Root Cause Driver Decomposition")
@@ -249,10 +243,10 @@ def build_pages():
     ]
     for idx, (vname, ent, prop, x, y, w, h) in enumerate(po_cards):
         vdict = {
-            "visualType": "cardVisual",
+            "visualType": "card",
             "query": {
                 "queryState": {
-                    "Data": {"projections": [make_projection_measure(ent, prop)]}
+                    "Values": {"projections": [make_projection_measure(ent, prop)]}
                 }
             }
         }
@@ -306,10 +300,10 @@ def build_pages():
     ]
     for idx, (vname, ent, prop, x, y, w, h) in enumerate(ifrs_kpis):
         vdict = {
-            "visualType": "cardVisual",
+            "visualType": "card",
             "query": {
                 "queryState": {
-                    "Data": {"projections": [make_projection_measure(ent, prop)]}
+                    "Values": {"projections": [make_projection_measure(ent, prop)]}
                 }
             }
         }
@@ -354,10 +348,10 @@ def build_pages():
 
     # Visual 3 (Bottom): IAS 36 Impairment Callout Warning Card
     impairment_card_dict = {
-        "visualType": "cardVisual",
+        "visualType": "card",
         "query": {
             "queryState": {
-                "Data": {"projections": [make_projection_measure("_Measures", "IAS 36 Impairment Callout")]}
+                "Values": {"projections": [make_projection_measure("_Measures", "IAS 36 Impairment Callout")]}
             }
         }
     }
@@ -372,10 +366,10 @@ def build_pages():
 
     # Visual 1 (Top Left / Full Top): Large Action Board
     action_board_dict = {
-        "visualType": "cardVisual",
+        "visualType": "card",
         "query": {
             "queryState": {
-                "Data": {"projections": [make_projection_measure("_Measures", "Prescriptive Controller Actions")]}
+                "Values": {"projections": [make_projection_measure("_Measures", "Prescriptive Controller Actions")]}
             }
         }
     }

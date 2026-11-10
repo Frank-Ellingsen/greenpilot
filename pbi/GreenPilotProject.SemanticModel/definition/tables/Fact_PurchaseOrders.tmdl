@@ -142,3 +142,4 @@ table Fact_PurchaseOrders
 				  #"Changed column type"
 
 	annotation PBI_ResultType = Table
+

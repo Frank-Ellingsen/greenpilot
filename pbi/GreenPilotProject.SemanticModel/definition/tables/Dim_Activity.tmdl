@@ -74,20 +74,20 @@ table Dim_Activity
 
 		annotation SummarizationSetBy = Automatic
 
-	column activity_status_group
-		dataType: string
-		lineageTag: 3f81e9b2-65d1-4e7a-9c41-8e01bb2f7c09
-		summarizeBy: none
-		sourceColumn: activity_status_group
-
-		annotation SummarizationSetBy = Automatic
-
 	column planned_duration_days
 		dataType: int64
 		formatString: 0
 		lineageTag: dcd1537f-abce-4760-9a9f-6213f93e3d9d
 		summarizeBy: sum
 		sourceColumn: planned_duration_days
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_status_group
+		dataType: string
+		lineageTag: 3f81e9b2-65d1-4e7a-9c41-8e01bb2f7c09
+		summarizeBy: none
+		sourceColumn: activity_status_group
 
 		annotation SummarizationSetBy = Automatic
 
@@ -102,3 +102,4 @@ table Dim_Activity
 				  #"Changed column type"
 
 	annotation PBI_ResultType = Table
+

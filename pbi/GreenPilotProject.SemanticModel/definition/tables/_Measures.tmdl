@@ -1,19 +1,60 @@
 table _Measures
 	lineageTag: 1ed40b8b-1f75-4e61-bc7a-059be942261d
 
-	measure 'Budget at Completion (BAC)' = 
-			SUM ( Fact_BudgetBaseline[baseline_budget_nok] )
+	measure 'Budget at Completion (BAC)' = SUM ( Fact_BudgetBaseline[baseline_budget_nok] )
 		formatString: #,0
 		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
 		lineageTag: 6b614cb1-a196-4012-aece-f1b4fa7a8bf8
 
-	measure 'Planned Value (PV)' = 
-			SUM ( Fact_BudgetBaseline[baseline_budget_nok] )
+	measure 'Planned Value (PV)' = SUM ( Fact_BudgetBaseline[baseline_budget_nok] )
 		formatString: #,0
 		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
 		lineageTag: 84f0c2d7-0f8c-436d-8084-1cdb1542bcdd
 
-	measure 'Planned Value Cumulative (PV S-Curve)' = 
+	measure 'Actual Cost (AC)' = SUM ( Fact_GLActuals[amount_nok] )
+		formatString: #,0
+		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
+		lineageTag: a9fa5bd8-0445-435f-899f-9806109f2b6a
+
+	measure 'Actual Cost (AC) Cumulative' = [Actual Cost Cumulative (AC S-Curve)]
+		formatString: #,0
+		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
+		lineageTag: de71db63-3125-4a5c-823d-af8447f87fe6
+
+	measure 'Actual Cost Capitalized (AuC)' =
+			CALCULATE (
+			    [Actual Cost (AC)],
+			    Dim_WBS[ias38_treatment] = "CAPITALIZE"
+			)
+		formatString: #,0
+		displayFolder: 05 IFRS & REGNSKAP (IAS 38 / AuC)
+		lineageTag: ca8e9fd9-dba4-4aa8-8213-2c6632e9afe3
+
+	measure 'Actual Cost Expensed (P&L)' =
+			CALCULATE (
+			    [Actual Cost (AC)],
+			    Dim_WBS[ias38_treatment] = "EXPENSE"
+			)
+		formatString: #,0
+		displayFolder: 05 IFRS & REGNSKAP (IAS 38 / AuC)
+		lineageTag: dd7e0a02-7aa4-424c-8698-7c00f77328af
+
+	measure 'Capitalization Rate %' = DIVIDE ( [Actual Cost Capitalized (AuC)], [Actual Cost (AC)], 0 )
+		formatString: 0.0%
+		displayFolder: 05 IFRS & REGNSKAP (IAS 38 / AuC)
+		lineageTag: 0f732f4e-2a87-493b-8e59-301c19ab9f71
+
+	measure 'Physical Progress % (Current)' = AVERAGE ( Dim_Activity[progress_pct] ) / 100
+		formatString: 0.00%
+		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
+		lineageTag: 1d7658ad-30aa-4a47-8703-73455491508b
+
+	measure 'Earned Value (EV)' = [Earned Value Cumulative (EV S-Curve)]
+		formatString: #,0
+		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
+		lineageTag: b646fe1b-85ce-4a4a-851f-2b871a53887f
+
+	measure 'Planned Value Cumulative (PV S-Curve)' =
 			VAR MaxDate = MAX ( Dim_Date[Date] )
 			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
 			VAR IsDateInScope = ISINSCOPE ( Dim_Date[Date] ) || ISINSCOPE ( Dim_Date[Period] ) || ISINSCOPE ( Dim_Date[Month] )
@@ -33,13 +74,7 @@ table _Measures
 		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
 		lineageTag: da34fdf5-726e-4ecb-84e4-92cfcf992977
 
-	measure 'Actual Cost (AC)' = 
-			SUM ( Fact_GLActuals[amount_nok] )
-		formatString: #,0
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: a9fa5bd8-0445-435f-899f-9806109f2b6a
-
-	measure 'Actual Cost Cumulative (AC S-Curve)' = 
+	measure 'Actual Cost Cumulative (AC S-Curve)' =
 			VAR MaxDate = MAX ( Dim_Date[Date] )
 			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
 			VAR IsDateInScope = ISINSCOPE ( Dim_Date[Date] ) || ISINSCOPE ( Dim_Date[Period] ) || ISINSCOPE ( Dim_Date[Month] )
@@ -63,29 +98,17 @@ table _Measures
 		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
 		lineageTag: 4bed1ea2-55b2-4c3b-93fe-dd1b786ff8c0
 
-	measure 'Actual Cost (AC) Cumulative' = 
-			[Actual Cost Cumulative (AC S-Curve)]
-		formatString: #,0
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: de71db63-3125-4a5c-823d-af8447f87fe6
-
-	measure 'Physical Progress % (Current)' = 
-			AVERAGE ( Dim_Activity[progress_pct] ) / 100
-		formatString: 0.00%
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: 1d7658ad-30aa-4a47-8703-73455491508b
-
-	measure 'Physical Progress % Cumulative' = 
+	measure 'Physical Progress % Cumulative' =
 			VAR MaxSelectedDate = MAX ( Dim_Date[Date] )
 			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
 			VAR TotalActivities = COUNTROWS ( ALL ( Dim_Activity ) )
-			VAR CompletedToDate = 
+			VAR CompletedToDate =
 			    CALCULATE (
 			        COUNTROWS ( Dim_Activity ),
 			        Dim_Activity[planned_finish] <= MaxSelectedDate,
 			        ALL ( Dim_Date )
 			    )
-			VAR ProgressAtCutoff = 
+			VAR ProgressAtCutoff =
 			    CALCULATE (
 			        SUMX (
 			            Dim_Activity,
@@ -111,7 +134,7 @@ table _Measures
 		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
 		lineageTag: b533f444-c2c5-4c08-81e4-6fe076fd17d4
 
-	measure 'Earned Value Cumulative (EV S-Curve)' = 
+	measure 'Earned Value Cumulative (EV S-Curve)' =
 			VAR MaxDate = MAX ( Dim_Date[Date] )
 			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
 			VAR TotalBAC = CALCULATE ( [Budget at Completion (BAC)], ALL ( Dim_Date ) )
@@ -130,140 +153,27 @@ table _Measures
 		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
 		lineageTag: b07ac07d-f2d6-478f-96b3-ed3e75052370
 
-	measure 'Earned Value (EV)' = 
-			[Earned Value Cumulative (EV S-Curve)]
-		formatString: #,0
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: b646fe1b-85ce-4a4a-851f-2b871a53887f
-
-	measure 'Cost Variance (CV)' = 
-			[Earned Value Cumulative (EV S-Curve)] - [Actual Cost Cumulative (AC S-Curve)]
+	measure 'Cost Variance (CV)' = [Earned Value Cumulative (EV S-Curve)] - [Actual Cost Cumulative (AC S-Curve)]
 		formatString: #,0
 		displayFolder: 02 EVM YTELSE & AVVIK (CV, SV, CPI, SPI)
 		lineageTag: 9390f270-26b7-49c9-9d67-ccda4123ab10
 
-	measure 'Schedule Variance (SV)' = 
-			[Earned Value Cumulative (EV S-Curve)] - [Planned Value Cumulative (PV S-Curve)]
-		formatString: #,0
-		displayFolder: 02 EVM YTELSE & AVVIK (CV, SV, CPI, SPI)
-		lineageTag: e0397412-4bbd-4459-8484-033c4de9b744
-
-	measure 'Cost Performance Index (CPI)' = 
-			DIVIDE ( [Earned Value Cumulative (EV S-Curve)], [Actual Cost Cumulative (AC S-Curve)], BLANK () )
+	measure 'Cost Performance Index (CPI)' = DIVIDE ( [Earned Value Cumulative (EV S-Curve)], [Actual Cost Cumulative (AC S-Curve)], BLANK () )
 		formatString: 0.00
 		displayFolder: 02 EVM YTELSE & AVVIK (CV, SV, CPI, SPI)
 		lineageTag: 4e824f6b-db26-4d95-b241-4d762f9333b8
 
-	measure 'Schedule Performance Index (SPI)' = 
-			DIVIDE ( [Earned Value Cumulative (EV S-Curve)], [Planned Value Cumulative (PV S-Curve)], BLANK () )
+	measure 'Schedule Variance (SV)' = [Earned Value Cumulative (EV S-Curve)] - [Planned Value Cumulative (PV S-Curve)]
+		formatString: #,0
+		displayFolder: 02 EVM YTELSE & AVVIK (CV, SV, CPI, SPI)
+		lineageTag: e0397412-4bbd-4459-8484-033c4de9b744
+
+	measure 'Schedule Performance Index (SPI)' = DIVIDE ( [Earned Value Cumulative (EV S-Curve)], [Planned Value Cumulative (PV S-Curve)], BLANK () )
 		formatString: 0.00
 		displayFolder: 02 EVM YTELSE & AVVIK (CV, SV, CPI, SPI)
 		lineageTag: 3d7a8269-fd50-4359-9662-afdf902b28d1
 
-	measure 'Estimate at Completion (EAC)' = 
-			VAR CurrentCPI = [Cost Performance Index (CPI)]
-			RETURN
-			    IF (
-			        CurrentCPI > 0,
-			        [Actual Cost (AC)] + DIVIDE ( [Budget at Completion (BAC)] - [Earned Value Cumulative (EV S-Curve)], CurrentCPI ),
-			        [Actual Cost (AC)]
-			    )
-		formatString: #,0
-		displayFolder: 03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)
-		lineageTag: 623686e2-a1ed-4718-82d1-5b0c89b6f82f
-
-	measure 'Variance at Completion (VAC)' = 
-			[Budget at Completion (BAC)] - [Estimate at Completion (EAC)]
-		formatString: #,0
-		displayFolder: 03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)
-		lineageTag: 5d24a114-650f-46c6-9bcb-59503b089ddd
-
-	measure 'To Complete Performance Index (TCPI EAC)' = 
-			VAR RemainingWork = [Budget at Completion (BAC)] - [Earned Value Cumulative (EV S-Curve)]
-			VAR RemainingFunds = [Estimate at Completion (EAC)] - [Actual Cost (AC)]
-			RETURN
-			    IF ( RemainingFunds > 0, DIVIDE ( RemainingWork, RemainingFunds ), BLANK () )
-		formatString: 0.00
-		displayFolder: 03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)
-		lineageTag: 49099a05-366e-4e69-929a-1cd1553ab2c3
-
-	measure 'To-Complete Performance Index (TCPI)' = 
-			[To Complete Performance Index (TCPI EAC)]
-		formatString: 0.00
-		displayFolder: 03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)
-		lineageTag: 49099a05-366e-4e69-929a-1cd1553ab2d4
-
-	measure 'Root Cause Primary Diagnosis' = 
-			VAR CurrentCPI = [Cost Performance Index (CPI)]
-			VAR CurrentSPI = [Schedule Performance Index (SPI)]
-			VAR OpenCommitments = SUM ( Fact_PurchaseOrders[open_commitment_nok] )
-			VAR BAC = CALCULATE ( [Budget at Completion (BAC)], ALL ( Dim_Date ) )
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    CurrentSPI >= 1.05 && CurrentCPI < 0.70,
-			        "FAST-TRACKING / PREMATURE FORCING: Schedule is 5 weeks ahead (SPI 1.16), but achieved via excessive premium freight, unbudgeted equipment purchases, and heavy overtime. Work delivered at 3x planned unit cost.",
-			    CurrentSPI < 0.90 && CurrentCPI < 0.90,
-			        "PRODUCTIVITY COLLAPSE: Severe execution bottlenecks with compounding delays and budget overruns.",
-			    OpenCommitments > (BAC * 0.50),
-			        "PROCUREMENT CONTROL BREACH: Uncontrolled Purchase Orders issued without gate approvals.",
-			    "STABLE / MINOR VARIANCE: Project progressing within acceptable operational variance."
-			)
-		displayFolder: 04 ROOT CAUSE & PRESCRIPTIVE ENGINE
-		lineageTag: a1c85304-4531-4821-b3b1-0498ac1239aa
-
-	measure 'Root Cause Driver Decomposition' = 
-			"VARIANCE DRIVERS (Total CV: " & FORMAT([Cost Variance (CV)] / 1e6, "-0.00") & "M NOK):" & UNICHAR(10) &
-			"1. Technology Development (WBS-500): -13.13M NOK (Overrun +417%)" & UNICHAR(10) &
-			"2. Equipment & Machinery (CE400):   -10.15M NOK (Overrun +312%)" & UNICHAR(10) &
-			"3. Pilot Plant Assembly (WBS-300):   -9.90M NOK (Overrun +295%)" & UNICHAR(10) &
-			"4. Internal Labor / Overtime (CE100): -9.52M NOK (Overrun +263%)" & UNICHAR(10) &
-			"5. Project Management (WBS-600):     -9.57M NOK (Overrun +282%)"
-		displayFolder: 04 ROOT CAUSE & PRESCRIPTIVE ENGINE
-		lineageTag: c2d96415-5642-4932-c4c2-1509bd234abb
-
-	measure 'Prescriptive Controller Actions' = 
-			VAR OpenCommitments = SUM ( Fact_PurchaseOrders[open_commitment_nok] )
-			VAR CapitalizedAuC = 
-			    CALCULATE (
-			        SUM ( Fact_GLActuals[amount_nok] ),
-			        Dim_WBS[ias38_treatment] = "CAPITALIZE"
-			    )
-			RETURN
-			"MANDATORY CONTROLLER ACTIONS (ELKEM PILOT CONTROL):" & UNICHAR(10) &
-			"1. [IMMEDIATE PO FREEZE] Cancel unfulfilled line items in Fact_PurchaseOrders. Open exposure is currently " & 
-			    FORMAT(OpenCommitments / 1e6, "0.00") & "M NOK across foreign vendors." & UNICHAR(10) &
-			"2. [IFRS / IAS 36 IMPAIRMENT REVIEW] Capitalized AuC on balance sheet has reached " & 
-			    FORMAT(CapitalizedAuC / 1e6, "0.00") & "M NOK. Corporate finance must assess if future commercial cash flows support this asset base." & UNICHAR(10) &
-			"3. [CHANGE ORDER BASELINE RESET] 14 out of 18 Change Orders remain unapproved or pending. The steering committee must establish an Over-Target Baseline (OTB) of 62.5M NOK." & UNICHAR(10) &
-			"4. [TIME CONTROL] 96.08% physical completion reached. Close remaining 4 active activities (A097-A100) and demobilize external personnel."
-		displayFolder: 04 ROOT CAUSE & PRESCRIPTIVE ENGINE
-		lineageTag: e3fa7526-6753-4a43-d5d3-2610ce345bcc
-
-	measure 'Status Date Dynamic Line' = 
-			VAR CurrentDate = MAX ( Dim_Date[Date] )
-			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
-			VAR MaxChartHeight = CALCULATE ( [Actual Cost (AC)], ALL ( Dim_Date ) ) * 1.05
-			RETURN
-			    IF (
-			        CurrentDate = ProjectDataDate,
-			        MaxChartHeight,
-			        BLANK ()
-			    )
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: 27bff0ad-9543-40a3-870d-9c86567fb8a1
-
-	measure 'S-Curve Subtitle KPI' = 
-			"Status Date: " & FORMAT ( MAX ( Dim_Project[data_date] ), "yyyy-MM-dd" ) & 
-			" | BAC: " & FORMAT ( [Budget at Completion (BAC)] / 1e6, "#,0.00" ) & "M NOK" &
-			" | AC: " & FORMAT ( [Actual Cost (AC)] / 1e6, "#,0.00" ) & "M NOK" &
-			" | EV: " & FORMAT ( [Earned Value Cumulative (EV S-Curve)] / 1e6, "#,0.00" ) & "M NOK" &
-			" | CPI: " & FORMAT ( [Cost Performance Index (CPI)], "0.00" ) &
-			" | SPI: " & FORMAT ( [Schedule Performance Index (SPI)], "0.00" )
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: f491ba37-7864-4b54-e6e4-3721df456cdd
-
-	measure 'EV End Point Label' = 
+	measure 'EV End Point Label' =
 			VAR CurrentDate = MAX ( Dim_Date[Date] )
 			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
 			VAR EV = [Earned Value Cumulative (EV S-Curve)]
@@ -282,114 +192,179 @@ table _Measures
 		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
 		lineageTag: 6443dbbe-b440-4b64-979a-15f2da73d7e6
 
-	measure 'Actual Cost Capitalized (AuC)' = 
-			CALCULATE (
-			    [Actual Cost (AC)],
-			    Dim_WBS[ias38_treatment] = "CAPITALIZE"
-			)
-		formatString: #,0
-		displayFolder: 05 IFRS & REGNSKAP (IAS 38 / AuC)
-		lineageTag: ca8e9fd9-dba4-4aa8-8213-2c6632e9afe3
+	measure 'Status Date Dynamic Line' =
+			VAR CurrentDate = MAX ( Dim_Date[Date] )
+			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
+			VAR MaxChartHeight = CALCULATE ( [Actual Cost (AC)], ALL ( Dim_Date ) ) * 1.05
+			RETURN
+			    IF (
+			        CurrentDate = ProjectDataDate,
+			        MaxChartHeight,
+			        BLANK ()
+			    )
+		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
+		lineageTag: 27bff0ad-9543-40a3-870d-9c86567fb8a1
 
-	measure 'Actual Cost Expensed (P&L)' = 
-			CALCULATE (
-			    [Actual Cost (AC)],
-			    Dim_WBS[ias38_treatment] = "EXPENSE"
-			)
+	measure 'Estimate at Completion (EAC)' =
+			VAR CurrentCPI = [Cost Performance Index (CPI)]
+			RETURN
+			    IF (
+			        CurrentCPI > 0,
+			        [Actual Cost (AC)] + DIVIDE ( [Budget at Completion (BAC)] - [Earned Value Cumulative (EV S-Curve)], CurrentCPI ),
+			        [Actual Cost (AC)]
+			    )
 		formatString: #,0
-		displayFolder: 05 IFRS & REGNSKAP (IAS 38 / AuC)
-		lineageTag: dd7e0a02-7aa4-424c-8698-7c00f77328af
+		displayFolder: 03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)
+		lineageTag: 623686e2-a1ed-4718-82d1-5b0c89b6f82f
 
-	measure 'Capitalization Rate %' = 
-			DIVIDE ( [Actual Cost Capitalized (AuC)], [Actual Cost (AC)], 0 )
+	measure 'Variance at Completion (VAC)' = [Budget at Completion (BAC)] - [Estimate at Completion (EAC)]
+		formatString: #,0
+		displayFolder: 03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)
+		lineageTag: 5d24a114-650f-46c6-9bcb-59503b089ddd
+
+	measure 'To-Complete Performance Index (TCPI)' = [To Complete Performance Index (TCPI EAC)]
+		formatString: 0.00
+		displayFolder: 03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)
+		lineageTag: 49099a05-366e-4e69-929a-1cd1553ab2d4
+
+	measure 'Planned Hours (P6)' = SUM ( Fact_ResourceAssignments[planned_hours] )
+		formatString: #,0
+		displayFolder: 08 RESSURS & TIMEAVSTEMMING
+		lineageTag: f86b1e8a-14cb-429d-b34d-2b05e8f2ed78
+
+	measure 'Actual Hours (HR)' = SUM ( Fact_Timesheets[hours] )
+		formatString: #,0
+		displayFolder: 08 RESSURS & TIMEAVSTEMMING
+		lineageTag: dbffbeda-a174-4207-92ec-1e62f10f5186
+
+	measure 'Hours Variance' = [Planned Hours (P6)] - [Actual Hours (HR)]
+		formatString: #,0
+		displayFolder: 08 RESSURS & TIMEAVSTEMMING
+		lineageTag: ea3248d7-bc11-41ea-a2bd-e5484115dde8
+
+	measure 'Hours Burn Rate %' = DIVIDE ( [Actual Hours (HR)], [Planned Hours (P6)], BLANK () )
 		formatString: 0.0%
-		displayFolder: 05 IFRS & REGNSKAP (IAS 38 / AuC)
-		lineageTag: 0f732f4e-2a87-493b-8e59-301c19ab9f71
+		displayFolder: 08 RESSURS & TIMEAVSTEMMING
+		lineageTag: 0d2f727f-8991-421a-8996-ccf4c4666e1e
 
-	measure 'IAS 36 Impairment Callout' = 
+	measure 'To Complete Performance Index (TCPI EAC)' =
+			VAR RemainingWork = [Budget at Completion (BAC)] - [Earned Value Cumulative (EV S-Curve)]
+			VAR RemainingFunds = [Estimate at Completion (EAC)] - [Actual Cost (AC)]
+			RETURN
+			    IF ( RemainingFunds > 0, DIVIDE ( RemainingWork, RemainingFunds ), BLANK () )
+		formatString: 0.00
+		displayFolder: 03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)
+		lineageTag: 49099a05-366e-4e69-929a-1cd1553ab2c3
+
+	measure 'Root Cause Primary Diagnosis' =
+			VAR CurrentCPI = [Cost Performance Index (CPI)]
+			VAR CurrentSPI = [Schedule Performance Index (SPI)]
+			VAR OpenCommitments = SUM ( Fact_PurchaseOrders[open_commitment_nok] )
+			VAR BAC = CALCULATE ( [Budget at Completion (BAC)], ALL ( Dim_Date ) )
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    CurrentSPI >= 1.05 && CurrentCPI < 0.70,
+			        "FAST-TRACKING / PREMATURE FORCING: Schedule is 5 weeks ahead (SPI 1.16), but achieved via excessive premium freight, unbudgeted equipment purchases, and heavy overtime. Work delivered at 3x planned unit cost.",
+			    CurrentSPI < 0.90 && CurrentCPI < 0.90,
+			        "PRODUCTIVITY COLLAPSE: Severe execution bottlenecks with compounding delays and budget overruns.",
+			    OpenCommitments > (BAC * 0.50),
+			        "PROCUREMENT CONTROL BREACH: Uncontrolled Purchase Orders issued without gate approvals.",
+			    "STABLE / MINOR VARIANCE: Project progressing within acceptable operational variance."
+			)
+		displayFolder: 04 ROOT CAUSE & PRESCRIPTIVE ENGINE
+		lineageTag: a1c85304-4531-4821-b3b1-0498ac1239aa
+
+	measure 'Root Cause Driver Decomposition' =
+			"VARIANCE DRIVERS (Total CV: " & FORMAT([Cost Variance (CV)] / 1e6, "-0.00") & "M NOK):" & UNICHAR(10) &
+			"1. Technology Development (WBS-500): -13.13M NOK (Overrun +417%)" & UNICHAR(10) &
+			"2. Equipment & Machinery (CE400):   -10.15M NOK (Overrun +312%)" & UNICHAR(10) &
+			"3. Pilot Plant Assembly (WBS-300):   -9.90M NOK (Overrun +295%)" & UNICHAR(10) &
+			"4. Internal Labor / Overtime (CE100): -9.52M NOK (Overrun +263%)" & UNICHAR(10) &
+			"5. Project Management (WBS-600):     -9.57M NOK (Overrun +282%)"
+		displayFolder: 04 ROOT CAUSE & PRESCRIPTIVE ENGINE
+		lineageTag: c2d96415-5642-4932-c4c2-1509bd234abb
+
+	measure 'Prescriptive Controller Actions' =
+			VAR OpenCommitments = SUM ( Fact_PurchaseOrders[open_commitment_nok] )
+			VAR CapitalizedAuC =
+			    CALCULATE (
+			        SUM ( Fact_GLActuals[amount_nok] ),
+			        Dim_WBS[ias38_treatment] = "CAPITALIZE"
+			    )
+			RETURN
+			"MANDATORY CONTROLLER ACTIONS (ELKEM PILOT CONTROL):" & UNICHAR(10) &
+			"1. [IMMEDIATE PO FREEZE] Cancel unfulfilled line items in Fact_PurchaseOrders. Open exposure is currently " &
+			    FORMAT(OpenCommitments / 1e6, "0.00") & "M NOK across foreign vendors." & UNICHAR(10) &
+			"2. [IFRS / IAS 36 IMPAIRMENT REVIEW] Capitalized AuC on balance sheet has reached " &
+			    FORMAT(CapitalizedAuC / 1e6, "0.00") & "M NOK. Corporate finance must assess if future commercial cash flows support this asset base." & UNICHAR(10) &
+			"3. [CHANGE ORDER BASELINE RESET] 14 out of 18 Change Orders remain unapproved or pending. The steering committee must establish an Over-Target Baseline (OTB) of 62.5M NOK." & UNICHAR(10) &
+			"4. [TIME CONTROL] 96.08% physical completion reached. Close remaining 4 active activities (A097-A100) and demobilize external personnel."
+		displayFolder: 04 ROOT CAUSE & PRESCRIPTIVE ENGINE
+		lineageTag: e3fa7526-6753-4a43-d5d3-2610ce345bcc
+
+	measure 'S-Curve Subtitle KPI' =
+			"Status Date: " & FORMAT ( MAX ( Dim_Project[data_date] ), "yyyy-MM-dd" ) &
+			" | BAC: " & FORMAT ( [Budget at Completion (BAC)] / 1e6, "#,0.00" ) & "M NOK" &
+			" | AC: " & FORMAT ( [Actual Cost (AC)] / 1e6, "#,0.00" ) & "M NOK" &
+			" | EV: " & FORMAT ( [Earned Value Cumulative (EV S-Curve)] / 1e6, "#,0.00" ) & "M NOK" &
+			" | CPI: " & FORMAT ( [Cost Performance Index (CPI)], "0.00" ) &
+			" | SPI: " & FORMAT ( [Schedule Performance Index (SPI)], "0.00" )
+		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
+		lineageTag: f491ba37-7864-4b54-e6e4-3721df456cdd
+
+	measure 'IAS 36 Impairment Callout' =
 			VAR CapAuC = [Actual Cost Capitalized (AuC)]
 			VAR CapRate = [Capitalization Rate %]
 			RETURN
 			IF (
 			    CapRate > 0.60,
-			    "CRITICAL IMPAIRMENT WARNING (IAS 36): AuC Capitalization has reached " & FORMAT ( CapAuC / 1e6, "0.00" ) & 
+			    "CRITICAL IMPAIRMENT WARNING (IAS 36): AuC Capitalization has reached " & FORMAT ( CapAuC / 1e6, "0.00" ) &
 			    "M NOK (" & FORMAT ( CapRate, "0.0%" ) & " of total expenditure). Since budget overrun is +190% (CPI 0.33), immediate impairment test is required against future discounted cash flows.",
 			    "IAS 36 STATUS: Normal capitalization within baseline limits."
 			)
 		displayFolder: 05 IFRS & REGNSKAP (IAS 38 / AuC)
 		lineageTag: f8a12903-8172-4b63-95cf-3129841ca012
 
-	measure 'PO Amount NOK' = 
-			SUM ( Fact_PurchaseOrders[amount_nok] )
+	measure 'PO Amount NOK' = SUM ( Fact_PurchaseOrders[amount_nok] )
 		formatString: #,0
 		displayFolder: 06 INNKJØP & FORPLIKTELSER (PO & AP)
 		lineageTag: b3941829-87c1-4b19-92da-1904bca91201
 
-	measure 'PO Invoiced NOK' = 
-			SUM ( Fact_PurchaseOrders[invoiced_nok] )
+	measure 'PO Invoiced NOK' = SUM ( Fact_PurchaseOrders[invoiced_nok] )
 		formatString: #,0
 		displayFolder: 06 INNKJØP & FORPLIKTELSER (PO & AP)
 		lineageTag: a72b4910-1829-4e7a-bc12-89bca7102391
 
-	measure 'PO Open Commitment NOK' = 
-			SUM ( Fact_PurchaseOrders[open_commitment_nok] )
+	measure 'PO Open Commitment NOK' = SUM ( Fact_PurchaseOrders[open_commitment_nok] )
 		formatString: #,0
 		displayFolder: 06 INNKJØP & FORPLIKTELSER (PO & AP)
 		lineageTag: 5291b849-37a1-49cf-b102-4820bc918231
 
-	measure 'PO Open Commitment %' = 
-			DIVIDE ( [PO Open Commitment NOK], [PO Amount NOK], 0 )
+	measure 'PO Open Commitment %' = DIVIDE ( [PO Open Commitment NOK], [PO Amount NOK], 0 )
 		formatString: 0.0%
 		displayFolder: 06 INNKJØP & FORPLIKTELSER (PO & AP)
 		lineageTag: c8172901-4b82-4190-8ba2-92817ba01928
 
-	measure 'Change Orders Total Requested' = 
-			SUM ( Fact_ChangeOrders[requested_amount_nok] )
+	measure 'Change Orders Total Requested' = SUM ( Fact_ChangeOrders[requested_amount_nok] )
 		formatString: #,0
 		displayFolder: 07 ENDRINGSORDRE & KONTROLL
 		lineageTag: d8192731-5012-4c81-b921-81720a918231
 
-	measure 'Change Orders Total Approved' = 
-			SUM ( Fact_ChangeOrders[approved_amount_nok] )
+	measure 'Change Orders Total Approved' = SUM ( Fact_ChangeOrders[approved_amount_nok] )
 		formatString: #,0
 		displayFolder: 07 ENDRINGSORDRE & KONTROLL
 		lineageTag: e9281724-6123-4d92-ca32-92831b029341
 
-	measure 'Change Orders Pending Count' = 
-			COUNTROWS ( FILTER ( Fact_ChangeOrders, Fact_ChangeOrders[status] IN { "SUBMITTED", "PENDING" } ) )
+	measure 'Change Orders Pending Count' = COUNTROWS ( FILTER ( Fact_ChangeOrders, Fact_ChangeOrders[status] IN { "SUBMITTED", "PENDING" } ) )
 		formatString: 0
 		displayFolder: 07 ENDRINGSORDRE & KONTROLL
 		lineageTag: a1928374-7234-4ea3-db43-039481bca012
 
-	measure 'Remaining Activities Count' = 
-			COUNTROWS ( FILTER ( Dim_Activity, Dim_Activity[status] IN { "In Progress", "Not Started" } ) )
+	measure 'Remaining Activities Count' = COUNTROWS ( FILTER ( Dim_Activity, Dim_Activity[status] IN { "In Progress", "Not Started" } ) )
 		formatString: 0
 		displayFolder: 07 ENDRINGSORDRE & KONTROLL
 		lineageTag: b2938475-8345-4fb4-ec54-140592cdb123
-
-	measure 'Planned Hours (P6)' = 
-			SUM ( Fact_ResourceAssignments[planned_hours] )
-		formatString: #,0
-		displayFolder: 08 RESSURS & TIMEAVSTEMMING
-		lineageTag: f86b1e8a-14cb-429d-b34d-2b05e8f2ed78
-
-	measure 'Actual Hours (HR)' = 
-			SUM ( Fact_Timesheets[hours] )
-		formatString: #,0
-		displayFolder: 08 RESSURS & TIMEAVSTEMMING
-		lineageTag: dbffbeda-a174-4207-92ec-1e62f10f5186
-
-	measure 'Hours Variance' = 
-			[Planned Hours (P6)] - [Actual Hours (HR)]
-		formatString: #,0
-		displayFolder: 08 RESSURS & TIMEAVSTEMMING
-		lineageTag: ea3248d7-bc11-41ea-a2bd-e5484115dde8
-
-	measure 'Hours Burn Rate %' = 
-			DIVIDE ( [Actual Hours (HR)], [Planned Hours (P6)], BLANK () )
-		formatString: 0.0%
-		displayFolder: 08 RESSURS & TIMEAVSTEMMING
-		lineageTag: 0d2f727f-8991-421a-8996-ccf4c4666e1e
 
 	column Value
 		isHidden
@@ -405,3 +380,4 @@ table _Measures
 		source = ({"dummy"})
 
 	annotation PBI_Id = 10ea645720ec4208b1cffb888a40c6d1
+

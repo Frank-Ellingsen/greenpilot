@@ -10,10 +10,10 @@
     "tabOrder": 2000
   },
   "visual": {
-    "visualType": "cardVisual",
+    "visualType": "multiRowCard",
     "query": {
       "queryState": {
-        "Data": {
+        "Values": {
           "projections": [
             {
               "field": {

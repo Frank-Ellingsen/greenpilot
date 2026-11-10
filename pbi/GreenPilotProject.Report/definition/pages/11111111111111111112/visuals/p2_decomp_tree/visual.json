@@ -10,27 +10,9 @@
     "tabOrder": 1000
   },
   "visual": {
-    "visualType": "decompositionTree",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
-        "Analyze": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Cost Variance (CV)"
-                }
-              },
-              "queryRef": "_Measures.Cost Variance (CV)",
-              "nativeQueryRef": "Cost Variance (CV)"
-            }
-          ]
-        },
         "Category": {
           "projections": [
             {
@@ -47,36 +29,24 @@
               "queryRef": "Dim_WBS.wbs_name",
               "nativeQueryRef": "wbs_name",
               "active": true
-            },
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Dim_CostElement"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "cost_element_name"
+                  "Property": "Cost Variance (CV)"
                 }
               },
-              "queryRef": "Dim_CostElement.cost_element_name",
-              "nativeQueryRef": "cost_element_name",
-              "active": true
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Dim_Vendor"
-                    }
-                  },
-                  "Property": "vendor_name"
-                }
-              },
-              "queryRef": "Dim_Vendor.vendor_name",
-              "nativeQueryRef": "vendor_name",
-              "active": true
+              "queryRef": "_Measures.Cost Variance (CV)",
+              "nativeQueryRef": "Cost Variance (CV)"
             }
           ]
         }
