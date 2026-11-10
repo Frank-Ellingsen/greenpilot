@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p1_wbs_matrix",
   "position": {
-    "x": 1120.0,
-    "y": 150.0,
+    "x": 1120,
+    "y": 150,
     "z": 2100,
-    "height": 905.0,
-    "width": 760.0,
+    "height": 905,
+    "width": 760,
     "tabOrder": 8000
   },
   "visual": {

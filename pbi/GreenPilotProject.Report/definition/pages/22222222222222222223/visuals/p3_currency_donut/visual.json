@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p3_currency_donut",
   "position": {
-    "x": 1320.0,
-    "y": 180.0,
+    "x": 1320,
+    "y": 180,
     "z": 2100,
-    "height": 870.0,
-    "width": 560.0,
+    "height": 870,
+    "width": 560,
     "tabOrder": 6000
   },
   "visual": {

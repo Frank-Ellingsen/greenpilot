@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p5_remaining_activities",
   "position": {
-    "x": 950.0,
-    "y": 460.0,
+    "x": 950,
+    "y": 460,
     "z": 1200,
-    "height": 590.0,
-    "width": 930.0,
+    "height": 590,
+    "width": 930,
     "tabOrder": 3000
   },
   "visual": {
@@ -87,7 +87,8 @@
                 }
               },
               "queryRef": "_Measures.Activity Progress Bar",
-              "nativeQueryRef": "Activity Progress Bar"
+              "nativeQueryRef": "Activity Progress Bar",
+              "active": false
             },
             {
               "field": {
