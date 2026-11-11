@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p4_ifrs_matrix",
   "position": {
-    "x": 660,
-    "y": 170,
+    "x": 660.0,
+    "y": 170.0,
     "z": 2100,
-    "height": 540,
-    "width": 1220,
+    "height": 540.0,
+    "width": 1220.0,
     "tabOrder": 6000
   },
   "visual": {

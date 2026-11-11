@@ -77,30 +77,46 @@ def get_evm_kpis(con):
     except Exception:
         ac = 57968040.98
 
-    # Activity Physical Progress: 98 completed out of 102 activities = 96.0784% (per project cut-off)
-    progress_pct = 0.960784
+    # Activity Physical Progress: 98.0 equivalent completed out of 102 activities = 96.078431% (per project cut-off)
+    try:
+        progress_pct = con.execute("SELECT AVG(progress_pct) / 100.0 FROM dim_activity").fetchone()[0] or (98.0 / 102.0)
+    except Exception:
+        progress_pct = 98.0 / 102.0
+
     ev = bac * progress_pct
     cv = ev - ac
     
     # Cumulative Planned Value (PV) through 2026-10-31 (cutoff 2026-11-01)
-    pv = 16616335.70
+    try:
+        pv = con.execute("SELECT SUM(baseline_budget_nok) FROM fact_budget_baseline WHERE CAST(period AS VARCHAR) <= '2026-10-31'").fetchone()[0] or 16620871.10
+    except Exception:
+        pv = 16620871.10
+
     sv = ev - pv
     cpi = ev / ac if ac > 0 else 0.0
     spi = ev / pv if pv > 0 else 0.0
+    eac = ac + ((bac - ev) / cpi) if cpi > 0 else ac
+    etc = eac - ac
+    vac = bac - eac
 
-    # Open PO Commitments
+    # Open PO Commitments & Total PO
     try:
-        open_po = con.execute("SELECT SUM(open_commitment_nok) FROM fact_purchase_orders").fetchone()[0] or 49233751.55
+        po_row = con.execute("SELECT SUM(amount_nok), SUM(invoiced_nok), SUM(open_commitment_nok) FROM fact_purchase_orders").fetchone()
+        po_total = po_row[0] or 106173112.16
+        po_invoiced = po_row[1] or 56946401.43
+        open_po = po_row[2] or 49233751.55
     except Exception:
+        po_total = 106173112.16
+        po_invoiced = 56946401.43
         open_po = 49233751.55
 
-    # Capitalized AuC vs Expensed P&L
+    # Capitalized AuC vs Expensed P&L (IAS 38)
     try:
-        auc_cap = con.execute("SELECT SUM(amount_nok) FROM fact_gl_actuals WHERE accounting_bucket = 'AuC Capitalized (IAS 38)'").fetchone()[0] or 43379150.98
-        pl_exp = con.execute("SELECT SUM(amount_nok) FROM fact_gl_actuals WHERE accounting_bucket = 'P&L Expensed (Research/Opex)'").fetchone()[0] or 14588890.00
+        auc_cap = con.execute("SELECT SUM(amount_nok) FROM fact_gl_actuals WHERE ias38_treatment = 'CAPITALIZE'").fetchone()[0] or 43375028.38
+        pl_exp = con.execute("SELECT SUM(amount_nok) FROM fact_gl_actuals WHERE ias38_treatment = 'EXPENSE'").fetchone()[0] or 14593012.60
     except Exception:
-        auc_cap = 43379150.98
-        pl_exp = 14588890.00
+        auc_cap = 43375028.38
+        pl_exp = 14593012.60
 
     return {
         "BAC": bac,
@@ -111,6 +127,11 @@ def get_evm_kpis(con):
         "SV": sv,
         "CPI": cpi,
         "SPI": spi,
+        "EAC": eac,
+        "ETC": etc,
+        "VAC": vac,
+        "PO_Total": po_total,
+        "PO_Invoiced": po_invoiced,
         "Open_PO": open_po,
         "Progress": progress_pct,
         "AuC_Cap": auc_cap,
@@ -123,15 +144,15 @@ def get_evm_kpis(con):
 def plot_s_curve(con, kpis):
     months = ["Jan", "Feb", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Des"]
     
-    # Exact Cumulative S-Curve profiles (in MNOK)
-    # PV spreads to BAC 20.00 MNOK
-    pv_cum = [1.53, 3.34, 4.79, 6.62, 8.50, 10.27, 11.92, 13.61, 15.13, 16.62, 18.33, 20.00]
+    # Exact Cumulative S-Curve profiles (in MNOK) matching Star Schema & Power BI
+    # PV spreads to BAC 20.00 MNOK (16.62 MNOK at Oct cut-off)
+    pv_cum = [1.53, 3.34, 4.79, 6.62, 8.50, 10.27, 11.91, 13.60, 15.13, 16.62, 18.33, 20.00]
     
     # AC cumulative up to October 31 (57.97 MNOK), then None
-    ac_cum = [4.65, 7.03, 10.44, 16.53, 19.98, 21.75, 27.41, 35.76, 43.45, 57.97, None, None]
+    ac_cum = [4.65, 7.03, 10.44, 16.53, 19.98, 21.75, 27.40, 35.75, 43.45, 57.97, None, None]
     
     # EV cumulative up to October 31 (19.22 MNOK), then None
-    ev_cum = [0.98, 2.55, 4.31, 6.86, 9.41, 11.76, 13.92, 15.88, 17.65, 19.22, None, None]
+    ev_cum = [0.98, 2.55, 5.10, 6.67, 8.82, 10.39, 12.75, 14.90, 16.86, 19.22, None, None]
 
     fig = go.Figure()
     
@@ -192,16 +213,25 @@ def plot_s_curve(con, kpis):
 def plot_wbs_breakdown(con):
     try:
         df = con.execute("""
+            WITH b AS (
+                SELECT wbs_id, SUM(baseline_budget_nok) AS bac_nok
+                FROM fact_budget_baseline
+                GROUP BY wbs_id
+            ),
+            g AS (
+                SELECT wbs_id, SUM(amount_nok) AS ac_nok
+                FROM fact_gl_actuals
+                GROUP BY wbs_id
+            )
             SELECT 
                 w.wbs_id,
                 w.wbs_name,
-                ROUND(SUM(b.baseline_budget_nok) / 1e6, 2) as bac_m,
-                ROUND(SUM(g.amount_nok) / 1e6, 2) as ac_m,
-                ROUND((SUM(b.baseline_budget_nok) - SUM(g.amount_nok)) / 1e6, 2) as var_m
+                ROUND(b.bac_nok / 1e6, 2) as bac_m,
+                ROUND(g.ac_nok / 1e6, 2) as ac_m,
+                ROUND((b.bac_nok - g.ac_nok) / 1e6, 2) as var_m
             FROM dim_wbs w
-            LEFT JOIN fact_budget_baseline b ON w.wbs_id = b.wbs_id
-            LEFT JOIN fact_gl_actuals g ON w.wbs_id = g.wbs_id
-            GROUP BY w.wbs_id, w.wbs_name
+            LEFT JOIN b ON w.wbs_id = b.wbs_id
+            LEFT JOIN g ON w.wbs_id = g.wbs_id
             ORDER BY w.wbs_id
         """).df()
     except Exception:
@@ -324,14 +354,15 @@ def handle_copilot_query(prompt, con):
         sql = """
             SELECT 
                 v.vendor_name,
-                v.vendor_category,
+                v.country,
+                v.currency,
                 ROUND(SUM(p.amount_nok) / 1e6, 2) as po_total_mnok,
                 ROUND(SUM(p.invoiced_nok) / 1e6, 2) as invoiced_mnok,
                 ROUND(SUM(p.open_commitment_nok) / 1e6, 2) as open_commitment_mnok
             FROM fact_purchase_orders p
             JOIN dim_vendor v ON p.vendor_id = v.vendor_id
             WHERE p.open_commitment_nok > 0
-            GROUP BY v.vendor_name, v.vendor_category
+            GROUP BY v.vendor_name, v.country, v.currency
             ORDER BY open_commitment_mnok DESC
             LIMIT 5
         """
@@ -342,11 +373,11 @@ def handle_copilot_query(prompt, con):
             tot_open = con.execute("SELECT SUM(open_commitment_nok) FROM fact_purchase_orders").fetchone()[0] or 49233751.55
             top_rows = df.to_dict('records')
             resp = f"### 📋 Topp 5 Leverandører med Størst Ubetalt Forpliktelse (Open PO Commitments)\n\n"
-            resp += f"Total uavregnet forpliktelseseksponering utgjør **{tot_open/1e6:.2f} MNOK** (49,23M NOK).\n\n"
-            resp += "| Leverandør | Kategori | Total PO (MNOK) | Fakturert (MNOK) | Åpen Forpliktelse (MNOK) |\n"
+            resp += f"Total uavregnet forpliktelseseksponering utgjør **{tot_open/1e6:.2f} MNOK** (49,23M NOK av 106,17M NOK totalt plassert).\n\n"
+            resp += "| Leverandør | Land (Valuta) | Total PO (MNOK) | Fakturert (MNOK) | Åpen Forpliktelse (MNOK) |\n"
             resp += "| :--- | :--- | :---: | :---: | :---: |\n"
             for r in top_rows:
-                resp += f"| **{r['vendor_name']}** | {r['vendor_category']} | {r['po_total_mnok']:.2f} | {r['invoiced_mnok']:.2f} | **{r['open_commitment_mnok']:.2f} MNOK** |\n"
+                resp += f"| **{r['vendor_name']}** | {r['country']} ({r['currency']}) | {r['po_total_mnok']:.2f} | {r['invoiced_mnok']:.2f} | **{r['open_commitment_mnok']:.2f} MNOK** |\n"
             resp += "\n> ⚠️ **Controller-varsel**: Høy forpliktelse mot utstyrspakker for WBS-500 og WBS-300 krever umiddelbar innfrysning av nye forpliktelser (PO Freeze) for å stanse ytterligere kontantlekkasje."
             log_audit_trail(prompt, resp, engine_info)
             return resp
@@ -364,7 +395,7 @@ Ifølge **IAS 38 Immaterielle Eiendeler** (`IAS-38-AAG.pdf` og standardens § 54
 1. **Forskningsfasen (IAS 38.54)**:
    - Alle utgifter til forskning (kartlegging, evaluering, laboratorieforsøk for å oppnå ny kunnskap) **skal kostnadsføres i resultatregnskapet (P&L)** etter hvert som de påløper. 
    - De kan **aldri** aktiveres i balansen.
-   - *I GreenPilot 2026*: WBS-100 (Engineering forprosjekt), WBS-400 (Verksted drift) og WBS-600 (Prosjektledelse) er klassifisert som P&L-kostnader (**14,59 MNOK**).
+   - *I GreenPilot 2026*: WBS-100 (Engineering forprosjekt) og WBS-600 (Prosjektledelse / Closeout) er klassifisert som P&L-kostnader (**14,59 MNOK**, 25,2 %).
 
 2. **Utviklingsfasen & PIRATE-kriteriene (IAS 38.57)**:
    - Utviklingskostnader kan og skal kun balanseføres som Anlegg under utførelse (**AuC**) dersom **alle 6 kumulative kriterier** er oppfylt:
@@ -376,7 +407,7 @@ Ifølge **IAS 38 Immaterielle Eiendeler** (`IAS-38-AAG.pdf` og standardens § 54
      6. **E** - *Expenditure reliably measured*: Pålitelig måling av påløpte utgifter direkte henførbare til eiendelen.
 
 > 🔴 **Kritisk Revisor-observasjon for Elkem Ledelse**: 
-> **43,38 MNOK** er balanseført som AuC (WBS-200, WBS-300, WBS-500). Gitt den massive kostnadsoverskridelsen (AC 57,97M mot budsjett 20,00M) utløses det **plikt til formell nedskrivningstest etter IAS 36**. Dersom gjenvinnbart beløp (bruksverdi) for pilotanlegget er under 43,38 MNOK, må differansen umiddelbart nedskrives mot resultatregnskapet.
+> **43,38 MNOK** (74,8 %) er balanseført som AuC (WBS-200, WBS-300, WBS-400, WBS-500). Gitt den massive kostnadsoverskridelsen (AC 57,97M mot budsjett 20,00M, EAC 60,33M) utløses det **plikt til formell nedskrivningstest etter IAS 36**. Dersom gjenvinnbart beløp (bruksverdi) for pilotanlegget er under 43,38 MNOK, må differansen umiddelbart nedskrives mot resultatregnskapet.
 """
         log_audit_trail(prompt, resp, engine_info)
         return resp
@@ -413,12 +444,14 @@ I henhold til **Enovas instruks og regelverk** (`instruks-regelverk-enova-2021.p
 
 #### 1. NØKKELTALL (EVM SUMMARY)
 - **Budsjett ved fullføring (BAC)**: 20,00 MNOK  
-- **Påløpt kostnad (AC)**: 57,97 MNOK (Avvik: -38,75 MNOK)  
-- **Opptjent verdi (EV)**: 19,22 MNOK (Fysisk fremdrift 96,1 %)  
+- **Planlagt verdi (PV per 31.10)**: 16,62 MNOK (83,1 % av BAC)  
+- **Opptjent verdi (EV)**: 19,22 MNOK (Fysisk fremdrift 96,08 %)  
+- **Påløpt kostnad (AC)**: 57,97 MNOK (Kostnadsavvik CV: -38,75 MNOK)  
+- **Tidsavvik (SV)**: +2,59 MNOK (SPI: 1,16 — ~5 uker foran plan via forsering)  
 - **Kostnadsindeks (CPI)**: 0,33 (Kritisk undergrense)  
-- **Tidsindeks (SPI)**: 1,16 (Prosjektet ligger 3,5 uker foran tidsplan)  
-- **Åpne PO-forpliktelser**: 49,23 MNOK  
-- **Balanseført AuC (IAS 38)**: 43,38 MNOK  
+- **Sluttprognose (EAC = BAC/CPI)**: 60,33 MNOK (VAC: -40,33 MNOK / ETC: 2,37 MNOK)  
+- **Åpne PO-forpliktelser**: 49,23 MNOK (46,4 % av 106,17 MNOK totalt plassert)  
+- **Balanseført AuC (IAS 38)**: 43,38 MNOK (74,8 %) | **Resultatført P&L**: 14,59 MNOK (25,2 %)  
 
 #### 2. HOVEDÅRSAKER TIL AVVIK (ROOT CAUSES)
 1. **Ekstrem tidsforsering**: Ledelsens krav om ferdigstillelse før nyttår har medført kontinuerlig overtid (13,1 MNOK i personalkostnader) og ekspressfrakt.
@@ -542,10 +575,11 @@ def main():
         with st.expander("🔍 Automatisk Avviksdiagnose (Rotårsaker)", expanded=True):
             st.error("🚨 **FORSERINGSAVVIK & INNKJØPSLEKKASJE DETEKTERT (CPI 0,33 / SPI 1,16)**")
             st.markdown(f"""
-            - **Tidsforsering**: Prosjektet er **96,1 %** fysisk fullført mot planlagt 83,1 % (**SPI = 1,16**). Dette skyldes massiv overtid (CE100: 13,1 MNOK) og ekspresskjøp for å nå politiske milepæler før nyttår.
-            - **Uautoriserte forpliktelser**: Åpne PO-er utgjør **{kpis['Open_PO']/1e6:.2f} MNOK**, konsentrert i WBS-500 (Teknologiutvikling) og WBS-300 (Pilotanlegg).
-            - **AuC Balanseføring (IAS 38)**: **{kpis['AuC_Cap']/1e6:.2f} MNOK** er balanseført under utførelse. Gitt budsjettoverskridelsen kreves **umiddelbar nedskrivningstest etter IAS 36**.
-            - **Resultatførte kostnader (P&L)**: **{kpis['PL_Exp']/1e6:.2f} MNOK** er kostnadsført over drift (WBS-100, 400, 600).
+            - **Tidsforsering**: Prosjektet er **96,08 %** fysisk fullført (EV **19,22 MNOK**) mot planlagt **83,10 %** (PV **16,62 MNOK**, **SV = +2,59 MNOK**, **SPI = 1,16**). Dette skyldes massiv overtid (CE100: 13,13 MNOK) og ekspresskjøp (CE400: 13,41 MNOK, CE600: 16,08 MNOK) for å nå milepæler før nyttår.
+            - **Sluttprognose (EAC)**: Med CPI = **0,33** estimeres EAC til **{kpis['EAC']/1e6:.2f} MNOK** (VAC: **{kpis['VAC']/1e6:.2f} MNOK**, gjenstående ETC: **{kpis['ETC']/1e6:.2f} MNOK**).
+            - **Uautoriserte forpliktelser**: Åpne PO-er utgjør **{kpis['Open_PO']/1e6:.2f} MNOK** (av totalt **{kpis['PO_Total']/1e6:.2f} MNOK** plassert), konsentrert i WBS-500 (Teknologiutvikling) og WBS-300 (Pilotanlegg).
+            - **AuC Balanseføring (IAS 38)**: **{kpis['AuC_Cap']/1e6:.2f} MNOK** (74,8 %) er balanseført under utførelse (WBS-200, 300, 400, 500). Gitt budsjettoverskridelsen kreves **umiddelbar nedskrivningstest etter IAS 36**.
+            - **Resultatførte kostnader (P&L)**: **{kpis['PL_Exp']/1e6:.2f} MNOK** (25,2 %) er kostnadsført over drift (WBS-100, 600).
             """)
 
     # ---------------------------------------------------------

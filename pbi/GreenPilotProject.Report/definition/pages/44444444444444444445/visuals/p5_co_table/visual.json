@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p5_co_table",
   "position": {
-    "x": 40,
-    "y": 460,
+    "x": 40.0,
+    "y": 460.0,
     "z": 1100,
-    "height": 590,
-    "width": 890,
+    "height": 590.0,
+    "width": 890.0,
     "tabOrder": 2000
   },
   "visual": {

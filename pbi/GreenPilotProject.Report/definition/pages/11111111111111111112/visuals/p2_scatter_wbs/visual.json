@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p2_scatter_wbs",
   "position": {
-    "x": 40,
-    "y": 540,
+    "x": 40.0,
+    "y": 540.0,
     "z": 1200,
-    "height": 510,
-    "width": 880,
+    "height": 510.0,
+    "width": 880.0,
     "tabOrder": 3000
   },
   "visual": {
@@ -32,24 +32,6 @@
             }
           ]
         },
-        "Size": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Actual Cost (AC)"
-                }
-              },
-              "queryRef": "_Measures.Actual Cost (AC)",
-              "nativeQueryRef": "Actual Cost (AC)"
-            }
-          ]
-        },
         "X": {
           "projections": [
             {
@@ -64,8 +46,7 @@
                 }
               },
               "queryRef": "_Measures.Schedule Performance Index (SPI)",
-              "nativeQueryRef": "Schedule Performance Index (SPI)",
-              "active": true
+              "nativeQueryRef": "Schedule Performance Index (SPI)"
             }
           ]
         },
@@ -84,6 +65,24 @@
               },
               "queryRef": "_Measures.Cost Performance Index (CPI)",
               "nativeQueryRef": "Cost Performance Index (CPI)"
+            }
+          ]
+        },
+        "Size": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Actual Cost (AC)"
+                }
+              },
+              "queryRef": "_Measures.Actual Cost (AC)",
+              "nativeQueryRef": "Actual Cost (AC)"
             }
           ]
         }

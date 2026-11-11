@@ -72,7 +72,7 @@ dax_content = """/* ============================================================
 SUM ( Fact_BudgetBaseline[baseline_budget_nok] )
 
 [Planned Value (PV)] = 
-SUM ( Fact_BudgetBaseline[baseline_budget_nok] )
+[Planned Value Cumulative (PV S-Curve)]
 
 [Planned Value Cumulative (PV S-Curve)] = 
 VAR MaxDate = MAX ( Dim_Date[Date] )
@@ -87,7 +87,7 @@ RETURN
         ),
         CALCULATE (
             [Budget at Completion (BAC)],
-            FILTER ( ALL ( Dim_Date ), Dim_Date[Date] <= ProjectDataDate )
+            FILTER ( ALL ( Dim_Date ), Dim_Date[Date] < ProjectDataDate )
         )
     )
 

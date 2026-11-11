@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p2_diag_card",
   "position": {
-    "x": 1140,
-    "y": 20,
+    "x": 1140.0,
+    "y": 20.0,
     "z": 1100,
-    "height": 500,
-    "width": 740,
+    "height": 500.0,
+    "width": 740.0,
     "tabOrder": 2000
   },
   "visual": {

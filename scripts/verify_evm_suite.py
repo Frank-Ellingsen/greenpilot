@@ -112,7 +112,52 @@ def run_quality_gates():
     ]
     for m in required_rag_and_bars:
         assert f"measure '{m}'" in tmdl_content, f"Missing required DAX measure in _Measures.tmdl: {m}"
+    assert "Dim_Date[Date] < ProjectDataDate" in tmdl_content, "Missing cutoff < ProjectDataDate filter in PV measure!"
+    assert "VAR Empty " not in tmdl_content, "Reserved keyword VAR Empty found in _Measures.tmdl!"
     print(f"[OK] All {len(required_rag_and_bars)} Dynamic RAG and In-Cell Conditional Bar measures verified in TMDL!")
+
+    # 7. Cross-Platform Consistency Check (Power BI vs Streamlit vs index.html)
+    print("\n--- Cross-Platform Consistency Check (PBI vs Streamlit vs index.html) ---")
+    import sys
+    if "scripts" not in sys.path:
+        sys.path.insert(0, "scripts")
+    import app as st_app
+    con = st_app.get_db_connection()
+    st_kpis = st_app.get_evm_kpis(con)
+
+    assert np.isclose(st_kpis["BAC"], bac, atol=0.01), f"Streamlit BAC mismatch: {st_kpis['BAC']} vs {bac}"
+    assert np.isclose(st_kpis["PV"], pv_cutoff, atol=0.01), f"Streamlit PV mismatch: {st_kpis['PV']} vs {pv_cutoff}"
+    assert np.isclose(st_kpis["EV"], ev, atol=0.01), f"Streamlit EV mismatch: {st_kpis['EV']} vs {ev}"
+    assert np.isclose(st_kpis["AC"], ac, atol=0.01), f"Streamlit AC mismatch: {st_kpis['AC']} vs {ac}"
+    assert np.isclose(st_kpis["CV"], cv, atol=0.01), f"Streamlit CV mismatch: {st_kpis['CV']} vs {cv}"
+    assert np.isclose(st_kpis["SV"], sv, atol=0.01), f"Streamlit SV mismatch: {st_kpis['SV']} vs {sv}"
+    assert np.isclose(st_kpis["CPI"], cpi, atol=0.0001), f"Streamlit CPI mismatch: {st_kpis['CPI']} vs {cpi}"
+    assert np.isclose(st_kpis["SPI"], spi, atol=0.0001), f"Streamlit SPI mismatch: {st_kpis['SPI']} vs {spi}"
+    assert np.isclose(st_kpis["Open_PO"], open_commitments, atol=0.01), f"Streamlit Open PO mismatch: {st_kpis['Open_PO']}"
+    assert np.isclose(st_kpis["AuC_Cap"], gl_auc, atol=0.01), f"Streamlit AuC mismatch: {st_kpis['AuC_Cap']}"
+    assert np.isclose(st_kpis["PL_Exp"], gl_pnl, atol=0.01), f"Streamlit P&L mismatch: {st_kpis['PL_Exp']}"
+    print("[OK] Streamlit (scripts/app.py) KPIs match Star Schema & Power BI 100%!")
+
+    with open("index.html", encoding="utf-8") as f:
+        html_content = f.read()
+    expected_html_tokens = [
+        "20 000 000",
+        "57 968 041",
+        "19 215 686",
+        "16 620 871",
+        "-38 752 355",
+        "+2 594 815",
+        "0.331",
+        "1.156",
+        "60 334 083",
+        "2 366 042",
+        "-40 334 083",
+        "49 233 752",
+        "43 375 028"
+    ]
+    for tok in expected_html_tokens:
+        assert tok in html_content, f"Missing canonical figure '{tok}' in index.html!"
+    print("[OK] index.html KPI cards, tables, S-curve, and simulator match Star Schema & Power BI 100%!")
 
     print("\n" + "=" * 80)
     print("ALL QUALITY GATES PASSED SUCCESSFULLY (100% SPEC COMPLIANCE)")

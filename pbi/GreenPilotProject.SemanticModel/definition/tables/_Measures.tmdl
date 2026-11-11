@@ -6,7 +6,7 @@ table _Measures
 		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
 		lineageTag: 6b614cb1-a196-4012-aece-f1b4fa7a8bf8
 
-	measure 'Planned Value (PV)' = SUM ( Fact_BudgetBaseline[baseline_budget_nok] )
+	measure 'Planned Value (PV)' = [Planned Value Cumulative (PV S-Curve)]
 		formatString: #,0
 		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
 		lineageTag: 84f0c2d7-0f8c-436d-8084-1cdb1542bcdd
@@ -67,7 +67,7 @@ table _Measures
 			        ),
 			        CALCULATE (
 			            [Budget at Completion (BAC)],
-			            FILTER ( ALL ( Dim_Date ), Dim_Date[Date] <= ProjectDataDate )
+			            FILTER ( ALL ( Dim_Date ), Dim_Date[Date] < ProjectDataDate )
 			        )
 			    )
 		formatString: #,0
@@ -106,7 +106,8 @@ table _Measures
 			    CALCULATE (
 			        COUNTROWS ( Dim_Activity ),
 			        Dim_Activity[planned_finish] <= MaxSelectedDate,
-			        ALL ( Dim_Date )
+			        ALL ( Dim_Date ),
+			        ALL ( Dim_WBS )
 			    )
 			VAR ProgressAtCutoff =
 			    CALCULATE (
@@ -118,14 +119,15 @@ table _Measures
 			                IF ( Dim_Activity[planned_start] <= MaxSelectedDate, ( Dim_Activity[progress_pct] / 100 ), 0.0 )
 			            )
 			        ),
-			        ALL ( Dim_Date )
+			        ALL ( Dim_Date ),
+			        ALL ( Dim_WBS )
 			    )
 			RETURN
 			    IF (
 			        ISBLANK ( MaxSelectedDate ),
-			        [Physical Progress % (Current)],
+			        CALCULATE ( [Physical Progress % (Current)], ALL ( Dim_Activity ) ),
 			        IF (
-			            MaxSelectedDate >= ProjectDataDate,
+			            MaxSelectedDate >= ProjectDataDate - 1,
 			            DIVIDE ( ProgressAtCutoff, TotalActivities, 0 ),
 			            DIVIDE ( CompletedToDate, TotalActivities, 0 )
 			        )
@@ -147,7 +149,7 @@ table _Measures
 			            TotalBAC * [Physical Progress % Cumulative],
 			            BLANK ()
 			        ),
-			        TotalBAC * [Physical Progress % (Current)]
+			        TotalBAC * CALCULATE ( [Physical Progress % (Current)], ALL ( Dim_Activity ) )
 			    )
 		formatString: #,0
 		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
@@ -183,7 +185,7 @@ table _Measures
 			VAR SV = EV - PV
 			RETURN
 			    IF (
-			        CurrentDate = ProjectDataDate && NOT ( ISBLANK ( EV ) ),
+			        ( CurrentDate = ProjectDataDate || CurrentDate = ProjectDataDate - 1 ) && NOT ( ISBLANK ( EV ) ),
 			        "EV: " & FORMAT ( EV / 1e6, "#,0.00" ) & "M" & UNICHAR ( 10 ) &
 			        "CV: " & FORMAT ( CV / 1e6, "+#,0.00;-#,0.00" ) & "M" & UNICHAR ( 10 ) &
 			        "SV: " & FORMAT ( SV / 1e6, "+#,0.00;-#,0.00" ) & "M",
@@ -198,7 +200,7 @@ table _Measures
 			VAR MaxChartHeight = CALCULATE ( [Actual Cost (AC)], ALL ( Dim_Date ) ) * 1.05
 			RETURN
 			    IF (
-			        CurrentDate = ProjectDataDate,
+			        CurrentDate = ProjectDataDate || CurrentDate = ProjectDataDate - 1,
 			        MaxChartHeight,
 			        BLANK ()
 			    )
