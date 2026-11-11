@@ -159,6 +159,15 @@ def run_quality_gates():
         assert tok in html_content, f"Missing canonical figure '{tok}' in index.html!"
     print("[OK] index.html KPI cards, tables, S-curve, and simulator match Star Schema & Power BI 100%!")
 
+    # 8. Config_VarianceThresholds CSV & TMDL Schema Alignment Check
+    cfg_df = pd.read_csv(r"processed\star_schema\Config_VarianceThresholds.csv", sep=";")
+    expected_cfg_cols = ["Metric", "Yellow_Limit", "Red_Limit", "Trigger_Type", "Controller_Action"]
+    assert list(cfg_df.columns) == expected_cfg_cols, f"Config_VarianceThresholds.csv columns mismatch: {list(cfg_df.columns)}"
+    with open(r"pbi\GreenPilotProject.SemanticModel\definition\tables\Config_VarianceThresholds.tmdl", encoding="utf-8") as f:
+        cfg_tmdl = f.read()
+    assert "Columns = 5" not in cfg_tmdl, "Brittle 'Columns = 5' found in Config_VarianceThresholds.tmdl!"
+    print("[OK] Config_VarianceThresholds.csv and Config_VarianceThresholds.tmdl schema 100% aligned!")
+
     print("\n" + "=" * 80)
     print("ALL QUALITY GATES PASSED SUCCESSFULLY (100% SPEC COMPLIANCE)")
     print("=" * 80)

@@ -45,7 +45,7 @@ table Config_VarianceThresholds
 		mode: import
 		source =
 				let
-				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Config_VarianceThresholds.csv"), [Delimiter = ";", Columns = 5, QuoteStyle = QuoteStyle.None]),
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Config_VarianceThresholds.csv"), [Delimiter = ";", QuoteStyle = QuoteStyle.None]),
 				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
 				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"Metric", type text}, {"Yellow_Limit", type text}, {"Red_Limit", type text}, {"Trigger_Type", type text}, {"Controller_Action", type text}})
 				in

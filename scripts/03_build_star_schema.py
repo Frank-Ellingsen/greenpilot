@@ -206,12 +206,12 @@ for target_dir in [STAR_SCHEMA_DIR, BUSINESS_READY_DIR]:
     save_csv_sig(fact_capacity, os.path.join(target_dir, "Fact_CapacityCalendar.csv"))
     save_csv_sig(fact_resource_assignments, os.path.join(target_dir, "Fact_ResourceAssignments.csv"))
 
-    # Terskelverdier med numeriske grenser for Power Query / DAX
+    # Terskelverdier med numeriske grenser for Power Query / DAX (5 kolonner som matcher Config_VarianceThresholds.tmdl)
     df_thresholds = pd.DataFrame([
-        {"Metric": "CPI", "Yellow_Limit": 0.90, "Red_Limit": 0.80, "Trigger_Type": "Min", "Format": "0.00", "Controller_Action": "Freeze non-critical POs, revise EAC"},
-        {"Metric": "SPI", "Yellow_Limit": 0.90, "Red_Limit": 0.80, "Trigger_Type": "Min", "Format": "0.00", "Controller_Action": "Assess schedule compression / reallocate labor"},
-        {"Metric": "Open Commitments (MNOK)", "Yellow_Limit": 10.0, "Red_Limit": 25.0, "Trigger_Type": "Max", "Format": "0.0 M", "Controller_Action": "Immediate PO cancellation audit"},
-        {"Metric": "AuC Capitalization Ratio", "Yellow_Limit": 0.60, "Red_Limit": 0.80, "Trigger_Type": "Max", "Format": "0.0%", "Controller_Action": "Trigger mandatory IAS 36 Impairment Test"}
+        {"Metric": "CPI", "Yellow_Limit": 0.90, "Red_Limit": 0.80, "Trigger_Type": "Min", "Controller_Action": "Freeze non-critical POs, revise EAC"},
+        {"Metric": "SPI", "Yellow_Limit": 0.90, "Red_Limit": 0.80, "Trigger_Type": "Min", "Controller_Action": "Assess schedule compression / reallocate labor"},
+        {"Metric": "Open Commitments (MNOK)", "Yellow_Limit": 10.0, "Red_Limit": 25.0, "Trigger_Type": "Max", "Controller_Action": "Immediate PO cancellation audit"},
+        {"Metric": "AuC Capitalization Ratio", "Yellow_Limit": 0.60, "Red_Limit": 0.80, "Trigger_Type": "Max", "Controller_Action": "Trigger mandatory IAS 36 Impairment Test"}
     ])
     save_csv_sig(df_thresholds, os.path.join(target_dir, "Config_VarianceThresholds.csv"))
 
