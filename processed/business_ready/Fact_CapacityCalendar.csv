@@ -1,4 +1,4 @@
-employee_id;week_start;contract_capacity_hours;absence_hours
+﻿employee_id;week_start;contract_capacity_hours;absence_hours
 E001;2026-01-05;40;0
 E001;2026-01-12;40;0
 E001;2026-01-19;40;0

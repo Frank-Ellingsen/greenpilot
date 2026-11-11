@@ -1,4 +1,4 @@
-vendor_id;vendor_name;country;currency
+﻿vendor_id;vendor_name;country;currency
 V001;Synthetic Vendor 01;SE;EUR
 V002;Synthetic Vendor 02;DE;USD
 V003;Synthetic Vendor 03;US;NOK

@@ -1,4 +1,4 @@
-change_order_id;wbs_id;submitted_date;status;requested_amount_nok;approved_amount_nok
+﻿change_order_id;wbs_id;submitted_date;status;requested_amount_nok;approved_amount_nok
 CO001;WBS-200;2026-02-14;APPROVED;323528;217871.0
 CO002;WBS-300;2026-02-27;REJECTED;212832;
 CO003;WBS-400;2026-03-12;IMPLEMENTED;32575;206762.0

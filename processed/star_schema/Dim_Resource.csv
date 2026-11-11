@@ -1,4 +1,4 @@
-resource_id;resource_name;resource_type;unit
+﻿resource_id;resource_name;resource_type;unit
 RES001;Resource 01;Labor;hour
 RES002;Resource 02;Labor;hour
 RES003;Resource 03;Labor;hour

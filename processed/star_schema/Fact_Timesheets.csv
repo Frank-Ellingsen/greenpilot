@@ -1,4 +1,4 @@
-timesheet_line_id;employee_id;work_date;hours;wbs_id;activity_id
+﻿timesheet_line_id;employee_id;work_date;hours;wbs_id;activity_id
 TS00001;E001;2026-01-07;8.0;WBS-200;A002
 TS00002;E002;2026-02-04;7.5;WBS-400;A010
 TS00003;E003;2026-03-04;8.0;WBS-600;A018

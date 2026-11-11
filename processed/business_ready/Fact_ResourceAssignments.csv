@@ -1,4 +1,4 @@
-assignment_id;activity_id;resource_id;planned_hours
+﻿assignment_id;activity_id;resource_id;planned_hours
 ASG0001;A001;RES001;20
 ASG0002;A002;RES002;150
 ASG0003;A003;RES003;96

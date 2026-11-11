@@ -1,4 +1,4 @@
-employee_id;employee_name;role;department
+﻿employee_id;employee_name;role;department
 E001;Synthetic Employee 01;Technician;Operations
 E002;Synthetic Employee 02;Scientist;Finance
 E003;Synthetic Employee 03;Controller;R&D

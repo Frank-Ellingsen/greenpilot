@@ -1,4 +1,4 @@
-wbs_id;project_id;wbs_name;parent_wbs_id;ias38_phase;ias38_treatment;accounting_bucket;eligible_auc
+﻿wbs_id;project_id;wbs_name;parent_wbs_id;ias38_phase;ias38_treatment;accounting_bucket;eligible_auc
 WBS-100;GP2026;Engineering;GP2026;Research;EXPENSE;P&L Operating Expense;False
 WBS-200;GP2026;Laboratory;GP2026;Development;CAPITALIZE;Balance Sheet (AuC);True
 WBS-300;GP2026;Pilot Plant;GP2026;Development;CAPITALIZE;Balance Sheet (AuC);True

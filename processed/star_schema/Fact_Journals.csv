@@ -1,4 +1,4 @@
-journal_line_id;posting_date;journal_type;wbs_id;cost_element;amount_nok;reversal_reference
+﻿journal_line_id;posting_date;journal_type;wbs_id;cost_element;amount_nok;reversal_reference
 J0001;2026-07-27;JOURNAL;WBS-200;CE200;-9761.68;
 J0002;2026-09-15;JOURNAL;WBS-300;CE300;29264.32;
 J0003;2026-03-22;JOURNAL;WBS-400;CE400;106085.99;
