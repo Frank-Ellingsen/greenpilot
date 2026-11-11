@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p4_auc_donut",
   "position": {
-    "x": 40.0,
-    "y": 170.0,
+    "x": 40,
+    "y": 170,
     "z": 2000,
-    "height": 540.0,
-    "width": 600.0,
+    "height": 540,
+    "width": 600,
     "tabOrder": 5000
   },
   "visual": {
@@ -46,7 +46,8 @@
                 }
               },
               "queryRef": "_Measures.Actual Cost (AC)",
-              "nativeQueryRef": "Actual Cost (AC)"
+              "nativeQueryRef": "Actual Cost (AC)",
+              "active": true
             }
           ]
         }

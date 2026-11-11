@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p1_kpi_cpi",
   "position": {
-    "x": 1065.0,
-    "y": 15.0,
+    "x": 1065,
+    "y": 15,
     "z": 1300,
-    "height": 120.0,
-    "width": 255.0,
+    "height": 120,
+    "width": 255,
     "tabOrder": 4000
   },
   "visual": {
@@ -27,11 +27,36 @@
                 }
               },
               "queryRef": "_Measures.Cost Performance Index (CPI)",
-              "nativeQueryRef": "Cost Performance Index (CPI)"
+              "nativeQueryRef": "Cost Performance Index (CPI)",
+              "active": true
             }
           ]
         }
       }
+    },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "CPI Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

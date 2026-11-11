@@ -16,8 +16,8 @@ def remove_readonly(func, path, excinfo):
     except Exception:
         pass
 
-def make_projection_measure(entity, prop):
-    return {
+def make_projection_measure(entity, prop, active=False):
+    d = {
         "field": {
             "Measure": {
                 "Expression": {"SourceRef": {"Entity": entity}},
@@ -26,6 +26,64 @@ def make_projection_measure(entity, prop):
         },
         "queryRef": f"{entity}.{prop}",
         "nativeQueryRef": prop
+    }
+    if active:
+        d["active"] = True
+    return d
+
+def make_measure_color_expr(entity, prop):
+    return {
+        "solid": {
+            "color": {
+                "expr": {
+                    "Measure": {
+                        "Expression": {"SourceRef": {"Entity": entity}},
+                        "Property": prop
+                    }
+                }
+            }
+        }
+    }
+
+def make_literal_color_expr(hex_color):
+    return {
+        "solid": {
+            "color": {
+                "expr": {
+                    "Literal": {
+                        "Value": f"'{hex_color}'"
+                    }
+                }
+            }
+        }
+    }
+
+def make_cell_font_color(metadata_ref, color_measure_prop, back_color_hex=None):
+    props = {
+        "fontColor": make_measure_color_expr("_Measures", color_measure_prop)
+    }
+    if back_color_hex:
+        props["backColor"] = make_literal_color_expr(back_color_hex)
+    return {
+        "selector": {"metadata": metadata_ref},
+        "properties": props
+    }
+
+def make_cell_databars(metadata_ref, pos_hex="#15803D", neg_hex="#BE123C", axis_hex="#94A3B8", color_measure_prop=None):
+    props = {
+        "dataBars": {
+            "positiveColor": make_literal_color_expr(pos_hex),
+            "negativeColor": make_literal_color_expr(neg_hex),
+            "axisColor": make_literal_color_expr(axis_hex),
+            "reverseDirection": {"expr": {"Literal": {"Value": "false"}}},
+            "hideText": {"expr": {"Literal": {"Value": "false"}}}
+        }
+    }
+    if color_measure_prop:
+        props["fontColor"] = make_measure_color_expr("_Measures", color_measure_prop)
+    return {
+        "selector": {"metadata": metadata_ref},
+        "properties": props
     }
 
 def make_projection_column(entity, prop, active=False):
@@ -51,11 +109,11 @@ def write_visual(page_folder, vname, visual_dict, x, y, w, h, z, tab_order):
         "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
         "name": vname,
         "position": {
-            "x": float(x),
-            "y": float(y),
+            "x": int(x),
+            "y": int(y),
             "z": int(z),
-            "height": float(h),
-            "width": float(w),
+            "height": int(h),
+            "width": int(w),
             "tabOrder": int(tab_order)
         },
         "visual": visual_dict
@@ -132,22 +190,32 @@ def build_pages():
 
     # KPI Cards (Top): BAC, AC, EV, CPI, SPI, Physical Progress %
     top_kpis = [
-        ("p1_kpi_bac", "_Measures", "Budget at Completion (BAC)", 255, 15, 255, 120),
-        ("p1_kpi_ac", "_Measures", "Actual Cost (AC)", 525, 15, 255, 120),
-        ("p1_kpi_ev", "_Measures", "Earned Value (EV)", 795, 15, 255, 120),
-        ("p1_kpi_cpi", "_Measures", "Cost Performance Index (CPI)", 1065, 15, 255, 120),
-        ("p1_kpi_spi", "_Measures", "Schedule Performance Index (SPI)", 1335, 15, 255, 120),
-        ("p1_kpi_prog", "_Measures", "Physical Progress % (Current)", 1605, 15, 275, 120),
+        ("p1_kpi_bac", "_Measures", "Budget at Completion (BAC)", 255, 15, 255, 120, None),
+        ("p1_kpi_ac", "_Measures", "Actual Cost (AC)", 525, 15, 255, 120, "CV Color RAG"),
+        ("p1_kpi_ev", "_Measures", "Earned Value (EV)", 795, 15, 255, 120, None),
+        ("p1_kpi_cpi", "_Measures", "Cost Performance Index (CPI)", 1065, 15, 255, 120, "CPI Color RAG"),
+        ("p1_kpi_spi", "_Measures", "Schedule Performance Index (SPI)", 1335, 15, 255, 120, "SPI Color RAG"),
+        ("p1_kpi_prog", "_Measures", "Physical Progress % (Current)", 1605, 15, 275, 120, "SPI Color RAG"),
     ]
-    for idx, (vname, ent, prop, x, y, w, h) in enumerate(top_kpis):
+    for idx, (vname, ent, prop, x, y, w, h, color_measure) in enumerate(top_kpis):
         vdict = {
             "visualType": "card",
             "query": {
                 "queryState": {
-                    "Values": {"projections": [make_projection_measure(ent, prop)]}
+                    "Values": {"projections": [make_projection_measure(ent, prop, active=True)]}
                 }
             }
         }
+        if color_measure:
+            vdict["objects"] = {
+                "labels": [
+                    {
+                        "properties": {
+                            "color": make_measure_color_expr("_Measures", color_measure)
+                        }
+                    }
+                ]
+            }
         write_visual(p1_dir, vname, vdict, x, y, w, h, 1000 + idx * 100, (idx + 1) * 1000)
 
     # Visual 1 (Main Left): Line and Clustered Column Chart (S-Curve)
@@ -156,12 +224,12 @@ def build_pages():
         "query": {
             "queryState": {
                 "Category": {"projections": [make_projection_column("Dim_Date", "Period", active=True)]},
-                "Y": {"projections": [make_projection_measure("_Measures", "Status Date Dynamic Line")]},
+                "Y": {"projections": [make_projection_measure("_Measures", "Status Date Dynamic Line", active=True)]},
                 "Y2": {
                     "projections": [
-                        make_projection_measure("_Measures", "Planned Value Cumulative (PV S-Curve)"),
-                        make_projection_measure("_Measures", "Actual Cost Cumulative (AC S-Curve)"),
-                        make_projection_measure("_Measures", "Earned Value Cumulative (EV S-Curve)")
+                        make_projection_measure("_Measures", "Planned Value Cumulative (PV S-Curve)", active=True),
+                        make_projection_measure("_Measures", "Actual Cost Cumulative (AC S-Curve)", active=True),
+                        make_projection_measure("_Measures", "Earned Value Cumulative (EV S-Curve)", active=True)
                     ]
                 }
             }
@@ -182,18 +250,33 @@ def build_pages():
                 },
                 "Values": {
                     "projections": [
-                        make_projection_measure("_Measures", "Budget at Completion (BAC)"),
-                        make_projection_measure("_Measures", "Planned Value (PV)"),
-                        make_projection_measure("_Measures", "Actual Cost (AC)"),
-                        make_projection_measure("_Measures", "Earned Value (EV)"),
-                        make_projection_measure("_Measures", "Cost Variance (CV)"),
-                        make_projection_measure("_Measures", "Cost Variance Bar"),
-                        make_projection_measure("_Measures", "Cost Performance Index (CPI)"),
-                        make_projection_measure("_Measures", "CPI Status RAG"),
-                        make_projection_measure("_Measures", "Physical Progress Bar")
+                        make_projection_measure("_Measures", "Budget at Completion (BAC)", active=True),
+                        make_projection_measure("_Measures", "Planned Value (PV)", active=True),
+                        make_projection_measure("_Measures", "Actual Cost (AC)", active=True),
+                        make_projection_measure("_Measures", "Budget Consumption Bar", active=True),
+                        make_projection_measure("_Measures", "Earned Value (EV)", active=True),
+                        make_projection_measure("_Measures", "Cost Variance (CV)", active=True),
+                        make_projection_measure("_Measures", "Cost Variance Bar", active=True),
+                        make_projection_measure("_Measures", "Cost Performance Index (CPI)", active=True),
+                        make_projection_measure("_Measures", "CPI Status RAG", active=True),
+                        make_projection_measure("_Measures", "Schedule Performance Index (SPI)", active=True),
+                        make_projection_measure("_Measures", "SPI Status RAG", active=True),
+                        make_projection_measure("_Measures", "Physical Progress Bar", active=True)
                     ]
                 }
             }
+        },
+        "objects": {
+            "cellElements": [
+                make_cell_font_color("_Measures.Budget Consumption Bar", "CV Color RAG"),
+                make_cell_databars("_Measures.Cost Variance (CV)", pos_hex="#15803D", neg_hex="#BE123C", color_measure_prop="CV Color RAG"),
+                make_cell_font_color("_Measures.Cost Variance Bar", "CV Color RAG"),
+                make_cell_font_color("_Measures.Cost Performance Index (CPI)", "CPI Color RAG"),
+                make_cell_font_color("_Measures.CPI Status RAG", "CPI Color RAG"),
+                make_cell_font_color("_Measures.Schedule Performance Index (SPI)", "SPI Color RAG"),
+                make_cell_font_color("_Measures.SPI Status RAG", "SPI Color RAG"),
+                make_cell_font_color("_Measures.Physical Progress Bar", "SPI Color RAG")
+            ]
         }
     }
     write_visual(p1_dir, "p1_wbs_matrix", matrix_dict, 1120, 150, 760, 905, 2100, 8000)
@@ -205,14 +288,23 @@ def build_pages():
     p2_dir = prepare_page(p2_id, "Root Cause & Variance Driver Matrix")
     pages_meta.append(p2_id)
 
-    # Visual 1 (Top Left): Clustered Bar Chart (Cost Variance by WBS)
+    # Visual 1 (Top Left): Clustered Bar Chart (Cost Variance by WBS) with Dynamic RAG Bar Fill
     decomp_dict = {
         "visualType": "clusteredBarChart",
         "query": {
             "queryState": {
                 "Category": {"projections": [make_projection_column("Dim_WBS", "wbs_name", active=True)]},
-                "Y": {"projections": [make_projection_measure("_Measures", "Cost Variance (CV)")]}
+                "Y": {"projections": [make_projection_measure("_Measures", "Cost Variance (CV)", active=True)]}
             }
+        },
+        "objects": {
+            "dataPoint": [
+                {
+                    "properties": {
+                        "fill": make_measure_color_expr("_Measures", "CV Color RAG")
+                    }
+                }
+            ]
         }
     }
     write_visual(p2_dir, "p2_decomp_tree", decomp_dict, 40, 20, 1080, 500, 1000, 1000)
@@ -224,9 +316,9 @@ def build_pages():
             "queryState": {
                 "Values": {
                     "projections": [
-                        make_projection_measure("_Measures", "Overall Project Health RAG"),
-                        make_projection_measure("_Measures", "Root Cause Primary Diagnosis"),
-                        make_projection_measure("_Measures", "Root Cause Driver Decomposition")
+                        make_projection_measure("_Measures", "Overall Project Health RAG", active=True),
+                        make_projection_measure("_Measures", "Root Cause Primary Diagnosis", active=True),
+                        make_projection_measure("_Measures", "Root Cause Driver Decomposition", active=True)
                     ]
                 }
             }
@@ -240,9 +332,9 @@ def build_pages():
         "query": {
             "queryState": {
                 "Category": {"projections": [make_projection_column("Dim_WBS", "wbs_name", active=True)]},
-                "X": {"projections": [make_projection_measure("_Measures", "Schedule Performance Index (SPI)")]},
-                "Y": {"projections": [make_projection_measure("_Measures", "Cost Performance Index (CPI)")]},
-                "Size": {"projections": [make_projection_measure("_Measures", "Actual Cost (AC)")]}
+                "X": {"projections": [make_projection_measure("_Measures", "Schedule Performance Index (SPI)", active=True)]},
+                "Y": {"projections": [make_projection_measure("_Measures", "Cost Performance Index (CPI)", active=True)]},
+                "Size": {"projections": [make_projection_measure("_Measures", "Actual Cost (AC)", active=True)]}
             }
         }
     }
@@ -254,7 +346,7 @@ def build_pages():
         "query": {
             "queryState": {
                 "Category": {"projections": [make_projection_column("Dim_CostElement", "cost_element_name", active=True)]},
-                "Y": {"projections": [make_projection_measure("_Measures", "Cost Variance (CV)")]}
+                "Y": {"projections": [make_projection_measure("_Measures", "Cost Variance (CV)", active=True)]}
             }
         }
     }
@@ -269,23 +361,33 @@ def build_pages():
 
     # Top Cards: Total PO, Invoiced AP, Open Commitments, Open %
     po_cards = [
-        ("p3_kpi_po_total", "_Measures", "PO Amount NOK", 40, 20, 440, 140),
-        ("p3_kpi_po_inv", "_Measures", "PO Invoiced NOK", 500, 20, 440, 140),
-        ("p3_kpi_po_open", "_Measures", "PO Open Commitment NOK", 960, 20, 440, 140),
-        ("p3_kpi_po_rate", "_Measures", "PO Open Commitment %", 1420, 20, 460, 140)
+        ("p3_kpi_po_total", "_Measures", "PO Amount NOK", 40, 20, 440, 140, None),
+        ("p3_kpi_po_inv", "_Measures", "PO Invoiced NOK", 500, 20, 440, 140, None),
+        ("p3_kpi_po_open", "_Measures", "PO Open Commitment NOK", 960, 20, 440, 140, "PO Commitment Color RAG"),
+        ("p3_kpi_po_rate", "_Measures", "PO Open Commitment %", 1420, 20, 460, 140, "PO Commitment Color RAG")
     ]
-    for idx, (vname, ent, prop, x, y, w, h) in enumerate(po_cards):
+    for idx, (vname, ent, prop, x, y, w, h, color_measure) in enumerate(po_cards):
         vdict = {
             "visualType": "card",
             "query": {
                 "queryState": {
-                    "Values": {"projections": [make_projection_measure(ent, prop)]}
+                    "Values": {"projections": [make_projection_measure(ent, prop, active=True)]}
                 }
             }
         }
+        if color_measure:
+            vdict["objects"] = {
+                "labels": [
+                    {
+                        "properties": {
+                            "color": make_measure_color_expr("_Measures", color_measure)
+                        }
+                    }
+                ]
+            }
         write_visual(p3_dir, vname, vdict, x, y, w, h, 1000 + idx * 100, (idx + 1) * 1000)
 
-    # Visual 2: Table of Top Exposed Vendors with RAG & Conditional Bar Length
+    # Visual 2: Table of Top Exposed Vendors with RAG & Conditional Bar Length (ALL projections active=True!)
     vendor_table_dict = {
         "visualType": "tableEx",
         "query": {
@@ -294,15 +396,22 @@ def build_pages():
                     "projections": [
                         make_projection_column("Dim_Vendor", "vendor_name", active=True),
                         make_projection_column("Fact_PurchaseOrders", "currency", active=True),
-                        make_projection_measure("_Measures", "PO Amount NOK"),
-                        make_projection_measure("_Measures", "PO Invoiced NOK"),
-                        make_projection_measure("_Measures", "PO Open Commitment NOK"),
-                        make_projection_measure("_Measures", "PO Commitment Exposure Bar"),
-                        make_projection_measure("_Measures", "PO Commitment Exposure RAG"),
+                        make_projection_measure("_Measures", "PO Amount NOK", active=True),
+                        make_projection_measure("_Measures", "PO Invoiced NOK", active=True),
+                        make_projection_measure("_Measures", "PO Open Commitment NOK", active=True),
+                        make_projection_measure("_Measures", "PO Commitment Exposure Bar", active=True),
+                        make_projection_measure("_Measures", "PO Commitment Exposure RAG", active=True),
                         make_projection_column("Fact_PurchaseOrders", "po_status", active=True)
                     ]
                 }
             }
+        },
+        "objects": {
+            "cellElements": [
+                make_cell_databars("_Measures.PO Open Commitment NOK", pos_hex="#D97706", neg_hex="#BE123C", color_measure_prop="PO Commitment Color RAG"),
+                make_cell_font_color("_Measures.PO Commitment Exposure Bar", "PO Commitment Color RAG"),
+                make_cell_font_color("_Measures.PO Commitment Exposure RAG", "PO Commitment Color RAG")
+            ]
         }
     }
     write_visual(p3_dir, "p3_vendor_table", vendor_table_dict, 40, 180, 1260, 870, 2000, 5000)
@@ -313,7 +422,7 @@ def build_pages():
         "query": {
             "queryState": {
                 "Category": {"projections": [make_projection_column("Fact_PurchaseOrders", "currency", active=True)]},
-                "Y": {"projections": [make_projection_measure("_Measures", "PO Amount NOK")]}
+                "Y": {"projections": [make_projection_measure("_Measures", "PO Amount NOK", active=True)]}
             }
         }
     }
@@ -328,20 +437,30 @@ def build_pages():
 
     # Top KPI Cards for IFRS
     ifrs_kpis = [
-        ("p4_kpi_total_ac", "_Measures", "Actual Cost (AC)", 40, 20, 440, 130),
-        ("p4_kpi_auc", "_Measures", "Actual Cost Capitalized (AuC)", 500, 20, 440, 130),
-        ("p4_kpi_pnl", "_Measures", "Actual Cost Expensed (P&L)", 960, 20, 440, 130),
-        ("p4_kpi_rate", "_Measures", "Capitalization Rate %", 1420, 20, 460, 130)
+        ("p4_kpi_total_ac", "_Measures", "Actual Cost (AC)", 40, 20, 440, 130, "CV Color RAG"),
+        ("p4_kpi_auc", "_Measures", "Actual Cost Capitalized (AuC)", 500, 20, 440, 130, None),
+        ("p4_kpi_pnl", "_Measures", "Actual Cost Expensed (P&L)", 960, 20, 440, 130, None),
+        ("p4_kpi_rate", "_Measures", "Capitalization Rate %", 1420, 20, 460, 130, "AuC Capitalization Color RAG")
     ]
-    for idx, (vname, ent, prop, x, y, w, h) in enumerate(ifrs_kpis):
+    for idx, (vname, ent, prop, x, y, w, h, color_measure) in enumerate(ifrs_kpis):
         vdict = {
             "visualType": "card",
             "query": {
                 "queryState": {
-                    "Values": {"projections": [make_projection_measure(ent, prop)]}
+                    "Values": {"projections": [make_projection_measure(ent, prop, active=True)]}
                 }
             }
         }
+        if color_measure:
+            vdict["objects"] = {
+                "labels": [
+                    {
+                        "properties": {
+                            "color": make_measure_color_expr("_Measures", color_measure)
+                        }
+                    }
+                ]
+            }
         write_visual(p4_dir, vname, vdict, x, y, w, h, 1000 + idx * 100, (idx + 1) * 1000)
 
     # Visual 1 (Left): Donut split of AuC vs P&L
@@ -350,7 +469,7 @@ def build_pages():
         "query": {
             "queryState": {
                 "Category": {"projections": [make_projection_column("Dim_WBS", "accounting_bucket", active=True)]},
-                "Y": {"projections": [make_projection_measure("_Measures", "Actual Cost (AC)")]}
+                "Y": {"projections": [make_projection_measure("_Measures", "Actual Cost (AC)", active=True)]}
             }
         }
     }
@@ -370,15 +489,22 @@ def build_pages():
                 },
                 "Values": {
                     "projections": [
-                        make_projection_measure("_Measures", "Actual Cost (AC)"),
-                        make_projection_measure("_Measures", "Actual Cost Capitalized (AuC)"),
-                        make_projection_measure("_Measures", "Actual Cost Expensed (P&L)"),
-                        make_projection_measure("_Measures", "Capitalization Rate %"),
-                        make_projection_measure("_Measures", "AuC Capitalization Bar"),
-                        make_projection_measure("_Measures", "AuC Capitalization Rate RAG")
+                        make_projection_measure("_Measures", "Actual Cost (AC)", active=True),
+                        make_projection_measure("_Measures", "Actual Cost Capitalized (AuC)", active=True),
+                        make_projection_measure("_Measures", "Actual Cost Expensed (P&L)", active=True),
+                        make_projection_measure("_Measures", "Capitalization Rate %", active=True),
+                        make_projection_measure("_Measures", "AuC Capitalization Bar", active=True),
+                        make_projection_measure("_Measures", "AuC Capitalization Rate RAG", active=True)
                     ]
                 }
             }
+        },
+        "objects": {
+            "cellElements": [
+                make_cell_databars("_Measures.Capitalization Rate %", pos_hex="#0284C7", neg_hex="#BE123C", color_measure_prop="AuC Capitalization Color RAG"),
+                make_cell_font_color("_Measures.AuC Capitalization Bar", "AuC Capitalization Color RAG"),
+                make_cell_font_color("_Measures.AuC Capitalization Rate RAG", "AuC Capitalization Color RAG")
+            ]
         }
     }
     write_visual(p4_dir, "p4_ifrs_matrix", ifrs_matrix_dict, 660, 170, 1220, 540, 2100, 6000)
@@ -388,8 +514,17 @@ def build_pages():
         "visualType": "card",
         "query": {
             "queryState": {
-                "Values": {"projections": [make_projection_measure("_Measures", "IAS 36 Impairment Callout")]}
+                "Values": {"projections": [make_projection_measure("_Measures", "IAS 36 Impairment Callout", active=True)]}
             }
+        },
+        "objects": {
+            "labels": [
+                {
+                    "properties": {
+                        "color": make_measure_color_expr("_Measures", "AuC Capitalization Color RAG")
+                    }
+                }
+            ]
         }
     }
     write_visual(p4_dir, "p4_impairment_callout", impairment_card_dict, 40, 730, 1840, 320, 2200, 7000)
@@ -406,13 +541,13 @@ def build_pages():
         "visualType": "card",
         "query": {
             "queryState": {
-                "Values": {"projections": [make_projection_measure("_Measures", "Prescriptive Controller Actions")]}
+                "Values": {"projections": [make_projection_measure("_Measures", "Prescriptive Controller Actions", active=True)]}
             }
         }
     }
     write_visual(p5_dir, "p5_action_board", action_board_dict, 40, 20, 1840, 420, 1000, 1000)
 
-    # Visual 2 (Bottom Left): Open Change Order Backlog Table
+    # Visual 2 (Bottom Left): Open Change Order Backlog Table with RAG & Conditional Bar Length
     co_table_dict = {
         "visualType": "tableEx",
         "query": {
@@ -422,16 +557,24 @@ def build_pages():
                         make_projection_column("Fact_ChangeOrders", "change_order_id", active=True),
                         make_projection_column("Fact_ChangeOrders", "wbs_id", active=True),
                         make_projection_column("Fact_ChangeOrders", "status", active=True),
+                        make_projection_measure("_Measures", "Change Order Status RAG", active=True),
                         make_projection_column("Fact_ChangeOrders", "requested_amount_nok", active=True),
-                        make_projection_column("Fact_ChangeOrders", "approved_amount_nok", active=True)
+                        make_projection_column("Fact_ChangeOrders", "approved_amount_nok", active=True),
+                        make_projection_measure("_Measures", "Change Order Exposure Bar", active=True)
                     ]
                 }
             }
+        },
+        "objects": {
+            "cellElements": [
+                make_cell_font_color("_Measures.Change Order Status RAG", "Change Order Status Color RAG"),
+                make_cell_font_color("_Measures.Change Order Exposure Bar", "Change Order Status Color RAG")
+            ]
         }
     }
     write_visual(p5_dir, "p5_co_table", co_table_dict, 40, 460, 890, 590, 1100, 2000)
 
-    # Visual 3 (Bottom Right): Remaining Activities Audit with In-Cell Activity Progress Bar
+    # Visual 3 (Bottom Right): Remaining Activities Audit with RAG & In-Cell Activity Progress Bar
     rem_act_dict = {
         "visualType": "tableEx",
         "query": {
@@ -442,12 +585,19 @@ def build_pages():
                         make_projection_column("Dim_Activity", "activity_name", active=True),
                         make_projection_column("Dim_Activity", "wbs_id", active=True),
                         make_projection_column("Dim_Activity", "status", active=True),
-                        make_projection_measure("_Measures", "Activity Progress Bar"),
+                        make_projection_measure("_Measures", "Activity Status RAG", active=True),
+                        make_projection_measure("_Measures", "Activity Progress Bar", active=True),
                         make_projection_column("Dim_Activity", "progress_pct", active=True),
                         make_projection_column("Dim_Activity", "planned_finish", active=True)
                     ]
                 }
             }
+        },
+        "objects": {
+            "cellElements": [
+                make_cell_font_color("_Measures.Activity Status RAG", "Activity Status Color RAG"),
+                make_cell_font_color("_Measures.Activity Progress Bar", "Activity Status Color RAG")
+            ]
         }
     }
     write_visual(p5_dir, "p5_remaining_activities", rem_act_dict, 950, 460, 930, 590, 1200, 3000)

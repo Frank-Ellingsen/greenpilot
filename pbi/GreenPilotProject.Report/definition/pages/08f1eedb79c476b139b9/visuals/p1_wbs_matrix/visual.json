@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p1_wbs_matrix",
   "position": {
-    "x": 1120.0,
-    "y": 150.0,
+    "x": 1120,
+    "y": 150,
     "z": 2100,
-    "height": 905.0,
-    "width": 760.0,
+    "height": 905,
+    "width": 760,
     "tabOrder": 8000
   },
   "visual": {
@@ -61,7 +61,8 @@
                 }
               },
               "queryRef": "_Measures.Budget at Completion (BAC)",
-              "nativeQueryRef": "Budget at Completion (BAC)"
+              "nativeQueryRef": "Budget at Completion (BAC)",
+              "active": true
             },
             {
               "field": {
@@ -75,7 +76,8 @@
                 }
               },
               "queryRef": "_Measures.Planned Value (PV)",
-              "nativeQueryRef": "Planned Value (PV)"
+              "nativeQueryRef": "Planned Value (PV)",
+              "active": true
             },
             {
               "field": {
@@ -89,7 +91,23 @@
                 }
               },
               "queryRef": "_Measures.Actual Cost (AC)",
-              "nativeQueryRef": "Actual Cost (AC)"
+              "nativeQueryRef": "Actual Cost (AC)",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Budget Consumption Bar"
+                }
+              },
+              "queryRef": "_Measures.Budget Consumption Bar",
+              "nativeQueryRef": "Budget Consumption Bar",
+              "active": true
             },
             {
               "field": {
@@ -103,7 +121,8 @@
                 }
               },
               "queryRef": "_Measures.Earned Value (EV)",
-              "nativeQueryRef": "Earned Value (EV)"
+              "nativeQueryRef": "Earned Value (EV)",
+              "active": true
             },
             {
               "field": {
@@ -117,7 +136,8 @@
                 }
               },
               "queryRef": "_Measures.Cost Variance (CV)",
-              "nativeQueryRef": "Cost Variance (CV)"
+              "nativeQueryRef": "Cost Variance (CV)",
+              "active": true
             },
             {
               "field": {
@@ -131,7 +151,8 @@
                 }
               },
               "queryRef": "_Measures.Cost Variance Bar",
-              "nativeQueryRef": "Cost Variance Bar"
+              "nativeQueryRef": "Cost Variance Bar",
+              "active": true
             },
             {
               "field": {
@@ -145,7 +166,8 @@
                 }
               },
               "queryRef": "_Measures.Cost Performance Index (CPI)",
-              "nativeQueryRef": "Cost Performance Index (CPI)"
+              "nativeQueryRef": "Cost Performance Index (CPI)",
+              "active": true
             },
             {
               "field": {
@@ -159,7 +181,38 @@
                 }
               },
               "queryRef": "_Measures.CPI Status RAG",
-              "nativeQueryRef": "CPI Status RAG"
+              "nativeQueryRef": "CPI Status RAG",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Schedule Performance Index (SPI)"
+                }
+              },
+              "queryRef": "_Measures.Schedule Performance Index (SPI)",
+              "nativeQueryRef": "Schedule Performance Index (SPI)",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "SPI Status RAG"
+                }
+              },
+              "queryRef": "_Measures.SPI Status RAG",
+              "nativeQueryRef": "SPI Status RAG",
+              "active": true
             },
             {
               "field": {
@@ -173,11 +226,249 @@
                 }
               },
               "queryRef": "_Measures.Physical Progress Bar",
-              "nativeQueryRef": "Physical Progress Bar"
+              "nativeQueryRef": "Physical Progress Bar",
+              "active": true
             }
           ]
         }
       }
+    },
+    "objects": {
+      "cellElements": [
+        {
+          "selector": {
+            "metadata": "_Measures.Budget Consumption Bar"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "CV Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.Cost Variance (CV)"
+          },
+          "properties": {
+            "dataBars": {
+              "positiveColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#15803D'"
+                      }
+                    }
+                  }
+                }
+              },
+              "negativeColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#BE123C'"
+                      }
+                    }
+                  }
+                }
+              },
+              "axisColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#94A3B8'"
+                      }
+                    }
+                  }
+                }
+              },
+              "reverseDirection": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              },
+              "hideText": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "CV Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.Cost Variance Bar"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "CV Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.Cost Performance Index (CPI)"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "CPI Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.CPI Status RAG"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "CPI Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.Schedule Performance Index (SPI)"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "SPI Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.SPI Status RAG"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "SPI Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.Physical Progress Bar"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "SPI Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

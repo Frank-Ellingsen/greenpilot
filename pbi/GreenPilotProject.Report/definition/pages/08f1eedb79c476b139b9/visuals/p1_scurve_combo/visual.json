@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p1_scurve_combo",
   "position": {
-    "x": 40.0,
-    "y": 150.0,
+    "x": 40,
+    "y": 150,
     "z": 2000,
-    "height": 905.0,
-    "width": 1060.0,
+    "height": 905,
+    "width": 1060,
     "tabOrder": 7000
   },
   "visual": {
@@ -46,7 +46,8 @@
                 }
               },
               "queryRef": "_Measures.Status Date Dynamic Line",
-              "nativeQueryRef": "Status Date Dynamic Line"
+              "nativeQueryRef": "Status Date Dynamic Line",
+              "active": true
             }
           ]
         },
@@ -64,7 +65,8 @@
                 }
               },
               "queryRef": "_Measures.Planned Value Cumulative (PV S-Curve)",
-              "nativeQueryRef": "Planned Value Cumulative (PV S-Curve)"
+              "nativeQueryRef": "Planned Value Cumulative (PV S-Curve)",
+              "active": true
             },
             {
               "field": {
@@ -78,7 +80,8 @@
                 }
               },
               "queryRef": "_Measures.Actual Cost Cumulative (AC S-Curve)",
-              "nativeQueryRef": "Actual Cost Cumulative (AC S-Curve)"
+              "nativeQueryRef": "Actual Cost Cumulative (AC S-Curve)",
+              "active": true
             },
             {
               "field": {
@@ -92,7 +95,8 @@
                 }
               },
               "queryRef": "_Measures.Earned Value Cumulative (EV S-Curve)",
-              "nativeQueryRef": "Earned Value Cumulative (EV S-Curve)"
+              "nativeQueryRef": "Earned Value Cumulative (EV S-Curve)",
+              "active": true
             }
           ]
         }

@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p4_kpi_rate",
   "position": {
-    "x": 1420.0,
-    "y": 20.0,
+    "x": 1420,
+    "y": 20,
     "z": 1300,
-    "height": 130.0,
-    "width": 460.0,
+    "height": 130,
+    "width": 460,
     "tabOrder": 4000
   },
   "visual": {
@@ -27,11 +27,36 @@
                 }
               },
               "queryRef": "_Measures.Capitalization Rate %",
-              "nativeQueryRef": "Capitalization Rate %"
+              "nativeQueryRef": "Capitalization Rate %",
+              "active": true
             }
           ]
         }
       }
+    },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "AuC Capitalization Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

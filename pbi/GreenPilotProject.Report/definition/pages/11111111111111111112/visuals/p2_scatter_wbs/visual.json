@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p2_scatter_wbs",
   "position": {
-    "x": 40.0,
-    "y": 540.0,
+    "x": 40,
+    "y": 540,
     "z": 1200,
-    "height": 510.0,
-    "width": 880.0,
+    "height": 510,
+    "width": 880,
     "tabOrder": 3000
   },
   "visual": {
@@ -46,7 +46,8 @@
                 }
               },
               "queryRef": "_Measures.Schedule Performance Index (SPI)",
-              "nativeQueryRef": "Schedule Performance Index (SPI)"
+              "nativeQueryRef": "Schedule Performance Index (SPI)",
+              "active": true
             }
           ]
         },
@@ -64,7 +65,8 @@
                 }
               },
               "queryRef": "_Measures.Cost Performance Index (CPI)",
-              "nativeQueryRef": "Cost Performance Index (CPI)"
+              "nativeQueryRef": "Cost Performance Index (CPI)",
+              "active": true
             }
           ]
         },
@@ -82,7 +84,8 @@
                 }
               },
               "queryRef": "_Measures.Actual Cost (AC)",
-              "nativeQueryRef": "Actual Cost (AC)"
+              "nativeQueryRef": "Actual Cost (AC)",
+              "active": true
             }
           ]
         }

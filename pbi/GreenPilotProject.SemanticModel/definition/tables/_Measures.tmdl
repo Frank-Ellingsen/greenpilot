@@ -474,10 +474,16 @@ table _Measures
 
 	measure 'PO Commitment Exposure RAG' =
 			VAR OpenPO = [PO Open Commitment NOK]
+			VAR TotalPO = [PO Amount NOK]
+			VAR Rate = DIVIDE ( OpenPO, TotalPO, 0 )
+			VAR IsVendorScope = ISINSCOPE ( Dim_Vendor[vendor_name] )
 			RETURN
 			SWITCH (
 			    TRUE (),
 			    ISBLANK ( OpenPO ), BLANK (),
+			    IsVendorScope && ( OpenPO >= 1500000 || Rate >= 0.60 ), "🔴 High Exposure (" & FORMAT ( OpenPO / 1e6, "0.00" ) & "M)",
+			    IsVendorScope && ( OpenPO >= 500000 || Rate >= 0.35 ), "🟡 Moderate Exposure (" & FORMAT ( OpenPO / 1e6, "0.00" ) & "M)",
+			    IsVendorScope, "🟢 Controlled Exposure (" & FORMAT ( OpenPO / 1e6, "0.00" ) & "M)",
 			    OpenPO > 25000000, "🔴 High Exposure (>25M)",
 			    OpenPO > 10000000, "🟡 Moderate Exposure (10-25M)",
 			    "🟢 Controlled Exposure (<10M)"
@@ -487,10 +493,16 @@ table _Measures
 
 	measure 'PO Commitment Color RAG' =
 			VAR OpenPO = [PO Open Commitment NOK]
+			VAR TotalPO = [PO Amount NOK]
+			VAR Rate = DIVIDE ( OpenPO, TotalPO, 0 )
+			VAR IsVendorScope = ISINSCOPE ( Dim_Vendor[vendor_name] )
 			RETURN
 			SWITCH (
 			    TRUE (),
 			    ISBLANK ( OpenPO ), BLANK (),
+			    IsVendorScope && ( OpenPO >= 1500000 || Rate >= 0.60 ), "#BE123C",
+			    IsVendorScope && ( OpenPO >= 500000 || Rate >= 0.35 ), "#D97706",
+			    IsVendorScope, "#15803D",
 			    OpenPO > 25000000, "#BE123C",
 			    OpenPO > 10000000, "#D97706",
 			    "#15803D"
@@ -576,8 +588,9 @@ table _Measures
 			VAR Pct = DIVIDE ( AVERAGE ( Dim_Activity[progress_pct] ), 100, 0 )
 			VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Pct * 10, 0 ) ) )
 			VAR Unfilled = 10 - Filled
+			VAR Icon = SWITCH ( TRUE (), Pct >= 1.0, "🟩 ", Pct > 0, "🟧 ", "🟥 " )
 			RETURN
-			REPT ( "█", Filled ) & REPT ( "░", Unfilled ) & " " & FORMAT ( Pct, "0%" )
+			IF ( ISBLANK ( Pct ), BLANK (), Icon & REPT ( "█", Filled ) & REPT ( "░", Unfilled ) & " " & FORMAT ( Pct, "0%" ) )
 		displayFolder: 10 BETINGET STOLPELENGDE
 		lineageTag: 02c3b21f-2673-49d7-85db-77fc88f72314
 
@@ -601,8 +614,9 @@ table _Measures
 			VAR Rate = DIVIDE ( OpenPO, TotalPO, 0 )
 			VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
 			VAR Unfilled = 10 - Filled
+			VAR Icon = SWITCH ( TRUE (), Rate >= 0.60, "🟥 ", Rate >= 0.35, "🟧 ", "🟩 " )
 			RETURN
-			IF ( ISBLANK ( OpenPO ) || TotalPO = 0, BLANK (), "🟧 " & REPT ( "■", Filled ) & REPT ( "□", Unfilled ) & " " & FORMAT ( Rate, "0.0%" ) )
+			IF ( ISBLANK ( OpenPO ) || TotalPO = 0, BLANK (), Icon & REPT ( "■", Filled ) & REPT ( "□", Unfilled ) & " " & FORMAT ( Rate, "0.0%" ) )
 		displayFolder: 10 BETINGET STOLPELENGDE
 		lineageTag: fb0e5b0a-05fe-4d79-a18e-d2a2b1167a68
 
@@ -614,6 +628,74 @@ table _Measures
 			IF ( ISBLANK ( Rate ), BLANK (), "🟦 " & REPT ( "■", Filled ) & REPT ( "□", Unfilled ) & " " & FORMAT ( Rate, "0.0%" ) )
 		displayFolder: 10 BETINGET STOLPELENGDE
 		lineageTag: 74f05679-45df-4851-8ae5-91084c703c2e
+
+	measure 'Change Order Status RAG' =
+			VAR S = SELECTEDVALUE ( Fact_ChangeOrders[status] )
+			RETURN
+			SWITCH (
+			    S,
+			    "IMPLEMENTED", "🟢 Implemented",
+			    "APPROVED", "🟢 Approved",
+			    "SUBMITTED", "🟡 Pending Approval",
+			    "REJECTED", "🔴 Rejected",
+			    IF ( ISBLANK ( COUNTROWS ( Fact_ChangeOrders ) ), BLANK (), "⚪ Total (" & FORMAT ( COUNTROWS ( Fact_ChangeOrders ), "0" ) & " COs)" )
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445501
+
+	measure 'Change Order Status Color RAG' =
+			VAR S = SELECTEDVALUE ( Fact_ChangeOrders[status] )
+			RETURN
+			SWITCH (
+			    S,
+			    "IMPLEMENTED", "#15803D",
+			    "APPROVED", "#15803D",
+			    "SUBMITTED", "#D97706",
+			    "REJECTED", "#BE123C",
+			    "#334155"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445502
+
+	measure 'Change Order Exposure Bar' =
+			VAR Req = SUM ( Fact_ChangeOrders[requested_amount_nok] )
+			VAR S = SELECTEDVALUE ( Fact_ChangeOrders[status] )
+			VAR MaxReq = IF ( ISINSCOPE ( Fact_ChangeOrders[change_order_id] ), 350000, 4000000 )
+			VAR Ratio = MIN ( 1.0, DIVIDE ( Req, MaxReq, 0 ) )
+			VAR Filled = MIN ( 10, MAX ( 1, ROUND ( Ratio * 10, 0 ) ) )
+			VAR Unfilled = 10 - Filled
+			VAR Prefix = SWITCH ( S, "IMPLEMENTED", "🟩 ", "APPROVED", "🟩 ", "SUBMITTED", "🟧 ", "REJECTED", "🟥 ", "🟦 " )
+			RETURN
+			IF ( ISBLANK ( Req ), BLANK (), Prefix & REPT ( "█", Filled ) & REPT ( "░", Unfilled ) & " " & FORMAT ( Req / 1e3, "#,0" ) & "k" )
+		displayFolder: 10 BETINGET STOLPELENGDE
+		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445503
+
+	measure 'Activity Status RAG' =
+			VAR S = SELECTEDVALUE ( Dim_Activity[status] )
+			VAR Pct = DIVIDE ( AVERAGE ( Dim_Activity[progress_pct] ), 100, 0 )
+			RETURN
+			SWITCH (
+			    S,
+			    "Completed", "🟢 Completed (100%)",
+			    "In Progress", "🟡 In Progress (" & FORMAT ( Pct, "0%" ) & ")",
+			    "Not Started", "🔴 Not Started (0%)",
+			    IF ( ISBLANK ( Pct ), BLANK (), "🔵 Avg (" & FORMAT ( Pct, "0.0%" ) & ")" )
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445504
+
+	measure 'Activity Status Color RAG' =
+			VAR S = SELECTEDVALUE ( Dim_Activity[status] )
+			RETURN
+			SWITCH (
+			    S,
+			    "Completed", "#15803D",
+			    "In Progress", "#D97706",
+			    "Not Started", "#BE123C",
+			    "#15803D"
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445505
 
 	column Value
 		isHidden

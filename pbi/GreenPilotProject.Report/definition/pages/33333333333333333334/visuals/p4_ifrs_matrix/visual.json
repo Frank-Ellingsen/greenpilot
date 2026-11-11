@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p4_ifrs_matrix",
   "position": {
-    "x": 660.0,
-    "y": 170.0,
+    "x": 660,
+    "y": 170,
     "z": 2100,
-    "height": 540.0,
-    "width": 1220.0,
+    "height": 540,
+    "width": 1220,
     "tabOrder": 6000
   },
   "visual": {
@@ -76,7 +76,8 @@
                 }
               },
               "queryRef": "_Measures.Actual Cost (AC)",
-              "nativeQueryRef": "Actual Cost (AC)"
+              "nativeQueryRef": "Actual Cost (AC)",
+              "active": true
             },
             {
               "field": {
@@ -90,7 +91,8 @@
                 }
               },
               "queryRef": "_Measures.Actual Cost Capitalized (AuC)",
-              "nativeQueryRef": "Actual Cost Capitalized (AuC)"
+              "nativeQueryRef": "Actual Cost Capitalized (AuC)",
+              "active": true
             },
             {
               "field": {
@@ -104,7 +106,8 @@
                 }
               },
               "queryRef": "_Measures.Actual Cost Expensed (P&L)",
-              "nativeQueryRef": "Actual Cost Expensed (P&L)"
+              "nativeQueryRef": "Actual Cost Expensed (P&L)",
+              "active": true
             },
             {
               "field": {
@@ -118,7 +121,8 @@
                 }
               },
               "queryRef": "_Measures.Capitalization Rate %",
-              "nativeQueryRef": "Capitalization Rate %"
+              "nativeQueryRef": "Capitalization Rate %",
+              "active": true
             },
             {
               "field": {
@@ -132,7 +136,8 @@
                 }
               },
               "queryRef": "_Measures.AuC Capitalization Bar",
-              "nativeQueryRef": "AuC Capitalization Bar"
+              "nativeQueryRef": "AuC Capitalization Bar",
+              "active": true
             },
             {
               "field": {
@@ -146,11 +151,134 @@
                 }
               },
               "queryRef": "_Measures.AuC Capitalization Rate RAG",
-              "nativeQueryRef": "AuC Capitalization Rate RAG"
+              "nativeQueryRef": "AuC Capitalization Rate RAG",
+              "active": true
             }
           ]
         }
       }
+    },
+    "objects": {
+      "cellElements": [
+        {
+          "selector": {
+            "metadata": "_Measures.Capitalization Rate %"
+          },
+          "properties": {
+            "dataBars": {
+              "positiveColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#0284C7'"
+                      }
+                    }
+                  }
+                }
+              },
+              "negativeColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#BE123C'"
+                      }
+                    }
+                  }
+                }
+              },
+              "axisColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#94A3B8'"
+                      }
+                    }
+                  }
+                }
+              },
+              "reverseDirection": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              },
+              "hideText": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "AuC Capitalization Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.AuC Capitalization Bar"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "AuC Capitalization Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.AuC Capitalization Rate RAG"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "AuC Capitalization Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

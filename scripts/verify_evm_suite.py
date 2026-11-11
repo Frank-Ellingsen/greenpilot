@@ -103,18 +103,38 @@ def run_quality_gates():
         "AuC Capitalization Rate RAG",
         "AuC Capitalization Color RAG",
         "Overall Project Health RAG",
+        "Change Order Status RAG",
+        "Change Order Status Color RAG",
+        "Activity Status RAG",
+        "Activity Status Color RAG",
         "Cost Variance Bar",
         "Physical Progress Bar",
         "Activity Progress Bar",
         "Budget Consumption Bar",
         "PO Commitment Exposure Bar",
-        "AuC Capitalization Bar"
+        "AuC Capitalization Bar",
+        "Change Order Exposure Bar"
     ]
     for m in required_rag_and_bars:
         assert f"measure '{m}'" in tmdl_content, f"Missing required DAX measure in _Measures.tmdl: {m}"
     assert "Dim_Date[Date] < ProjectDataDate" in tmdl_content, "Missing cutoff < ProjectDataDate filter in PV measure!"
     assert "VAR Empty " not in tmdl_content, "Reserved keyword VAR Empty found in _Measures.tmdl!"
     print(f"[OK] All {len(required_rag_and_bars)} Dynamic RAG and In-Cell Conditional Bar measures verified in TMDL!")
+
+    # Verify PBIR visual.json projections and conditional formatting objects
+    import glob, json
+    visual_files = sorted(glob.glob(r"pbi\GreenPilotProject.Report\definition\pages\*\visuals\*\visual.json"))
+    cond_formatted_visuals = []
+    for vf in visual_files:
+        with open(vf, encoding="utf-8") as f:
+            vdata = json.load(f)
+        for role, rdata in vdata.get("visual", {}).get("query", {}).get("queryState", {}).items():
+            for proj in rdata.get("projections", []):
+                assert proj.get("active") is True, f"Projection {proj.get('queryRef')} in {vf} is not active=True!"
+        if vdata.get("visual", {}).get("objects"):
+            cond_formatted_visuals.append(os.path.basename(os.path.dirname(vf)))
+    assert len(cond_formatted_visuals) >= 12, f"Expected >=12 conditionally formatted visuals, found {len(cond_formatted_visuals)}"
+    print(f"[OK] All {len(visual_files)} PBIR visuals have active=True projections and {len(cond_formatted_visuals)} visuals have conditional formatting objects!")
 
     # 7. Cross-Platform Consistency Check (Power BI vs Streamlit vs index.html)
     print("\n--- Cross-Platform Consistency Check (PBI vs Streamlit vs index.html) ---")

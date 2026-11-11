@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p2_diag_card",
   "position": {
-    "x": 1140.0,
-    "y": 20.0,
+    "x": 1140,
+    "y": 20,
     "z": 1100,
-    "height": 500.0,
-    "width": 740.0,
+    "height": 500,
+    "width": 740,
     "tabOrder": 2000
   },
   "visual": {
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "_Measures.Overall Project Health RAG",
-              "nativeQueryRef": "Overall Project Health RAG"
+              "nativeQueryRef": "Overall Project Health RAG",
+              "active": true
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "_Measures.Root Cause Primary Diagnosis",
-              "nativeQueryRef": "Root Cause Primary Diagnosis"
+              "nativeQueryRef": "Root Cause Primary Diagnosis",
+              "active": true
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "_Measures.Root Cause Driver Decomposition",
-              "nativeQueryRef": "Root Cause Driver Decomposition"
+              "nativeQueryRef": "Root Cause Driver Decomposition",
+              "active": true
             }
           ]
         }

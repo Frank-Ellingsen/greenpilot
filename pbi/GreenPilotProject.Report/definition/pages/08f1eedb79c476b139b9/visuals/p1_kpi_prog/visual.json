@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p1_kpi_prog",
   "position": {
-    "x": 1605.0,
-    "y": 15.0,
+    "x": 1605,
+    "y": 15,
     "z": 1500,
-    "height": 120.0,
-    "width": 275.0,
+    "height": 120,
+    "width": 275,
     "tabOrder": 6000
   },
   "visual": {
@@ -27,11 +27,36 @@
                 }
               },
               "queryRef": "_Measures.Physical Progress % (Current)",
-              "nativeQueryRef": "Physical Progress % (Current)"
+              "nativeQueryRef": "Physical Progress % (Current)",
+              "active": true
             }
           ]
         }
       }
+    },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "SPI Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p3_vendor_table",
   "position": {
-    "x": 40.0,
-    "y": 180.0,
+    "x": 40,
+    "y": 180,
     "z": 2000,
-    "height": 870.0,
-    "width": 1260.0,
+    "height": 870,
+    "width": 1260,
     "tabOrder": 5000
   },
   "visual": {
@@ -57,7 +57,8 @@
                 }
               },
               "queryRef": "_Measures.PO Amount NOK",
-              "nativeQueryRef": "PO Amount NOK"
+              "nativeQueryRef": "PO Amount NOK",
+              "active": true
             },
             {
               "field": {
@@ -71,7 +72,8 @@
                 }
               },
               "queryRef": "_Measures.PO Invoiced NOK",
-              "nativeQueryRef": "PO Invoiced NOK"
+              "nativeQueryRef": "PO Invoiced NOK",
+              "active": true
             },
             {
               "field": {
@@ -85,7 +87,8 @@
                 }
               },
               "queryRef": "_Measures.PO Open Commitment NOK",
-              "nativeQueryRef": "PO Open Commitment NOK"
+              "nativeQueryRef": "PO Open Commitment NOK",
+              "active": true
             },
             {
               "field": {
@@ -99,7 +102,8 @@
                 }
               },
               "queryRef": "_Measures.PO Commitment Exposure Bar",
-              "nativeQueryRef": "PO Commitment Exposure Bar"
+              "nativeQueryRef": "PO Commitment Exposure Bar",
+              "active": true
             },
             {
               "field": {
@@ -113,7 +117,8 @@
                 }
               },
               "queryRef": "_Measures.PO Commitment Exposure RAG",
-              "nativeQueryRef": "PO Commitment Exposure RAG"
+              "nativeQueryRef": "PO Commitment Exposure RAG",
+              "active": true
             },
             {
               "field": {
@@ -133,6 +138,128 @@
           ]
         }
       }
+    },
+    "objects": {
+      "cellElements": [
+        {
+          "selector": {
+            "metadata": "_Measures.PO Open Commitment NOK"
+          },
+          "properties": {
+            "dataBars": {
+              "positiveColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#D97706'"
+                      }
+                    }
+                  }
+                }
+              },
+              "negativeColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#BE123C'"
+                      }
+                    }
+                  }
+                }
+              },
+              "axisColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#94A3B8'"
+                      }
+                    }
+                  }
+                }
+              },
+              "reverseDirection": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              },
+              "hideText": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "PO Commitment Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.PO Commitment Exposure Bar"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "PO Commitment Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.PO Commitment Exposure RAG"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "PO Commitment Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }
