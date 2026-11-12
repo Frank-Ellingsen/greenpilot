@@ -123,56 +123,6 @@
           ]
         }
       }
-    },
-    "objects": {
-      "cellElements": [
-        {
-          "selector": {
-            "metadata": "_Measures.Change Order Status RAG"
-          },
-          "properties": {
-            "fontColor": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Measure": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "_Measures"
-                        }
-                      },
-                      "Property": "Change Order Status Color RAG"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "selector": {
-            "metadata": "_Measures.Change Order Exposure Bar"
-          },
-          "properties": {
-            "fontColor": {
-              "solid": {
-                "color": {
-                  "expr": {
-                    "Measure": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "_Measures"
-                        }
-                      },
-                      "Property": "Change Order Status Color RAG"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      ]
     }
   }
 }

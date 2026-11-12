@@ -1107,7 +1107,7 @@ table _Measures
 
 	/// Executive Narrative Del 3: Regnskapsmessig Konsekvens (IAS 38 / IAS 36)
 	measure 'Narrative Part3 Accounting' =
-			VAR _auc = [Capitalized AuC NOK] / 1000000
+			VAR _auc = [Actual Cost Capitalized (AuC)] / 1000000
 			RETURN
 			"3. REGNSKAPSMESSIG KONSEKVENS: Av de bokførte kostnadene er NOK "
 			& FORMAT ( _auc, "0.0" )
@@ -1129,7 +1129,7 @@ table _Measures
 		lineageTag: da990001-0005-4000-8000-000000000005
 
 	/// Side 2 Narrativ: S-Kurve Vurdering
-	measure 'Page02_SCurve_Narrative' =
+	measure Page02_SCurve_Narrative =
 			VAR _cpi = [Cost Performance Index (CPI)]
 			VAR _spi = [Schedule Performance Index (SPI)]
 			VAR _sv = [Schedule Variance (SV)] / 1000000
@@ -1142,9 +1142,9 @@ table _Measures
 		lineageTag: da990001-0006-4000-8000-000000000006
 
 	/// Side 4 Narrativ: IFRS IAS 38 / 36 Vurdering
-	measure 'Page03_IFRS_Narrative' =
-			VAR _auc = [Capitalized AuC NOK] / 1000000
-			VAR _fou = [Expensed R&D / OpEx NOK] / 1000000
+	measure Page03_IFRS_Narrative =
+			VAR _auc = [Actual Cost Capitalized (AuC)] / 1000000
+			VAR _fou = [Actual Cost Expensed (P&L)] / 1000000
 			RETURN
 			"IFRS IAS 38/36 ANALYSE: Av påløpte kostnader er NOK " & FORMAT ( _auc, "0.0" ) & "M aktivert som anlegg under utførelse (AuC) og NOK "
 			& FORMAT ( _fou, "0.0" ) & "M driftsført over resultat. Eksploderende sluttkostnad utløser akutt krav om nedskrivningstest etter IAS 36 før årsoppgjøret."
@@ -1152,7 +1152,7 @@ table _Measures
 		lineageTag: da990001-0007-4000-8000-000000000007
 
 	/// Side 6 Narrativ: Likviditetsvarsel & Arbeidskapital
-	measure 'Page04_CashFlow_Narrative' =
+	measure Page04_CashFlow_Narrative =
 			VAR _netCash = [Cumulative Net Cash Flow NOK] / 1000000
 			VAR _po = [PO Open Commitment NOK] / 1000000
 			RETURN
@@ -1163,13 +1163,12 @@ table _Measures
 		lineageTag: da990001-0008-4000-8000-000000000008
 
 	/// Side 5 Narrativ: AI Insights & Rotårsaksanalyse
-	measure 'Page05_AI_Insights_Narrative' =
-			"AI INSIGHTS & ROTÅRSAKSANALYSE: Nedbrytingstreet og variansmotoren identifiserer WBS 1.3 (Pilot Furnace Construction & Procurement) og valutabundne utstyrsleveranser som de dominerende driverne for kostnadssprekk og rød status."
+	measure Page05_AI_Insights_Narrative = "AI INSIGHTS & ROTÅRSAKSANALYSE: Nedbrytingstreet og variansmotoren identifiserer WBS 1.3 (Pilot Furnace Construction & Procurement) og valutabundne utstyrsleveranser som de dominerende driverne for kostnadssprekk og rød status."
 		displayFolder: 08 Early Warnings & RAG
 		lineageTag: da990001-0009-4000-8000-000000000009
 
 	/// Dynamisk markørfarge for S-kurve
-	measure 'EVM_Marker_Color' =
+	measure EVM_Marker_Color =
 			VAR _cpi = [Cost Performance Index (CPI)]
 			RETURN
 			SWITCH (

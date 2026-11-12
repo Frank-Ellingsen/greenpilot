@@ -57,11 +57,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Koststed Kode (Fisk\u00e5)"
+                  "Property": "Koststed Kode (Fiskå)"
                 }
               },
-              "queryRef": "_Measures.Koststed Kode (Fisk\u00e5)",
-              "nativeQueryRef": "Koststed Kode (Fisk\u00e5)",
+              "queryRef": "_Measures.Koststed Kode (Fiskå)",
+              "nativeQueryRef": "Koststed Kode (Fiskå)",
               "active": true
             },
             {
@@ -127,66 +127,6 @@
           ]
         }
       }
-    },
-    "objects": {
-      "cellElements": [
-        {
-          "selector": {
-            "metadata": "_Measures.Andel Timer Koststed %"
-          },
-          "properties": {
-            "dataBars": {
-              "positiveColor": {
-                "solid": {
-                  "color": {
-                    "expr": {
-                      "Literal": {
-                        "Value": "'#0284C7'"
-                      }
-                    }
-                  }
-                }
-              },
-              "negativeColor": {
-                "solid": {
-                  "color": {
-                    "expr": {
-                      "Literal": {
-                        "Value": "'#BE123C'"
-                      }
-                    }
-                  }
-                }
-              },
-              "axisColor": {
-                "solid": {
-                  "color": {
-                    "expr": {
-                      "Literal": {
-                        "Value": "'#94A3B8'"
-                      }
-                    }
-                  }
-                }
-              },
-              "reverseDirection": {
-                "expr": {
-                  "Literal": {
-                    "Value": "false"
-                  }
-                }
-              },
-              "hideText": {
-                "expr": {
-                  "Literal": {
-                    "Value": "false"
-                  }
-                }
-              }
-            }
-          }
-        }
-      ]
     }
   }
 }

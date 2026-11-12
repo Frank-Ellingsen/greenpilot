@@ -164,9 +164,12 @@ def run_quality_gates():
                 qref = proj.get("queryRef", "")
                 for uncached in ["Fact_CashFlowBridge", "Dim_CostCenter", "Fact_MonthlyEarlyWarnings", "Fact_FinancialEVM_Unified_Flat"]:
                     assert uncached not in qref, f"Visual {vf} references uncached table {uncached} in {qref}!"
-        if vdata.get("visual", {}).get("objects"):
+        vobjects = vdata.get("visual", {}).get("objects", {})
+        assert "cellElements" not in vobjects, f"Visual {vf} contains cellElements without internal queryState bindings (causes Missing_References)!"
+        if vobjects:
             cond_formatted_visuals.append(os.path.basename(os.path.dirname(vf)))
     assert len(cond_formatted_visuals) >= 12, f"Expected >=12 conditionally formatted visuals, found {len(cond_formatted_visuals)}"
+    assert "Capitalized AuC NOK" not in tmdl_content and "Expensed R&D / OpEx NOK" not in tmdl_content, "Missing measure reference found in _Measures.tmdl!"
     print(f"[OK] All {len(visual_files)} PBIR visuals across {len(page_folders)} pages have valid schemas, cached projections, and {len(cond_formatted_visuals)} conditionally formatted visuals!")
 
     # 7. Cross-Platform Consistency Check (Power BI vs Streamlit vs index.html)

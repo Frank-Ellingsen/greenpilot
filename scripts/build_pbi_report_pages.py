@@ -119,7 +119,7 @@ def write_visual(page_folder, vname, visual_dict, x, y, w, h, z, tab_order):
         "visual": visual_dict
     }
     with open(vfile, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2)
+        json.dump(payload, f, indent=2, ensure_ascii=False)
 
 def prepare_page(pid, display_name):
     pdir = os.path.join(PAGES_DIR, pid)
@@ -138,7 +138,7 @@ def prepare_page(pid, display_name):
             "displayOption": "FitToPage",
             "height": 1080,
             "width": 1920
-        }, f, indent=2)
+        }, f, indent=2, ensure_ascii=False)
     return pdir
 
 def repack_pbix():
@@ -351,18 +351,6 @@ def build_pages():
                     ]
                 }
             }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_font_color("_Measures.Budget Consumption Bar", "CV Color RAG"),
-                make_cell_databars("_Measures.Cost Variance (CV)", pos_hex="#15803D", neg_hex="#BE123C", color_measure_prop="CV Color RAG"),
-                make_cell_font_color("_Measures.Cost Variance Bar", "CV Color RAG"),
-                make_cell_font_color("_Measures.Cost Performance Index (CPI)", "CPI Color RAG"),
-                make_cell_font_color("_Measures.CPI Status RAG", "CPI Color RAG"),
-                make_cell_font_color("_Measures.Schedule Performance Index (SPI)", "SPI Color RAG"),
-                make_cell_font_color("_Measures.SPI Status RAG", "SPI Color RAG"),
-                make_cell_font_color("_Measures.Physical Progress Bar", "SPI Color RAG")
-            ]
         }
     }
     write_visual(p1_dir, "p1_wbs_matrix", matrix_dict, 1120, 150, 760, 905, 2100, 8000)
@@ -491,13 +479,6 @@ def build_pages():
                     ]
                 }
             }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_databars("_Measures.PO Open Commitment NOK", pos_hex="#D97706", neg_hex="#BE123C", color_measure_prop="PO Commitment Color RAG"),
-                make_cell_font_color("_Measures.PO Commitment Exposure Bar", "PO Commitment Color RAG"),
-                make_cell_font_color("_Measures.PO Commitment Exposure RAG", "PO Commitment Color RAG")
-            ]
         }
     }
     write_visual(p3_dir, "p3_vendor_table", vendor_table_dict, 40, 180, 1260, 870, 2000, 5000)
@@ -584,13 +565,6 @@ def build_pages():
                     ]
                 }
             }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_databars("_Measures.Capitalization Rate %", pos_hex="#0284C7", neg_hex="#BE123C", color_measure_prop="AuC Capitalization Color RAG"),
-                make_cell_font_color("_Measures.AuC Capitalization Bar", "AuC Capitalization Color RAG"),
-                make_cell_font_color("_Measures.AuC Capitalization Rate RAG", "AuC Capitalization Color RAG")
-            ]
         }
     }
     write_visual(p4_dir, "p4_ifrs_matrix", ifrs_matrix_dict, 660, 170, 1220, 540, 2100, 6000)
@@ -650,12 +624,6 @@ def build_pages():
                     ]
                 }
             }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_font_color("_Measures.Change Order Status RAG", "Change Order Status Color RAG"),
-                make_cell_font_color("_Measures.Change Order Exposure Bar", "Change Order Status Color RAG")
-            ]
         }
     }
     write_visual(p5_dir, "p5_co_table", co_table_dict, 40, 460, 890, 590, 1100, 2000)
@@ -678,12 +646,6 @@ def build_pages():
                     ]
                 }
             }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_font_color("_Measures.Activity Status RAG", "Activity Status Color RAG"),
-                make_cell_font_color("_Measures.Activity Progress Bar", "Activity Status Color RAG")
-            ]
         }
     }
     write_visual(p5_dir, "p5_remaining_activities", rem_act_dict, 950, 460, 930, 590, 1200, 3000)
@@ -767,11 +729,6 @@ def build_pages():
                     ]
                 }
             }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_databars("_Measures.Andel Timer Koststed %", pos_hex="#0284C7", neg_hex="#BE123C")
-            ]
         }
     }
     write_visual(p6_dir, "p6_costcenter_matrix", cc_matrix_dict, 1020, 170, 860, 430, 2100, 6000)
@@ -794,12 +751,6 @@ def build_pages():
                     ]
                 }
             }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_font_color("_Measures.Early Warning Status RAG", "Early Warning Color RAG"),
-                make_cell_font_color("_Measures.Early Warning PO Exposure Bar", "Early Warning Color RAG")
-            ]
         }
     }
     write_visual(p6_dir, "p6_early_warning_table", ew_table_dict, 40, 620, 1840, 430, 2200, 7000)
