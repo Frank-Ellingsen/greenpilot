@@ -166,6 +166,8 @@ def run_quality_gates():
                     assert uncached not in qref, f"Visual {vf} references uncached table {uncached} in {qref}!"
         vobjects = vdata.get("visual", {}).get("objects", {})
         assert "cellElements" not in vobjects, f"Visual {vf} contains cellElements without internal queryState bindings (causes Missing_References)!"
+        if vdata.get("visual", {}).get("visualType") == "decompositionTreeVisual":
+            assert "expansionStates" not in vdata.get("visual", {}), f"Visual {vf} contains synthetic expansionStates (causes getAILevelInformation TypeError)!"
         if vobjects:
             cond_formatted_visuals.append(os.path.basename(os.path.dirname(vf)))
     assert len(cond_formatted_visuals) >= 12, f"Expected >=12 conditionally formatted visuals, found {len(cond_formatted_visuals)}"

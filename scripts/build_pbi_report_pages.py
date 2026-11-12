@@ -379,71 +379,7 @@ def build_pages():
                         make_projection_column("Dim_Date", "Quarter", active=True)
                     ]
                 }
-            },
-            "sortDefinition": {
-                "sort": [
-                    {
-                        "field": {
-                            "Measure": {
-                                "Expression": {"SourceRef": {"Entity": "_Measures"}},
-                                "Property": "Cost Variance (CV)"
-                            }
-                        },
-                        "direction": "Descending"
-                    }
-                ],
-                "isDefaultSort": True
             }
-        },
-        "expansionStates": [
-            {
-                "roles": ["ExplainBy"],
-                "levels": [
-                    {
-                        "queryRefs": ["Dim_CostElement.cost_element_name"],
-                        "isCollapsed": True,
-                        "identityKeys": [
-                            {
-                                "Column": {
-                                    "Expression": {"SourceRef": {"Entity": "Dim_CostElement"}},
-                                    "Property": "cost_element_name"
-                                }
-                            }
-                        ],
-                        "isPinned": True
-                    },
-                    {
-                        "queryRefs": ["Dim_WBS.wbs_name"],
-                        "isCollapsed": True,
-                        "identityKeys": [
-                            {
-                                "Column": {
-                                    "Expression": {"SourceRef": {"Entity": "Dim_WBS"}},
-                                    "Property": "wbs_name"
-                                }
-                            }
-                        ],
-                        "isPinned": True
-                    }
-                ],
-                "root": {
-                    "children": [
-                        {
-                            "identityValues": [{"Literal": {"Value": "'Other project cost'"}}],
-                            "isToggled": True
-                        }
-                    ]
-                }
-            }
-        ],
-        "objects": {
-            "tree": [
-                {
-                    "properties": {
-                        "effectiveBarsPerLevel": {"expr": {"Literal": {"Value": "14L"}}}
-                    }
-                }
-            ]
         },
         "drillFilterOtherVisuals": True
     }
@@ -856,71 +792,7 @@ def build_pages():
                         make_projection_column("Dim_Date", "Quarter", active=True)
                     ]
                 }
-            },
-            "sortDefinition": {
-                "sort": [
-                    {
-                        "field": {
-                            "Measure": {
-                                "Expression": {"SourceRef": {"Entity": "_Measures"}},
-                                "Property": "Cost Variance (CV)"
-                            }
-                        },
-                        "direction": "Descending"
-                    }
-                ],
-                "isDefaultSort": True
             }
-        },
-        "expansionStates": [
-            {
-                "roles": ["ExplainBy"],
-                "levels": [
-                    {
-                        "queryRefs": ["Dim_CostElement.cost_element_name"],
-                        "isCollapsed": True,
-                        "identityKeys": [
-                            {
-                                "Column": {
-                                    "Expression": {"SourceRef": {"Entity": "Dim_CostElement"}},
-                                    "Property": "cost_element_name"
-                                }
-                            }
-                        ],
-                        "isPinned": True
-                    },
-                    {
-                        "queryRefs": ["Dim_WBS.wbs_name"],
-                        "isCollapsed": True,
-                        "identityKeys": [
-                            {
-                                "Column": {
-                                    "Expression": {"SourceRef": {"Entity": "Dim_WBS"}},
-                                    "Property": "wbs_name"
-                                }
-                            }
-                        ],
-                        "isPinned": True
-                    }
-                ],
-                "root": {
-                    "children": [
-                        {
-                            "identityValues": [{"Literal": {"Value": "'Other project cost'"}}],
-                            "isToggled": True
-                        }
-                    ]
-                }
-            }
-        ],
-        "objects": {
-            "tree": [
-                {
-                    "properties": {
-                        "effectiveBarsPerLevel": {"expr": {"Literal": {"Value": "14L"}}}
-                    }
-                }
-            ]
         },
         "drillFilterOtherVisuals": True
     }
@@ -943,84 +815,7 @@ def build_pages():
                         make_projection_column("Fact_PurchaseOrders", "po_status", active=True)
                     ]
                 }
-            },
-            "sortDefinition": {
-                "sort": [
-                    {
-                        "field": {
-                            "Measure": {
-                                "Expression": {"SourceRef": {"Entity": "_Measures"}},
-                                "Property": "PO Open Commitment NOK"
-                            }
-                        },
-                        "direction": "Descending"
-                    }
-                ],
-                "isDefaultSort": True
             }
-        },
-        "expansionStates": [
-            {
-                "roles": ["ExplainBy"],
-                "levels": [
-                    {
-                        "queryRefs": ["Dim_Vendor.vendor_name"],
-                        "isCollapsed": True,
-                        "identityKeys": [
-                            {
-                                "Column": {
-                                    "Expression": {"SourceRef": {"Entity": "Dim_Vendor"}},
-                                    "Property": "vendor_name"
-                                }
-                            }
-                        ],
-                        "isPinned": True
-                    },
-                    {
-                        "queryRefs": ["Fact_PurchaseOrders.currency"],
-                        "isCollapsed": True,
-                        "identityKeys": [
-                            {
-                                "Column": {
-                                    "Expression": {"SourceRef": {"Entity": "Fact_PurchaseOrders"}},
-                                    "Property": "currency"
-                                }
-                            }
-                        ],
-                        "isPinned": True
-                    },
-                    {
-                        "queryRefs": ["Dim_WBS.wbs_name"],
-                        "isCollapsed": True,
-                        "identityKeys": [
-                            {
-                                "Column": {
-                                    "Expression": {"SourceRef": {"Entity": "Dim_WBS"}},
-                                    "Property": "wbs_name"
-                                }
-                            }
-                        ],
-                        "isPinned": True
-                    }
-                ],
-                "root": {
-                    "children": [
-                        {
-                            "identityValues": [{"Literal": {"Value": "'Synthetic Vendor 01'"}}],
-                            "isToggled": True
-                        }
-                    ]
-                }
-            }
-        ],
-        "objects": {
-            "tree": [
-                {
-                    "properties": {
-                        "effectiveBarsPerLevel": {"expr": {"Literal": {"Value": "14L"}}}
-                    }
-                }
-            ]
         },
         "drillFilterOtherVisuals": True
     }
