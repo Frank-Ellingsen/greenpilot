@@ -1,254 +1,265 @@
-# 🏭 Elkem GreenPilot 2026 (GP2026) — Enterprise EVM & AI Project Controller Suite
+# Elkem GreenPilot 2026 — End-to-End EVM Project Control & Dual-Engine AI Architecture
 
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![DuckDB](https://img.shields.io/badge/DuckDB-Fast%20Analytical%20SQL-yellow.svg)](https://duckdb.org/)
-[![Power BI](https://img.shields.io/badge/Power%20BI-TMDL%20%26%20PBIP-F2C811.svg)](https://powerbi.microsoft.com/)
-[![Excel](https://img.shields.io/badge/Excel-FAST%20Standard%20%26%20EVM-217346.svg)](https://www.microsoft.com/excel)
-[![Streamlit](https://img.shields.io/badge/Streamlit-Dual--Engine%20Copilot-FF4B4B.svg)](https://streamlit.io/)
-[![IFRS IAS 38](https://img.shields.io/badge/IFRS-IAS%2038%20%26%20IAS%2036-green.svg)](https://www.ifrs.org/)
+A production-grade, audit-ready financial engineering and project controlling showcase developed for complex industrial research and development (R&D) initiatives. Grounded in synthetic enterprise data from **Elkem Technology (Fiskå, Kristiansand)** and co-funded by **Enova SF**, this repository demonstrates the end-to-end transformation of fragmented enterprise resource planning (ERP), scheduling (Primavera P6), and human resources (HR) data into an integrated **Single Source of Truth (SSOT)**.
+
+The framework implements a **Dual-Engine Architecture** for corporate financial governance: combining deterministic, formula-driven calculation engines (FAST-standard financial models, star schema data warehouses, and Power BI semantic models) with an agentic AI Copilot backed by a vectorized in-memory regulatory knowledge base (RAG) covering IFRS, ISA standards, and government grant regulations.
 
 ---
 
-## 📌 Executive Summary
+## 1. Executive Summary & The GreenPilot 2026 Crisis
 
-**Elkem GreenPilot 2026 (GP2026)** is an end-to-end industrial project controlling ecosystem modeled for a pilot industrial plant (Silicon Slag Upgrading & Biocarbon Pilot). It integrates **Earned Value Management (ANSI/EIA-748)**, **IFRS / IAS 38 Asset under Construction (AuC)** capitalization, **Enova / SkatteFUNN grant compliance**, and a **Dual-Engine AI Copilot** (DuckDB Text-to-SQL + Knowledge Base RAG with Gemini 3.8 Flash).
+The **GreenPilot 2026** project was chartered to construct and validate a next-generation pilot reactor for low-carbon silicon production at Elkem's industrial research facility in Fiskå. The project operates under a strictly capped, board-approved baseline budget (**Budget at Completion / BAC**) of **NOK 20,000,000.00**, supported by a conditional grant commitment of **NOK 10,000,000.00** from Enova SF.
 
-All reported figures are **100% mathematically reconciled** across **Power BI** (`pbi/GreenPilotProject.pbip` & `GreenPilotProjectReport.pbix`), **Streamlit** (`scripts/app.py`), **Excel** (`GreenPilot_2026_EVM_Model.xlsx`), and the **Interactive Web Dashboard** (`index.html`).
+As of the **31.10.2026 accounting cut-off date**, traditional general ledger financial reviews reported accrued project costs of **NOK 57.97M**. While this alone represents a massive overrun (+189.8% above BAC), comprehensive project control synthesis revealed a far more severe financial crisis: **an unmonitored commitment iceberg**.
 
-The project models an active **cut-off date of 01.11.2026** (last ERP GL posting `31.10.2026`), exposing a classic industrial project-controlling paradox: **schedule compression / fast-tracking (`SPI = 1.16`, `+2.59M NOK` ahead of plan)** achieved at the cost of **severe budget overrun (`CPI = 0.33`, `-38.75M NOK` cost variance)** and unapproved procurement commitments (**`NOK 49.23M` open POs**).
+* **Visible Accruals (General Ledger Actuals - AC):** NOK 57,968,040.98 (289.8% of BAC)
+* **Submerged Commitments (Unbilled Purchase Orders - PO):** NOK 49,233,751.55 (246.2% of BAC)
+* **Total Financial Exposure (AC + Open PO):** NOK 107,201,792.53 (536.0% of BAC)
+* **Baseline Budget Authorization (BAC):** NOK 20,000,000.00 (100.0% of BAC)
+* **Unapproved Financial Overrun (Exposure Variance):** -NOK 87,201,792.53 (+436.0% budget breach)
+
+### The Root Cause: Fast-Tracking Without Financial Commitments Gatekeeping
+In Q1 2026, project engineering initiated an aggressive fast-tracking campaign to achieve early mechanical completion. Physical progress advanced rapidly, yielding an apparent Schedule Performance Index (**SPI**) of **1.156** (Schedule Variance: +NOK 2.59M). However, this physical acceleration was achieved by issuing massive, unhedged purchase orders in foreign currencies (USD and EUR) for specialized titanium components, high-temperature instrumentation, and external engineering support.
+
+Because standard ERP accounts payable controls only monitor vendor invoices after goods receipt, commitments were omitted from routine monthly budget variance reports. By March 2026, open purchase orders alone exceeded 149% of the entire project budget. This drove the Cost Performance Index (**CPI**) down to **0.331** (Cost Variance: -NOK 38.75M), generating an immediate liquidity crunch and severe IFRS balance sheet impairment exposure.
+
+---
+
+## 2. Core EVM Metrics & Governance Scorecard
+
+All metrics are computed deterministically per the cut-off date **31.10.2026** (Data Date: 2026-11-01), reconciled across general ledger transactions, Primavera P6 activity baselines, and vendor registers.
+
+| Metric | Symbol | Value (NOK) | Performance / Benchmark | Controller Assessment & Diagnostic | RAG Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Budget at Completion** | BAC | 20,000,000.00 | Approved Baseline Target | Board-authorized spending ceiling for WBS 100–600 | Baseline |
+| **Planned Value (YTD)** | PV | 16,620,871.10 | Scheduled Delivery to Date | Cumulative baseline budget scheduled through Oct 2026 | Planned |
+| **Actual Cost** | AC | 57,968,040.98 | Actual GL Accruals | Gross general ledger expenditure (+189.8% above BAC) | Red Alarm |
+| **Earned Value** | EV | 19,215,686.27 | Physical Progress (96.1%) | Budget value of physically completed activities | Fast-Track |
+| **Cost Variance** | CV | -38,752,354.71 | EV - AC | Severe unit-cost overrun across pilot development | Red Alarm |
+| **Schedule Variance** | SV | +2,594,815.17 | EV - PV | Positive schedule variance driven by forced mechanical assembly | Ahead |
+| **Cost Performance Index** | CPI | **0.331** | Threshold: >= 1.000 | Critical cost inefficiency: NOK 1.00 spent returns NOK 0.33 value | Red Alarm |
+| **Schedule Performance Index** | SPI | **1.156** | Threshold: >= 1.000 | Physical schedule advancement achieved through severe overspending | Ahead |
+| **Open Commitments** | PO | 49,233,751.55 | Legal Obligations | Legally binding, unbilled external purchase orders | Critical |
+| **Total Financial Exposure** | EXP | **107,201,792.53** | AC + Open PO | Combined capital required to satisfy all executed contracts | Critical |
+| **Capitalized AuC (IAS 38)** | AuC | 43,375,028.38 | Development Phase Assets | Carried on balance sheet under Construction in Progress | Impairment |
+| **Expensed R&D (IAS 38)** | P&L | 14,593,012.60 | Research & Governance | Expensed directly to operating profit (WBS-100 & PMO) | Expensed |
+| **Enova Grant Received** | Grant | 3,000,000.00 | Milestone 1 (June 2026) | Verified grant disbursement; NOK 7.0M remaining tranche | Received |
+
+---
+
+## 3. Accounting & Regulatory Architecture
+
+Industrial demonstration projects require strict separation between operational project tracking and statutory IFRS financial reporting. The repository embeds full compliance with international accounting and auditing frameworks.
+
+### IFRS IAS 38 — Intangible Assets & AuC Capitalization
+Under IAS 38.54–57, research activities must be expensed as incurred, whereas development costs may only be capitalized when six cumulative criteria are demonstrated (technical feasibility, commercial intent, ability to use/sell, future economic benefits, resource availability, and reliable measurement):
+* **Expensed R&D (NOK 14.59M):** WBS-100 (Project Management & PMO) and general administrative coordination fail direct technical attribution and are booked directly to P&L operating expenses.
+* **Capitalized AuC (NOK 43.38M):** Direct engineering, pilot fabrication, and reactor assembly (WBS-200 through WBS-500) are recognized on the balance sheet as Assets under Construction (*Anlegg under utførelse*).
+
+### IFRS IAS 36 — Impairment Testing Trigger & Asset Haircut
+IAS 36.12(f) mandates that when internal reporting indicates that economic performance or project capital requirements are significantly worse than budgeted, an immediate impairment test must be performed. 
+With an EAC exceeding NOK 107M against a commercial model predicated on a NOK 20M capital footprint:
+* **Terminal Value / Fair Value Less Costs of Disposal (FVLCOD):** A terminated pilot facility yields minimal liquidation value (estimated at NOK 0–5M in scrap/salvage).
+* **Value in Use (VIU):** Even under successful technical completion, the pilot unit produces discounted operational cash flows estimated at NOK 30.0M.
+* **Audit Mandate:** Carrying AuC at NOK 43.38M without an immediate valuation haircut violates IAS 36. An extraordinary impairment charge of between **NOK 13.4M (continued execution)** and **NOK 43.4M (full abandonment)** must be recognized prior to year-end closing.
+
+### ISA 805 & Government Grant Compliance (Enova SF)
+Audit engagements under **ISA 805 (Special Considerations — Audits of Single Financial Statements and Specific Elements)** govern cost certifications submitted to Enova SF:
+* **Hourly Personnel Rate Cap:** Under Norwegian Research Council (NFR) and Enova regulations (Informasjonsskriv 3-2018 / RF-1053B / 250114), internal labor rates are calculated as 1.2 promille of contractual base salary, but are **strictly capped at NOK 530.00 per hour**. The system validates all 1,537 employee timesheets against this threshold.
+* **Documentation Rigor:** Time entries lacking explicit WBS activity tags or demonstrating excessive administrative meeting overhead (e.g., CC-4300 PMO logging 3,394 hours) are quarantined to mitigate grant clawback risks under Enova's funding regulations.
+
+---
+
+## 4. The Dual-Engine Architecture
+
+This project operationalizes the core philosophy of **Architecting Agentic Finance**:
+
+> *Models Reason. Software Computes. Agents Orchestrate. Systems Verify.*
+
+* **Engine 1: Deterministic Calculation (The Software Calculator):**
+  * Pure mathematical accuracy with zero hallucination risk.
+  * Star schema ETL & OLAP aggregation across ERP, Primavera P6, and HR datasets.
+  * Deterministic EVM formulation (BAC, PV, AC, EV, CPI, SPI, EAC).
+  * Working capital & DPO 30-day cash outflow bridges.
+  * Real-time what-if scenario simulations.
+* **Engine 2: Agentic AI Reasoning (The Financial Copilot):**
+  * Context-aware semantic reasoning grounded in verified financial models.
+  * Vectorized knowledge retrieval (TF-IDF & Cosine Similarity) across IFRS, ISA, and Enova statutes.
+  * Multi-step variance diagnosis and automated root cause extraction.
+  * Automated drafting of Board Memos and Stage-Gate governance resolutions.
+
+When an executive or board member queries the system:
+1. **Engine 1** computes exact figures from the underlying transactional star schema (e.g., aggregating open purchase orders for WBS-300 totaling NOK 28.45M).
+2. **Engine 2** ingests these exact figures, traverses the vector database of IFRS standards and grant rules, and articulates an audit-ready narrative explaining why the variance triggers a mandatory IAS 36 impairment review.
+
+---
+
+## 5. The Multi-Channel Delivery Ecosystem
+
+A primary deliverable of this project is ensuring that all stakeholders—from plant controllers to the Board of Directors—consume synchronized data through their preferred enterprise interface.
+
+### 1. Microsoft Excel Master Model (`GreenPilot_2026_Model-v3.xlsx`)
+* **FAST Standard & Tufte Principles:** Formatted with `Top-Left A1` focus, frozen header panes, clean visual hierarchy, and high data-ink ratio.
+* **Side-by-Side Executive Summary:** Features KPI metrics, the 4-part rule-based controller narrative, and a direct visual representation of the management gap (Exposure vs. BAC) in cells `H10:N24`.
+* **Inline Sheet Charts:** WBS cost variance column charts, 12-month S-curve lines, working capital cash flow bars, and department resource allocation charts placed directly beneath tables to eliminate horizontal scrolling.
+
+### 2. Microsoft Power BI Project (`pbi/GreenPilotProject.pbip`)
+* **Version-Controlled Fabric PBIP Structure:** Cleanly separated semantic model (`_Measures.tmdl`) and report definitions (`pages.json`).
+* **6 Specialized Report Pages:**
+  1. `00 Executive Narrative & Governance`: Dynamic headline banner, 4 narrative DAX cards, executive KPI scorecards, and exposure waterfall.
+  2. `01 Executive Summary`: Core EVM performance matrix and in-cell bar indicators.
+  3. `02 EVM S-Curve & Trends`: Continuous date line charts with linear trendlines, ETS forecasting (6 months out), anomaly detection (highlighting the March 2026 blowout), and dynamic RAG markers.
+  4. `03 IFRS Accounting & WBS Drilldown`: Interactive Decomposition Tree drilling from total cost variance into WBS, cost elements, vendors, and cost centers.
+  5. `04 Likviditet & Koststeder Fiskå`: Working capital cash flow bridge and departmental labor tracking.
+  6. `05 AI Analytics & Key Influencers`: Machine learning visual identifying currency exposure and WBS-300 procurement as primary drivers of project distress, alongside natural language Q&A.
+
+### 3. Board Decision Deck (`GreenPilot_2026_Board_Deck.pptx` & `.pdf`)
+* **Executive Presentation:** 8 widescreen 16:9 slides built in corporate Elkem Navy typography.
+* **Storytelling with Data Visuals:** Features five standalone, high-resolution figures:
+  1. *EVM S-Curve with Crisis Inflection Point* (annotating March 2026).
+  2. *The Financial Commitment Iceberg* (waterfall bridge from BAC 20M to Exposure 107.2M).
+  3. *Liquidity Gap Analysis* (monthly vendor cash-out vs. Enova grant receipts).
+  4. *Fiskå Resource Leakage* (horizontal hours breakdown for CC-4100, CC-4200, CC-4300).
+  5. *IFRS IAS 36 Impairment Scenarios* (stacked valuation impact comparing completion vs. abandonment).
+
+### 4. Formal Board Memo (`GreenPilot_2026_Board_Memo.pdf`)
+* **3-Page Statutory Executive Memorandum:** Authoritative document drafted for the Extraordinary Stage-Gate 3 Review.
+* **Actionable 4-Point Board Resolution:** Formal mandate establishing an immediate procurement freeze, a cancellation audit of open purchase orders, technical hold parameters, and Enova notification protocols.
+
+### 5. Streamlit Dual-Engine Application (`app.py`) & Web Portal
+* **Live What-If Simulation Engine:** Interactive sliders allowing executives to test purchase order cancellation rates (0–100%) and impairment haircuts, recalculating Net Financial Exposure in real time.
+* **In-Memory Vector DB (RAG Chatbot):** Semantic search engine indexing project sources, IFRS standards (IAS 38, IAS 36, IAS 20), ISA 805, and Enova grant guidelines, providing cited answers to ad-hoc governance inquiries.
+* **Interactive Web Application:** Configured for deployment to GitHub Pages.
+
+---
+
+## 6. Data Architecture & Star Schema Pipeline
+
+The project extracts, cleans, validates, and models data across 22 operational tables from three disparate enterprise domains:
+
+### Pipeline Stages
+1. **Stage 1: Cleaning & Harmonization:**
+   * Delimiter auto-detection (semi-colon/comma), currency parsing (NOK, EUR, USD).
+   * FX conversion using historical transaction rates (`03_erp_fx_rates.csv`).
+   * Primavera P6 activity relationship validation & date formatting.
+   * HR timesheet audit against the statutory NOK 530/hour billing rate cap.
+2. **Stage 2: Dimensional Modeling:**
+   * Conformed Dimensions: `Dim_Project`, `Dim_WBS`, `Dim_CostElement`, `Dim_Vendor`, `Dim_Employee`, `Dim_CostCenter`, `Dim_Activity`, `Dim_Date`.
+   * Fact Tables: `Fact_BudgetBaseline`, `Fact_GLActuals`, `Fact_PurchaseOrders`, `Fact_GoodsReceipts`, `Fact_APInvoices`, `Fact_Timesheets`, `Fact_CashFlowBridge`.
+3. **Stage 3: The Gold Business Layer:**
+   * Exported to `/processed/excel_ready/Fact_FinancialEVM_Unified_Flat.csv`.
+   * Standardized schema containing unified baseline, actual, commitment, and accrual records feeding Power BI, Excel FAST models, and the Streamlit Vector Engine.
+
+### Dimensional Model Summary
+* **`Dim_WBS`:** 6 Level-2 Work Breakdown Structures enriched with parent keys and statutory IAS 38 treatment tags (`CAPITALIZE` vs. `EXPENSE`).
+* **`Dim_Date`:** Comprehensive 365-day calendar table covering FY2026 with continuous date indexing, quarters, and accounting periods.
+* **`Dim_CostCenter`:** Departmental hierarchy covering Elkem Fiskå facilities: CC-4100 (Pilot Operations), CC-4200 (Central Chemistry R&D), and CC-4300 (Process Metallurgy & PMO).
+* **`Fact_PurchaseOrders`:** Contains contractual line items, tracking ordered currency, converted base amounts, invoiced progress, and remaining open commitments.
+* **`Fact_CashFlowBridge`:** Reconciles accounting accruals (AC) into physical cash outflows based on weighted 30-day supplier credit terms (DPO 30d) plus immediate payroll disbursement.
+
+---
+
+## 7. Repository Structure
 
 ```text
-========================================================================================
-                     CANONICAL PROJECT SCORECARD (CUT-OFF 01.11.2026)
-========================================================================================
-BAC (Budget at Completion):   NOK  20,000,000.00   | Status Date:     2026-11-01 (M10)
-PV  (Planned Value Jan–Oct):  NOK  16,620,871.10   | Planned Share:   83.10% of BAC
-EV  (Earned Value Opptjent):  NOK  19,215,686.27   | Physical Prog:   96.08% (98.0/102)
-AC  (Actual Cost Påløpt):     NOK  57,968,040.98   | Spend vs. BAC:   289.84% of BAC
-----------------------------------------------------------------------------------------
-CV  (Cost Variance EV - AC):  NOK -38,752,354.71   | CPI (EV / AC):   0.3315 (0.33) [RED]
-SV  (Sched Variance EV - PV): NOK  +2,594,815.17   | SPI (EV / PV):   1.1561 (1.16) [GREEN]
-EAC (Typical = BAC / CPI):    NOK  60,334,083.47   | VAC (BAC - EAC): NOK -40,334,083.47
-EAC (Composite CPI × SPI):    NOK  60,014,581.85   | ETC (EAC - AC):  NOK   2,366,042.49
-----------------------------------------------------------------------------------------
-Total PO Placed:              NOK 106,173,112.16   | PO Invoiced:     NOK  56,946,401.43
-Open PO Commitments:          NOK  49,233,751.55   | Open PO Share:   46.37% of Total PO
-AuC Capitalized (IAS 38):     NOK  43,375,028.38   | Cap. Rate:       74.83% (WBS 200-500)
-P&L Expensed (IAS 38.54):     NOK  14,593,012.60   | Expense Rate:    25.17% (WBS 100, 600)
-========================================================================================
-```
-
----
-
-## 🏛️ Ecosystem Architecture
-
-```mermaid
-flowchart TD
-    subgraph Data_Layer ["1. Data Ingestion & Star Schema"]
-        Raw["data/raw/ (21 Source CSVs)"] --> Cleaner["02_data_quality_cleaning.py"]
-        Cleaner --> Cleaned["data/cleaned/"]
-        Cleaned --> StarBuilder["03_build_star_schema.py"]
-        StarBuilder --> Parquet["processed/star_schema/*.parquet & *.csv"]
-    end
-
-    subgraph Analytics_Tier ["2. Multi-Platform Controller Deliverables"]
-        Parquet --> PBI["Power BI Suite (PBIP / TMDL + PBIX)\n5 Controller Pages | 53 DAX Measures\nDynamic RAG & Conditional Data Bars"]
-        Parquet --> Excel["GreenPilot_2026_EVM_Model.xlsx\nFAST Standard | 6 Quality Gates\nDynamic S-Curve & AuC Schedule"]
-        Parquet --> HTML["Standalone Web Dashboard (index.html)\n5 Interactive Tabs: Scorecard, S-Curve,\nP6 Banana Chart, Gantt & What-If Simulator"]
-    end
-
-    subgraph AI_Engine ["3. Streamlit AI Control Room (scripts/app.py)"]
-        Parquet --> DuckDB["In-Memory DuckDB Engine"]
-        KB["Kunnskapsbase/ (30 Reference PDFs)"] --> Chunks["data/staging/knowledge_base_chunks.json"]
-        
-        DuckDB --> AppDash["Left Column: Interactive S-Curve,\nScorecards & WBS Overrun Breakdown"]
-        DuckDB --> Copilot["Right Column: Dual-Engine AI Copilot"]
-        Chunks --> Copilot
-        Copilot --> Gemini["Gemini 3.8 Flash / Deterministic Controller"]
-        Copilot --> Audit["data/audit/streamlit_audit.jsonl"]
-    end
-```
-
----
-
-## 🔍 Root Cause Analysis & Financial Forensics
-
-### 1. Reconciled WBS Variance Matrix (Cut-off `01.11.2026`)
-
-| WBS ID | Work Package | IAS 38 Treatment | BAC (NOK) | PV Oct (NOK) | EV (NOK) | AC (NOK) | CV (`EV - AC`) | Budget Var (`BAC - AC`) | CPI | SPI | Status |
-| :--- | :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | :--- |
-| **WBS-100** | Engineering | `EXPENSE` (P&L) | `3 581 799` | `3 002 371` | `3 441 336` | `1 630 813` | **`+1 810 523`** | `+1,95M` | `2,110` | `1,146` | 🟢 Green |
-| **WBS-200** | Laboratory | `CAPITALIZE` (AuC) | `3 323 265` | `2 834 129` | `3 192 941` | `12 446 210` | **`-9 253 270`** | `-9,12M` | `0,257` | `1,127` | 🔴 Red |
-| **WBS-300** | Pilot Plant | `CAPITALIZE` (AuC) | `3 359 641` | `2 771 120` | `3 227 891` | `13 263 844` | **`-10 035 953`** | `-9,90M` | `0,243` | `1,165` | 🔴 Red |
-| **WBS-400** | Workshop | `CAPITALIZE` (AuC) | `3 195 297` | `2 681 477` | `3 069 991` | `1 379 679` | **`+1 690 312`** | `+1,82M` | `2,225` | `1,145` | 🟢 Green |
-| **WBS-500** | Tech Development | `CAPITALIZE` (AuC) | `3 150 476` | `2 508 688` | `3 026 928` | `16 285 294` | **`-13 258 366`** | `-13,13M` | `0,186` | `1,207` | 🔴 Critical |
-| **WBS-600** | Project Management | `EXPENSE` (P&L) | `3 389 522` | `2 823 086` | `3 256 600` | `12 962 199` | **`-9 705 599`** | `-9,57M` | `0,251` | `1,154` | 🔴 Red |
-| **TOTAL** | **Consolidated (GP2026)** | **AuC: 74,8% / P&L: 25,2%** | **`20 000 000`** | **`16 620 871`** | **`19 215 686`** | **`57 968 041`** | **`-38 752 355`** | **`-37,97M`** | **`0,331`** | **`1,156`** | 🔴 **Alarm** |
-
-### 2. Cost Element Variance Breakdown (`Fact_BudgetBaseline` vs. `Fact_GLActuals`)
-
-| Cost Element | Description | BAC (NOK) | AC (NOK) | Overrun / Variance (`AC - BAC`) | Overrun % |
-| :--- | :--- | ---: | ---: | ---: | ---: |
-| **CE100** | Internal labor & overtime | `3 617 525,77` | `13 134 153,87` | `+9 516 628,10` | `+263,1 %` |
-| **CE200** | External services | `3 538 276,68` | `1 479 752,80` | `-2 058 523,88` | `-58,2 %` |
-| **CE300** | Materials | `3 483 062,15` | `12 567 943,20` | `+9 084 881,05` | `+260,8 %` |
-| **CE400** | Equipment & machinery | `3 253 109,87` | `13 407 240,56` | `+10 154 130,69` | `+312,1 %` |
-| **CE500** | Travel & logistics | `3 088 115,86` | `1 302 881,14` | `-1 785 234,72` | `-57,8 %` |
-| **CE600** | Other project cost | `3 019 909,67` | `16 076 069,41` | `+13 056 159,74` | `+432,3 %` |
-| **TOTAL** | **All Cost Elements** | **`20 000 000,00`** | **`57 968 040,98`** | **`+37 968 040,98`** | **`+189,8 %`** |
-
-### 3. Primary Variance Drivers
-1. **Schedule Compression / Fast-Tracking (`SPI = 1.16`)**:
-   - Physical completion reached **96.08%** (`96` completed activities at `100%`, `4` in-progress activities `A097–A100` at `50%`, `2` unstarted activities `A101–A102` at `0%`) vs. **83.10%** planned (`SV = +2,594,815 NOK`).
-   - Achieved via heavy internal overtime (`CE100: 13.13M NOK`), air-freighted equipment (`CE400: 13.41M NOK`), and unbudgeted reactor modifications (`CE600: 16.08M NOK`).
-2. **Procurement Commitment Exposure (`NOK 49.23M`)**:
-   - Total Purchase Orders placed: **`NOK 106,173,112.16`** (`NOK 56,946,401.43` invoiced in AP; **`NOK 49,233,751.55`** open commitments across 20 vendors).
-3. **IFRS / IAS 38 AuC & Mandatory IAS 36 Impairment Testing (`NOK 43.38M`)**:
-   - **`NOK 43,375,028.38`** (`74.83%`) is capitalized to Balance Sheet (`AuC`) across development work packages `WBS-200`, `WBS-300`, `WBS-400`, and `WBS-500`, while **`NOK 14,593,012.60`** (`25.17%`) is expensed to P&L (`WBS-100` Research and `WBS-600` PMO/Closeout).
-   - Because total project spend (`57.97M NOK`, `EAC 60.33M NOK`) is nearly 3× baseline budget, **IAS 36** requires an immediate impairment review comparing the `43.38M NOK` carrying amount against recoverable commercial cash flows (value in use).
-
----
-
-## 💻 Tech Stack & Deliverables
-
-### 1. Power BI Project & TMDL Semantic Model (`pbi/GreenPilotProject.pbip` & `GreenPilotProjectReport.pbix`)
-- Source-controlled **PBIP / PBIR** report and **TMDL** semantic model (`pbi/GreenPilotProject.SemanticModel/definition/tables/_Measures.tmdl`) with **53 validated DAX measures** organized into 10 display folders:
-  - `01 EVM KJERNE (BAC, PV, AC, EV)` — Dynamic cutoff logic driven by `Dim_Project[data_date]` (`2026-11-01`).
-  - `02 EVM YTELSE & AVVIK (CV, SV, CPI, SPI)`
-  - `03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)`
-  - `04 ROOT CAUSE & PRESCRIPTIVE ENGINE`
-  - `05 IFRS & REGNSKAP (IAS 38 / AuC)`
-  - `06 INNKJØP & FORPLIKTELSER (PO & AP)`
-  - `07 ENDRINGSORDRE & KONTROLL`
-  - `08 RESSURS & TIMEAVSTEMMING`
-  - `09 DYNAMISK RAG FORMATERING` — 14 dynamic RAG badge and hex color measures (`CPI Status RAG`, `SPI Status RAG`, `CV Status RAG`, `PO Commitment Exposure RAG`, `AuC Capitalization Rate RAG`, `Overall Project Health RAG`, etc.) linked to `Config_VarianceThresholds`.
-  - `10 BETINGET STOLPELENGDE` — 6 in-cell Unicode conditional bar measures (`Cost Variance Bar`, `Physical Progress Bar`, `Activity Progress Bar`, `Budget Consumption Bar`, `PO Commitment Exposure Bar`, `AuC Capitalization Bar`).
-- **5 Analytical Report Pages**:
-  1. *Executive EVM Scorecard & S-Curve*
-  2. *Root Cause & Variance Driver Matrix*
-  3. *Procurement & Commitment Exposure*
-  4. *IFRS / IAS 38 Accounting & AuC Capitalization*
-  5. *Prescriptive Controller Action Panel*
-
-### 2. Streamlit AI Control Room (`scripts/app.py`)
-- **Dual-Engine Architecture**:
-  - **Deterministic Text-to-SQL (DuckDB)**: Queries the Gold Star Schema Parquet/CSV tables in-memory with zero arithmetic hallucination.
-  - **Knowledge Base RAG**: Searches 30 regulatory and methodological PDFs (`Kunnskapsbase/`) indexed in `data/staging/knowledge_base_chunks.json` (`IAS 38`, `IAS 36`, `Enova`, `COSO`).
-  - **Variance Analysis Report (VAR) Generator** & **JSONL Audit Trail** (`data/audit/streamlit_audit.jsonl`).
-- **Tufte-Compliant Plotly Visuals**: Interactive S-Curve with `Cut-off (01.11.2026)` vertical marker and pre-aggregated WBS BAC vs. AC bar chart.
-
-### 3. Standalone Interactive Web Dashboard (`index.html`)
-- Zero-dependency, responsive HTML5/CSS3/JS application styled on the IBM Carbon / Tufte high-data-ink specification (ready for GitHub Pages with `.nojekyll`).
-- **5 Interactive Tabs**:
-  1. *KPI-Scorecard & WBS Drilldown Matrix* (click any WBS chip or table row to filter the entire dashboard)
-  2. *Dynamic S-Curve & Monthly EVM Ledger* (with CSV export)
-  3. *Primavera P6 Banana Chart* (Early vs. Late Dates float envelope vs. actual EV %)
-  4. *Interactive Gantt Chart* (all 102 Primavera P6 activities with Critical Path, status filters, search, and activity inspector modal)
-  5. *Root Cause Diagnosis, Action Matrix & What-If Scenario Simulator* (interactive sliders for remaining CPI, risk contingency, schedule crashing, and SkatteFUNN/Enova grant rate + one-click VAR clipboard export)
-
-### 4. FAST-Standard Excel Model (`GreenPilot_2026_EVM_Model.xlsx`)
-- Built in compliance with the **FAST Standard** and **ICAEW Financial Modelling Code**, featuring 6 automated audit gates on `00_Control_Index` (`BALANCED (OK)`).
-
----
-
-## 📂 Repository Structure
-
-```text
-C:\Users\frank\OneDrive\Elkem\
 ├── data/
-│   ├── raw/                           # 21 raw source CSV extracts (ERP, P6, HR, Grant)
-│   ├── staging/                       # Staging data & knowledge_base_chunks.json
-│   ├── cleaned/                       # Silver layer cleaned & validated CSVs
-│   └── audit/
-│       └── streamlit_audit.jsonl      # Automatic AI Copilot interaction audit trail
-├── docs/                              # Technical specifications & DAX library
-│   ├── ANTIGRAVITY_STREAMLIT_APP_SPEC (1).md
-│   ├── ANTIGRAVITY_PBI_SPECIFICATION.md
-│   ├── ANTIGRAVITY_EXCEL_SPECIFICATION.md
-│   ├── star-schema-greenpilot.md
-│   ├── dax_measures_library.dax
-│   └── veiled_pbi.md
-├── Kunnskapsbase/                     # 30 Regulatory & Controller PDFs (IAS 38, Enova, COSO)
-├── pbi/                               # Power BI Project (PBIP) & TMDL Semantic Model
-│   ├── GreenPilotProject.pbip
-│   ├── GreenPilotProject.Report/
-│   └── GreenPilotProject.SemanticModel/
-│       └── definition/
-│           ├── model.tmdl
-│           ├── relationships.tmdl
-│           └── tables/
-│               └── _Measures.tmdl     # 53 DAX measures (EVM, IAS 38, RAG, Data Bars)
+│   ├── raw/                             # 22 enterprise raw CSV datasets (ERP, P6, HR)
+│   ├── staging/                         # Cleaned, UTF-8 encoded staging tables
+│   └── dictionary/                      # 20_data_dictionary.csv & 21_manifest.csv
+├── pbi/
+│   ├── GreenPilotProject.pbip           # Power BI Desktop Project Entrypoint
+│   ├── GreenPilotProject.Report/        # Visual JSON layouts & 6-page report configurations
+│   └── GreenPilotProject.SemanticModel/ # TMDL definitions (_Measures.tmdl & star schema)
 ├── processed/
-│   ├── star_schema/                   # Gold Star Schema Parquet & CSV tables
-│   ├── business_ready/                # Enriched EVM & 3-way match outputs
-│   ├── excel_ready/                   # Unified flat tables for Excel Power Query
-│   └── audit_logs/                    # Pipeline data quality & reconciliation logs
-├── scripts/                           # Pipeline, modeling, verification & app scripts
-│   ├── 01_ingest_and_validate.py      # Step 1: Raw data ingestion & schema check
-│   ├── 02_data_quality_cleaning.py    # Step 2: FX normalization, 3-way match & cut-off audit
-│   ├── 03_build_star_schema.py        # Step 3: Conformed Star Schema builder (Parquet/CSV)
-│   ├── 04_business_rules_evm.py       # Step 4: EVM & IAS 38 business rules engine
-│   ├── 04_index_knowledge_base.py     # Step 4b: PDF extraction & RAG chunk indexer
-│   ├── 05_run_full_pipeline_and_dax.py# Step 5: Master Orchestrator (Steps 1–5b)
-│   ├── apply_rag_and_bars_tmdl.py     # Dynamic RAG & Conditional Bar Length TMDL injector
-│   ├── build_pbi_report_pages.py      # Automated 5-page PBIR generator & PBIX sync
-│   ├── build_excel_model.py           # Automated openpyxl FAST-standard Excel builder
-│   ├── verify_evm_suite.py            # Cross-platform EVM quality gates (PBI, Streamlit, HTML)
-│   ├── verify_excel_model.py          # COM-based Excel formula & audit gate verifier
-│   ├── app.py                         # Streamlit EVM Control Room & AI Copilot
-│   └── requirements.txt               # Python dependencies
-├── index.html                         # Standalone interactive HTML5 Controller Dashboard
-├── GreenPilotProjectReport.pbix       # Compiled Power BI Desktop report archive
-├── GreenPilot_2026_EVM_Model.xlsx     # Audited FAST-standard Excel model
-├── .nojekyll                          # GitHub Pages static asset configuration
-├── .gitignore                         # Repository ignore rules
-└── README.md                          # Project documentation
+│   ├── star_schema/                     # Parquet / CSV dimensional tables
+│   ├── excel_ready/                     # Unified consolidated flat files & Excel models
+│   └── reports/                         # Generated Board Decks, Memos, and Figures
+│       ├── figures/                     # 5 publication-ready Storytelling PNG charts
+│       ├── GreenPilot_2026_Board_Deck.pptx
+│       ├── GreenPilot_2026_Board_Deck.pdf
+│       └── GreenPilot_2026_Board_Memo.pdf
+├── scripts/
+│   ├── 01_clean_data.py                 # Extraction & schema normalization
+│   ├── 02_build_star_schema.py          # Dimensional enrichment & fact table construction
+│   ├── build_excel_model_v3.py          # FAST-standard Excel model builder with inline charts
+│   ├── build_pbi_report_pages.py        # PBIP automated report generator & TMDL DAX injector
+│   ├── build_storytelling_deck_and_pdf.py # Matplotlib, python-pptx, and ReportLab pipeline
+│   └── app.py                           # Streamlit Dual-Engine web application & Vector RAG
+├── docs/                                # Regulatory guides, IFRS briefs, and audit standards
+└── README.md                            # Repository documentation & portfolio specification
 ```
 
 ---
 
-## 🚀 Quickstart Guide
+## 8. Installation, Reproduction & Execution Guide
 
-### 1. Clone & Install Dependencies
-```bash
-git clone https://github.com/Frank-Ellingsen/greenpilot.git
+### Prerequisites
+* Python 3.10+ (tested on Python 3.12)
+* Git & PowerShell / Bash
+* Microsoft Power BI Desktop (for opening `.pbip` files)
+* Microsoft Excel 2016+ / Office 365
+
+### Step 1: Environment Setup
+Clone the repository and install required dependencies:
+```powershell
+# Clone repository
+git clone <repository-url>
 cd greenpilot
-pip install -r scripts/requirements.txt
+
+# Create and activate virtual environment
+python -m venv wf1
+.\wf1\Scripts\Activate.ps1
+
+# Install required analytical, visualization, and presentation packages
+pip install pandas numpy matplotlib seaborn plotly streamlit python-pptx reportlab openpyxl scikit-learn
 ```
 
-*(Optional)* Configure `.env` with `GEMINI_API_KEY=your_api_key` to enable live Gemini 3.8 Flash synthesis in the Streamlit Copilot (deterministic DuckDB SQL and RAG fallback work out of the box without an API key).
-
-### 2. Run the Full ETL Pipeline & Cross-Platform Quality Gates
-```bash
-python scripts/05_run_full_pipeline_and_dax.py
-```
-Or run the cross-platform consistency test suite directly:
-```bash
-python scripts/verify_evm_suite.py
+### Step 2: Build the Star Schema & Data Warehouse
+Execute the ETL pipeline to ingest raw ERP, Primavera, and HR data, apply business logic, and generate the dimensional gold mart:
+```powershell
+python .\scripts\01_clean_data.py
+python .\scripts\02_build_star_schema.py
 ```
 
-### 3. Launch the Streamlit AI Control Room
-```bash
-streamlit run scripts/app.py
+### Step 3: Generate the FAST-Standard Excel Master Model
+Compile the financial model with top-left layout, conditional RAG flags, and inline Tufte visuals:
+```powershell
+python .\scripts\build_excel_model_v3.py
+# Output generated: processed/excel_ready/GreenPilot_2026_Model-v3.xlsx
 ```
 
-### 4. Open Power BI, Web Dashboard, or Excel
-- **Power BI**: Open `pbi/GreenPilotProject.pbip` or `GreenPilotProjectReport.pbix` in Power BI Desktop.
-- **Web Dashboard**: Open `index.html` in any browser (or via GitHub Pages).
-- **Excel**: Open `GreenPilot_2026_EVM_Model.xlsx` in Microsoft Excel.
+### Step 4: Generate Board Presentation & Statutory Audit Memo
+Render the five *Storytelling with Data* visual figures, assemble the widescreen PowerPoint deck, and compile the 3-page ReportLab PDF memorandum:
+```powershell
+python .\scripts\build_storytelling_deck_and_pdf.py
+# Outputs generated:
+# - processed/reports/figures/ (5 high-resolution PNGs)
+# - processed/reports/GreenPilot_2026_Board_Deck.pptx
+# - processed/reports/GreenPilot_2026_Board_Deck.pdf
+# - processed/reports/GreenPilot_2026_Board_Memo.pdf
+```
+
+### Step 5: Update the Power BI Project (PBIP)
+Inject the six specialized report pages, analytical configurations, and DAX measures into the Power BI model:
+```powershell
+python .\scripts\build_pbi_report_pages.py
+# Open pbi/GreenPilotProject.pbip in Power BI Desktop
+```
+
+### Step 6: Launch the Streamlit Dual-Engine Copilot
+Start the local interactive decision dashboard and vector-backed AI chatbot:
+```powershell
+streamlit run .\scripts\app.py
+# Opens automatically at http://localhost:8501
+```
 
 ---
 
-## 📐 Edward Tufte Data-Ink Design Standards
-All visual outputs across Power BI, Streamlit, Excel, and `index.html` adhere to Edward Tufte's **Data-Ink Ratio** principles:
-- **Zero Chartjunk**: No 3D effects, heavy drop shadows, or decorative icons.
-- **Clean Tabular & Gantt Grids**: Vertical gridlines removed; numbers right-aligned (`tabular-nums`) and text left-aligned.
-- **Direct Labeling**: Explicit `Cut-off (01.11.2026)` status lines and endpoint callouts on S-Curves.
-- **Semantic Exception Coloring**: Muted slates/greys for baseline context; high-contrast red (`#DC2626`) and amber (`#D97706`) reserved strictly for active cost overruns and IAS 36 impairment risks.
+## 9. Controller Evaluation & Governance Recommendations
 
----
+For the upcoming **Stage-Gate 3 Review Meeting**, the controller team recommends that the Board of Directors adopt **Option A (30-Day Technical Hold)**:
 
-## 👨‍💼 Author
-**Frank Ellingsen**  
-*Financial Controller & Business Intelligence Specialist | Project Controlling*  
-Focus areas: Project Controlling, Earned Value Management (EIA-748), IFRS Capitalization (IAS 38 / IAS 36), Power BI (PBIP/TMDL/DAX), DuckDB, and Local-First AI Agents.
+1. **Procurement Freeze:** Immediately halt all uncommitted purchase requisitions across WBS-100 through WBS-600.
+2. **Cancellation Audit:** Review the **NOK 49.23M** in unbilled purchase orders. Contractual termination clauses indicate that between **NOK 15.0M and NOK 25.0M** in unperformed supplier scopes can be legally cancelled, reducing peak financial exposure from NOK 107.2M to approximately NOK 82–92M.
+3. **IAS 36 Impairment Provisioning:** Instruct external auditors to establish an extraordinary valuation test for the **NOK 43.38M AuC balance**, modeling an estimated impairment provision of NOK 13.4M under continued operation or NOK 43.4M under project abandonment.
+4. **Grant Alignment:** Present an amended project scope and revised cost structure to Enova SF to safeguard the remaining NOK 7.0M grant allocation and eliminate clawback exposure on the NOK 3.0M disbursement already received.
