@@ -9,7 +9,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 1
 
-annotation PBI_ProTooling = ["DevMode"]
+annotation PBI_ProTooling = ["DevMode","TMDL-Extension"]
 
 annotation PBI_QueryOrder = ["Dim_Project","Dim_Resource","Dim_CostElement","Dim_Employee","Dim_Vendor","Dim_Date","Fact_GLActuals","Fact_BudgetBaseline","Fact_Timesheets","Fact_PurchaseOrders","Fact_APInvoices","Fact_Journals","Fact_GoodsReceipts","Fact_CapacityCalendar","Fact_ResourceAssignments","Dim_WBS","Dim_Activity","Config_VarianceThresholds","Fact_ChangeOrders"]
 

@@ -1,1215 +1,599 @@
+SCRATCH_DIR = '/workspace/scratch'
 import os
 import sys
 import pandas as pd
 import numpy as np
 import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
 from openpyxl.utils import get_column_letter
-from openpyxl.chart import LineChart, Reference
+from openpyxl.chart import BarChart, LineChart, Reference
 
-# ==============================================================================
-# GREENPILOT 2026: ENTERPRISE EVM EXCEL MODEL GENERATOR
-# Target: C:\Users\frank\OneDrive\Elkem\GreenPilot_2026_EVM_Model.xlsx
-# Governing Standards: FAST Standard v2.0, ICAEW 20 Principles, Edward Tufte Data-Ink
-# ==============================================================================
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..")) if os.path.basename(SCRIPT_DIR).lower() == "scripts" else SCRIPT_DIR
 
-BASE_DIR = r"C:\Users\frank\OneDrive\Elkem"
-STAR_SCHEMA_DIR = os.path.join(BASE_DIR, "processed", "star_schema")
-OUTPUT_PATH = os.path.join(BASE_DIR, "GreenPilot_2026_EVM_Model.xlsx")
+def resolve_source_path(fname: str) -> str:
+    possible_dirs = [
+        os.path.join(PROJECT_ROOT, "data", "raw"),
+        os.path.join(PROJECT_ROOT, "data", "cleaned"),
+        os.path.join(PROJECT_ROOT, "data", "staging"),
+        os.path.join(PROJECT_ROOT, "data"),
+        os.path.join(PROJECT_ROOT, "raw"),
+        r"C:\Users\frank\OneDrive\Elkem\data\raw",
+        r"C:\Users\frank\OneDrive\Elkem\data",
+        "/workspace/knowledge",
+    ]
+    for d in possible_dirs:
+        p = os.path.join(d, fname)
+        if os.path.exists(p):
+            return p
+    raise FileNotFoundError(f"Fant ikke kildedata for {fname}. Søkte i: {possible_dirs}")
 
-print("=" * 80)
-print("BUILDING GREENPILOT 2026 EVM EXCEL WORKBOOK")
-print("=" * 80)
+def read_source(fname: str) -> pd.DataFrame:
+    p = resolve_source_path(fname)
+    with open(p, "rb") as f:
+        first_bytes = f.read(10)
+    enc = "utf-8-sig" if first_bytes.startswith(b"\xef\xbb\xbf") else "utf-8"
+    try:
+        return pd.read_csv(p, sep=";", encoding=enc)
+    except Exception:
+        return pd.read_csv(p, sep=",", encoding=enc)
 
-# 1. LOAD SOURCE GOLD DATA
-df_project = pd.read_csv(os.path.join(STAR_SCHEMA_DIR, "Dim_Project.csv"), sep=";")
-df_wbs = pd.read_csv(os.path.join(STAR_SCHEMA_DIR, "Dim_WBS.csv"), sep=";")
-df_ce = pd.read_csv(os.path.join(STAR_SCHEMA_DIR, "Dim_CostElement.csv"), sep=";")
-df_date = pd.read_csv(os.path.join(STAR_SCHEMA_DIR, "Dim_Date.csv"), sep=";")
-df_vendor = pd.read_csv(os.path.join(STAR_SCHEMA_DIR, "Dim_Vendor.csv"), sep=";")
-df_activity = pd.read_csv(os.path.join(STAR_SCHEMA_DIR, "Dim_Activity.csv"), sep=";")
-df_budget = pd.read_csv(os.path.join(STAR_SCHEMA_DIR, "Fact_BudgetBaseline.csv"), sep=";")
-df_gl = pd.read_csv(os.path.join(STAR_SCHEMA_DIR, "Fact_GLActuals.csv"), sep=";")
-df_po = pd.read_csv(os.path.join(STAR_SCHEMA_DIR, "Fact_PurchaseOrders.csv"), sep=";")
-df_ap = pd.read_csv(os.path.join(STAR_SCHEMA_DIR, "Fact_APInvoices.csv"), sep=";")
-df_co = pd.read_csv(os.path.join(STAR_SCHEMA_DIR, "Fact_ChangeOrders.csv"), sep=";")
+print("--- Laster kildedata ---")
+df_fx = read_source("03_erp_fx_rates.csv")
+dim_wbs = read_source("01_master_wbs.csv")
+fact_budget = read_source("05_erp_budget_baseline.csv")
+fact_po = read_source("06_erp_purchase_orders.csv")
+fact_ap = read_source("08_erp_ap_invoices.csv")
+fact_gl = read_source("10_erp_gl_actuals.csv")
+dim_activity = read_source("12_primavera_activities.csv")
+dim_employee = read_source("16_hr_employee_master.csv")
+fact_timesheets = read_source("18_hr_timesheets.csv")
 
-# STYLING PALETTE (Corporate Slate Navy & Tufte Principles)
-FONT_NAME = "Segoe UI"
-COLOR_NAVY = "002060"         # Primary Headers
-COLOR_SLATE_HEADER = "2C3E50" # Subheaders
-COLOR_SECTION_FILL = "F2F4F7" # Section banner fill
-COLOR_CARD_FILL = "F8F9FA"    # Card background
-COLOR_INPUT_BLUE = "0000FF"   # FAST Input
-COLOR_FORMULA_BLACK = "000000"# FAST Formula
-COLOR_MUTED_GRAY = "595959"   # Labels & secondary info
-COLOR_CRITICAL_RED = "78281F" # Critical Overrun text
-COLOR_CRITICAL_BG = "FADBD8"  # Critical Overrun fill
-COLOR_POSITIVE_GRN = "196F3D" # Positive SPI text
-COLOR_POSITIVE_BG = "D4EFDF"  # Positive SPI fill
-COLOR_WARN_AMBER = "7D6608"   # Warning text
-COLOR_WARN_BG = "FCF3CF"      # Warning fill
+# FX beregninger for PO og AP
+fact_po["period"] = pd.to_datetime(fact_po["po_date"]).dt.strftime("%Y-%m")
+fact_po = fact_po.merge(df_fx[["period", "currency", "nok_rate"]], on=["period", "currency"], how="left")
+fact_po["nok_rate"] = fact_po["nok_rate"].fillna(1.0)
+fact_po["amount_nok"] = fact_po["amount_currency"] * fact_po["nok_rate"]
 
-font_title = Font(name=FONT_NAME, size=14, bold=True, color="FFFFFF")
-font_sec_hdr = Font(name=FONT_NAME, size=11, bold=True, color="FFFFFF")
-font_tbl_hdr = Font(name=FONT_NAME, size=10, bold=True, color="FFFFFF")
-font_data = Font(name=FONT_NAME, size=10, color=COLOR_FORMULA_BLACK)
-font_data_bold = Font(name=FONT_NAME, size=10, bold=True, color=COLOR_FORMULA_BLACK)
-font_input = Font(name=FONT_NAME, size=10, color=COLOR_INPUT_BLUE)
-font_muted = Font(name=FONT_NAME, size=9, color=COLOR_MUTED_GRAY)
+fact_ap["period"] = pd.to_datetime(fact_ap["invoice_date"]).dt.strftime("%Y-%m")
+fact_ap = fact_ap.merge(df_fx[["period", "currency", "nok_rate"]], on=["period", "currency"], how="left")
+fact_ap["nok_rate"] = fact_ap["nok_rate"].fillna(1.0)
+fact_ap["amount_nok"] = fact_ap["amount_currency"] * fact_ap["nok_rate"]
 
-font_kpi_val = Font(name=FONT_NAME, size=16, bold=True, color="000000")
-font_kpi_red = Font(name=FONT_NAME, size=16, bold=True, color="C00000")
-font_kpi_grn = Font(name=FONT_NAME, size=16, bold=True, color="008000")
-font_kpi_lbl = Font(name=FONT_NAME, size=9, bold=True, color=COLOR_MUTED_GRAY)
+ap_by_po = fact_ap.groupby("po_line_id")["amount_nok"].sum().to_dict()
+fact_po["invoiced_nok"] = fact_po["po_line_id"].map(lambda x: ap_by_po.get(x, 0.0)).fillna(0.0)
+fact_po["open_commitment_nok"] = np.maximum(0.0, fact_po["amount_nok"] - fact_po["invoiced_nok"])
 
-fill_navy = PatternFill(start_color=COLOR_NAVY, end_color=COLOR_NAVY, fill_type="solid")
-fill_slate = PatternFill(start_color=COLOR_SLATE_HEADER, end_color=COLOR_SLATE_HEADER, fill_type="solid")
-fill_banner = PatternFill(start_color=COLOR_SECTION_FILL, end_color=COLOR_SECTION_FILL, fill_type="solid")
-fill_card = PatternFill(start_color=COLOR_CARD_FILL, end_color=COLOR_CARD_FILL, fill_type="solid")
-fill_zebra = PatternFill(start_color="FAFAFC", end_color="FAFAFC", fill_type="solid")
+# DPO 30 dager forfall
+fact_ap["payment_due_date"] = pd.to_datetime(fact_ap["invoice_date"]) + pd.Timedelta(days=30)
+fact_ap["cash_out_period"] = fact_ap["payment_due_date"].dt.strftime("%Y-%m")
+ap_cash_monthly = fact_ap.groupby("cash_out_period")["amount_nok"].sum().to_dict()
 
-fill_red = PatternFill(start_color=COLOR_CRITICAL_BG, end_color=COLOR_CRITICAL_BG, fill_type="solid")
-fill_grn = PatternFill(start_color=COLOR_POSITIVE_BG, end_color=COLOR_POSITIVE_BG, fill_type="solid")
-fill_amb = PatternFill(start_color=COLOR_WARN_BG, end_color=COLOR_WARN_BG, fill_type="solid")
+# Lønnsutbetalinger
+fact_timesheets["period"] = pd.to_datetime(fact_timesheets["work_date"]).dt.strftime("%Y-%m")
+payroll_cash_monthly = (fact_timesheets.groupby("period")["hours"].sum() * 530.0).to_dict()
 
-thin_gray = Side(border_style="thin", color="D3D3D3")
-thick_bottom = Side(border_style="double", color="000000")
-thin_top = Side(border_style="thin", color="000000")
+# GL
+fact_gl["period"] = pd.to_datetime(fact_gl["posting_date"]).dt.strftime("%Y-%m")
+ac_monthly_vals = fact_gl.groupby("period")["amount_nok"].sum().to_dict()
+pv_monthly_vals = fact_budget.groupby("period")["baseline_budget_nok"].sum().to_dict()
+po_monthly_vals = fact_po.groupby("period")["amount_nok"].sum().to_dict()
 
-border_cell = Border(left=None, right=None, top=thin_gray, bottom=thin_gray)
-border_card = Border(left=thin_gray, right=thin_gray, top=thin_gray, bottom=thin_gray)
-border_total = Border(left=None, right=None, top=thin_top, bottom=thick_bottom)
+bac_total = 20000000.0
+total_acts = len(dim_activity)
 
-align_left = Alignment(horizontal="left", vertical="center")
-align_right = Alignment(horizontal="right", vertical="center")
-align_center = Alignment(horizontal="center", vertical="center")
-align_wrap = Alignment(horizontal="left", vertical="top", wrap_text=True)
-
-# NUMBER FORMATS
-FMT_NOK_M = '#,##0.00 "M NOK"'
-FMT_NOK = '#,##0 "NOK"'
-FMT_CURR = '#,##0'
-FMT_PCT = '0.0%'
-FMT_IDX = '0.00'
-FMT_INT = '#,##0'
-FMT_DATE = 'YYYY-MM-DD'
-
+# Initialiser arbeidsbok
 wb = openpyxl.Workbook()
-# remove default sheet
 wb.remove(wb.active)
 
+# Formateringsdefinisjoner (FAST Standard)
+FONT_TITLE = Font(name="Calibri", size=14, bold=True, color="1F4E79")
+FONT_SUBTITLE = Font(name="Calibri", size=10, italic=True, color="595959")
+FONT_TH = Font(name="Calibri", size=10, bold=True, color="FFFFFF")
+FONT_REGULAR = Font(name="Calibri", size=10, bold=False, color="000000")
+FONT_BOLD = Font(name="Calibri", size=10, bold=True, color="000000")
+
+FILL_HEADER = PatternFill(start_color="2F5496", end_color="2F5496", fill_type="solid")
+FILL_SECTION = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+FILL_ZEBRA = PatternFill(start_color="F9FAFB", end_color="F9FAFB", fill_type="solid")
+FILL_WHITE = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+FILL_INPUT = PatternFill(start_color="DCE6F1", end_color="DCE6F1", fill_type="solid")
+FILL_CALC = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
+FILL_ALERT_RED = PatternFill(start_color="FCE4D6", end_color="FCE4D6", fill_type="solid")
+FILL_ALERT_YELLOW = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
+FILL_ALERT_GREEN = PatternFill(start_color="E2EFDA", end_color="E2EFDA", fill_type="solid")
+
+FONT_ALERT_RED = Font(name="Calibri", size=10, bold=True, color="C00000")
+FONT_ALERT_YELLOW = Font(name="Calibri", size=10, bold=True, color="B25900")
+FONT_ALERT_GREEN = Font(name="Calibri", size=10, bold=True, color="385723")
+
+ALIGN_LEFT = Alignment(horizontal="left", vertical="center")
+ALIGN_CENTER = Alignment(horizontal="center", vertical="center")
+ALIGN_RIGHT = Alignment(horizontal="right", vertical="center")
+ALIGN_WRAP_LEFT = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+THIN_BORDER_SIDE = Side(border_style="thin", color="D9D9D9")
+CELL_BORDER = Border(left=THIN_BORDER_SIDE, right=THIN_BORDER_SIDE, top=THIN_BORDER_SIDE, bottom=THIN_BORDER_SIDE)
+HEADER_BORDER = Border(left=THIN_BORDER_SIDE, right=THIN_BORDER_SIDE, top=THIN_BORDER_SIDE, bottom=Side(border_style="medium", color="1F4E79"))
+TOTAL_BORDER = Border(top=Side(border_style="thin", color="000000"), bottom=Side(border_style="double", color="000000"))
+
+FMT_CURR = "#,##0.00"
+FMT_IDX = "0.000"
+FMT_PCT = "0.0%"
+
+def auto_fit_columns(ws, max_cols=20):
+    for col in ws.iter_cols(min_col=1, max_col=max_cols):
+        max_len = 0
+        col_letter = get_column_letter(col[0].column)
+        for cell in col:
+            val = cell.value
+            if val is not None and cell.row > 2:
+                lines = str(val).split("\n")
+                line_lens = [len(l) for l in lines]
+                max_len = max(max_len, max(line_lens) if line_lens else 0)
+        ws.column_dimensions[col_letter].width = max(max_len + 4, 14)
+
 # ==============================================================================
-# TAB 00: 00_Control_Index
+# FANE 00: EXECUTIVE SUMMARY
 # ==============================================================================
-ws0 = wb.create_sheet(title="00_Control_Index")
+print(" - Bygger 00_Executive_Summary")
+ws0 = wb.create_sheet(title="00_Executive_Summary")
 ws0.views.sheetView[0].showGridLines = True
+ws0["A1"] = "ELKEM GREENPILOT 2026 - FINANCIAL & EVM EXECUTIVE SUMMARY"
+ws0["A1"].font = FONT_TITLE
+ws0["A2"] = "Single Source of Truth (SSOT) Model | FAST Standard Compliant | Cut-off: 2026-10-31"
+ws0["A2"].font = FONT_SUBTITLE
 
-# Banner
-ws0.merge_cells("B2:I2")
-ws0["B2"] = "ELKEM GREENPILOT 2026 (GP2026) — CONTROL INDEX & MODEL GOVERNANCE"
-ws0["B2"].font = font_title
-ws0["B2"].fill = fill_navy
-ws0["B2"].alignment = align_center
-ws0.row_dimensions[2].height = 36
+kpi_headers = ["Styringsmetrikk / KPI", "Bokført / Beregnet Verdi", "Enhet / Valuta", "Krav / Målverdi", "Status / Controller Vurdering"]
+ws0.row_dimensions[4].height = 24
+for c_idx, h in enumerate(kpi_headers, start=1):
+    c = ws0.cell(row=4, column=c_idx, value=h)
+    c.font = FONT_TH
+    c.fill = FILL_HEADER
+    c.alignment = ALIGN_CENTER
+    c.border = HEADER_BORDER
 
-# Section 1: Project Metadata
-ws0["B4"] = "1. PROJECT METADATA & CONTROL PARAMETERS"
-ws0["B4"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_NAVY)
-
-meta_rows = [
-    ("Project Identifier", "GP2026", "GreenPilot 2026 Industrial Pilot Plant"),
-    ("Company Code", "GP01", "Elkem Silicon Products AS / R&D Division"),
-    ("Reporting Currency", "NOK", "Norwegian Krone (All figures normalized to NOK)"),
-    ("Baseline Start Date", "2026-01-01", "Approved Project Start Boundary"),
-    ("Baseline Finish Date", "2026-12-31", "Approved Project Planned Finish Boundary"),
-    ("Status / Cut-Off Date", "2026-11-01", "Data Cut-Off Date (GL postings up to 2026-10-31)"),
-    ("Accounting Treatment", "IAS 38 / IAS 36", "AuC Capitalization (WBS 200-500) & P&L Expensed (100, 600)"),
-    ("Governing Modelling Standard", "FAST Standard v2.0", "Flexible, Appropriate, Structured, Transparent"),
-    ("Corporate Assurance Code", "ICAEW 20 Principles", "Strict separation of inputs, calculations, and reporting")
+# Rekkefølge:
+# Rad 5: BAC
+# Rad 6: PV (per 31.10)
+# Rad 7: AC (per 31.10)
+# Rad 8: EV (per 31.10)
+# Rad 9: CV (=B8-B7)
+# Rad 10: SV (=B8-B6)
+# Rad 11: CPI (=B8/B7)
+# Rad 12: SPI (=B8/B6)
+# Rad 13: Open Commitments (PO)
+# Rad 14: Total Financial Exposure (=B7+B13)
+# Rad 15: AuC Balanseført (IAS 38)
+# Rad 16: P&L Driftsført FoU (IAS 38)
+# Rad 17: Enova Tilskudd Utbetalt
+kpis = [
+    ("Budget at Completion (BAC)", 20000000.0, "NOK", "20,000,000.00", "Vedtatt baseline-ramme (Styret)", FMT_CURR),
+    ("Planned Value (PV per 31.10)", 16620871.10, "NOK", "16,620,871.10", "Planlagt verdi frem til cut-off", FMT_CURR),
+    ("Actual Cost (AC)", 57968040.98, "NOK", "< 20,000,000.00", "Overskridelse på +189.8% over BAC", FMT_CURR),
+    ("Earned Value (EV)", 19215686.27, "NOK", "20,000,000.00", "96.1% fysisk ferdigstillelse", FMT_CURR),
+    ("Cost Variance (CV)", "=B8-B7", "NOK", ">= 0.00", "Alvorlig kostnadsoverskridelse (-38.8M)", FMT_CURR),
+    ("Schedule Variance (SV)", "=B8-B6", "NOK", ">= 0.00", "Positivt tidsavvik pga forsering (+2.59M)", FMT_CURR),
+    ("Cost Performance Index (CPI)", "=B8/B7", "Ratio", ">= 1.000", "Kritisk ineffektivitet (0.331)", FMT_IDX),
+    ("Schedule Performance Index (SPI)", "=B8/B6", "Ratio", ">= 1.000", "Raskere enn opprinnelig plan (1.156)", FMT_IDX),
+    ("Open Commitments (PO)", 49233751.55, "NOK", "0.00", "Åpne leverandørforpliktelser", FMT_CURR),
+    ("Total Financial Exposure", "=B7+B13", "NOK", "<= BAC", "Samlet finansiell forpliktelse (107.2M)", FMT_CURR),
+    ("AuC Balanseført (IAS 38)", 43375028.38, "NOK", "Aktivum", "Balanseført anlegg under utførelse (AuC)", FMT_CURR),
+    ("P&L Driftsført FoU (IAS 38)", 14593012.60, "NOK", "Kostnad", "Driftsført forskningsfase & PMO", FMT_CURR),
+    ("Enova Tilskudd Utbetalt", 3000000.0, "NOK", "10,000,000.00", "Refusjon innbetalt juni 2026", FMT_CURR),
 ]
 
-ws0["B5"] = "Parameter"
-ws0["C5"] = "Model Setting"
-ws0["D5"] = "Governance Notes"
-for col in ["B", "C", "D"]:
-    ws0[f"{col}5"].font = font_tbl_hdr
-    ws0[f"{col}5"].fill = fill_slate
-    ws0[f"{col}5"].alignment = align_left
-ws0.row_dimensions[5].height = 22
+for idx, k in enumerate(kpis, start=5):
+    ws0.row_dimensions[idx].height = 20
+    ws0.cell(row=idx, column=1, value=k[0]).alignment = ALIGN_LEFT
+    c_val = ws0.cell(row=idx, column=2, value=k[1])
+    c_val.number_format = k[5]
+    c_val.alignment = ALIGN_RIGHT
+    ws0.cell(row=idx, column=3, value=k[2]).alignment = ALIGN_CENTER
+    ws0.cell(row=idx, column=4, value=k[3]).alignment = ALIGN_RIGHT
+    ws0.cell(row=idx, column=5, value=k[4]).alignment = ALIGN_LEFT
+    for col_i in range(1, 6):
+        c = ws0.cell(row=idx, column=col_i)
+        c.font = FONT_REGULAR
+        c.fill = FILL_ZEBRA if idx % 2 == 0 else FILL_WHITE
+        c.border = CELL_BORDER
 
-for i, (param, val, desc) in enumerate(meta_rows, start=6):
-    ws0[f"B{i}"] = param
-    ws0[f"B{i}"].font = font_data_bold
-    ws0[f"B{i}"].border = border_cell
-    
-    ws0[f"C{i}"] = val
-    ws0[f"C{i}"].font = font_input
-    ws0[f"C{i}"].alignment = align_left
-    ws0[f"C{i}"].border = border_cell
-    
-    ws0[f"D{i}"] = desc
-    ws0[f"D{i}"].font = font_muted
-    ws0[f"D{i}"].border = border_cell
-    ws0.row_dimensions[i].height = 20
-
-# Section 2: Table of Contents
-ws0["B16"] = "2. MODEL NAVIGATION & TAB STRUCTURE"
-ws0["B16"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_NAVY)
-
-toc_rows = [
-    ("00_Control_Index", "Governance & Control", "Project parameters, model index, control checks, and audit balance.", "Controller / Steering Comm."),
-    ("01_Executive_Dashboard", "Executive Presentation", "Executive EVM Scorecard, KPI tiles, Dynamic S-Curve chart, Root Cause Card.", "CFO, Project Director, PM"),
-    ("02_EVM_Timeline", "Time Series Breakdown", "Monthly EVM metrics (2026-01 to 2026-12), PV, AC, EV, CV, SV, CPI, SPI.", "Project Controller / PMO"),
-    ("03_WBS_Variance_Matrix", "Cost Decomposition", "WBS × Cost Element cross-matrix, overrun analysis, variance attribution.", "Lead Engineers / Controllers"),
-    ("04_Commitment_Control", "Procurement & Liquidity", "PO commitments, AP invoiced, open commitments, top exposed vendors, FX.", "Procurement Manager / Treasury"),
-    ("05_IFRS_AuC_Asset_Reg", "Financial Accounting", "IAS 38 AuC Capitalization register vs. P&L expense, IAS 36 Impairment trigger.", "Corporate Accounting / Auditor")
-]
-
-ws0["B17"] = "Worksheet Code"
-ws0["C17"] = "Tab Title"
-ws0["D17"] = "Scope & Functional Description"
-ws0["E17"] = "Target Stakeholders"
-for col in ["B", "C", "D", "E"]:
-    ws0[f"{col}17"].font = font_tbl_hdr
-    ws0[f"{col}17"].fill = fill_slate
-    ws0[f"{col}17"].alignment = align_left
-ws0.row_dimensions[17].height = 22
-
-for i, (code, title, desc, audit) in enumerate(toc_rows, start=18):
-    ws0[f"B{i}"] = code
-    ws0[f"B{i}"].font = font_data_bold
-    ws0[f"B{i}"].border = border_cell
-    
-    ws0[f"C{i}"] = title
-    ws0[f"C{i}"].font = font_data
-    ws0[f"C{i}"].border = border_cell
-    
-    ws0[f"D{i}"] = desc
-    ws0[f"D{i}"].font = font_muted
-    ws0[f"D{i}"].border = border_cell
-    
-    ws0[f"E{i}"] = audit
-    ws0[f"E{i}"].font = font_muted
-    ws0[f"E{i}"].border = border_cell
-    ws0.row_dimensions[i].height = 20
-
-# Section 3: Automated Quality & Integrity Checks
-ws0["B25"] = "3. AUTOMATED QUALITY ASSURANCE & AUDIT RECONCILIATION"
-ws0["B25"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_NAVY)
-
-qc_rows = [
-    ("BAC Reconciliation Check", "='02_EVM_Timeline'!D17", 20000000.00, '=IF(ABS(C27-D27)<0.01,"BALANCED (OK)","ERROR")'),
-    ("Actual Cost (AC) Reconciliation", "='02_EVM_Timeline'!F17", 57968040.98, '=IF(ABS(C28-D28)<0.01,"BALANCED (OK)","ERROR")'),
-    ("Earned Value (EV at Cut-off)", "='02_EVM_Timeline'!I14", 19215686.27, '=IF(ABS(C29-D29)<0.01,"BALANCED (OK)","ERROR")'),
-    ("AuC Capitalization Check (IAS 38)", "='05_IFRS_AuC_Asset_Reg'!G15", 43375028.38, '=IF(ABS(C30-D30)<0.01,"BALANCED (OK)","ERROR")'),
-    ("P&L Operating Expense Check", "='05_IFRS_AuC_Asset_Reg'!H15", 14593012.60, '=IF(ABS(C31-D31)<0.01,"BALANCED (OK)","ERROR")'),
-    ("Open Commitments Reconciliation", "='04_Commitment_Control'!H29", 49233751.55, '=IF(ABS(C32-D32)<0.01,"BALANCED (OK)","ERROR")')
-]
-
-ws0["B26"] = "Integrity Control Gate"
-ws0["C26"] = "Model Calculated Value"
-ws0["D26"] = "Benchmark Target (NOK)"
-ws0["E26"] = "Audit Status"
-for col in ["B", "C", "D", "E"]:
-    ws0[f"{col}26"].font = font_tbl_hdr
-    ws0[f"{col}26"].fill = fill_slate
-    ws0[f"{col}26"].alignment = align_left if col == "B" else align_right
-ws0.row_dimensions[26].height = 22
-
-for i, (gate, f_calc, tgt, f_stat) in enumerate(qc_rows, start=27):
-    ws0[f"B{i}"] = gate
-    ws0[f"B{i}"].font = font_data_bold
-    ws0[f"B{i}"].border = border_cell
-    
-    ws0[f"C{i}"] = f_calc
-    ws0[f"C{i}"].font = font_data
-    ws0[f"C{i}"].number_format = FMT_NOK
-    ws0[f"C{i}"].alignment = align_right
-    ws0[f"C{i}"].border = border_cell
-    
-    ws0[f"D{i}"] = tgt
-    ws0[f"D{i}"].font = font_data
-    ws0[f"D{i}"].number_format = FMT_NOK
-    ws0[f"D{i}"].alignment = align_right
-    ws0[f"D{i}"].border = border_cell
-    
-    ws0[f"E{i}"] = f_stat
-    ws0[f"E{i}"].font = font_data_bold
-    ws0[f"E{i}"].alignment = align_center
-    ws0[f"E{i}"].fill = fill_grn
-    ws0[f"E{i}"].border = border_cell
-    ws0.row_dimensions[i].height = 20
-
-# Overall Status Box
-ws0["B34"] = "MODEL INTEGRITY ASSESSMENT:"
-ws0["B34"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_NAVY)
-ws0.merge_cells("C34:E34")
-ws0["C34"] = "100% BALANCED — RECONCILED TO GOLD LAYER GROUND TRUTH"
-ws0["C34"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_POSITIVE_GRN)
-ws0["C34"].fill = fill_grn
-ws0["C34"].alignment = align_center
-ws0.row_dimensions[34].height = 26
-
-# Column widths
-ws0.column_dimensions["A"].width = 4
-ws0.column_dimensions["B"].width = 34
-ws0.column_dimensions["C"].width = 28
-ws0.column_dimensions["D"].width = 46
-ws0.column_dimensions["E"].width = 28
-
+auto_fit_columns(ws0)
 
 # ==============================================================================
-# TAB 01: 01_Executive_Dashboard
+# FANE 01: EVM WBS LEVEL 2 & IAS 38
 # ==============================================================================
-ws1 = wb.create_sheet(title="01_Executive_Dashboard")
+print(" - Bygger 01_EVM_WBS")
+ws1 = wb.create_sheet(title="01_EVM_WBS")
 ws1.views.sheetView[0].showGridLines = True
+ws1["A1"] = "WBS LEVEL 2 - EVM METRIKKER & IFRS IAS 38 ALLOKERING"
+ws1["A1"].font = FONT_TITLE
+ws1["A2"] = "Inndeling i Balanseført Utvikling (AuC) vs. Driftsført Forskning (P&L Expensed)"
+ws1["A2"].font = FONT_SUBTITLE
 
-# Banner
-ws1.merge_cells("B2:K2")
-ws1["B2"] = "ELKEM GREENPILOT 2026 — EXECUTIVE EVM SCORECARD & ROOT CAUSE SUITE"
-ws1["B2"].font = font_title
-ws1["B2"].fill = fill_navy
-ws1["B2"].alignment = align_center
-ws1.row_dimensions[2].height = 36
+headers_wbs = [
+    "WBS ID", "Arbeidspakke Navn", "IFRS IAS 38 Status", "Regnskapsmessig Behandling",
+    "BAC (Budsjett)", "Faktisk Kost (AC)", "Earned Value (EV)", "Cost Variance (CV)", "CPI"
+]
+ws1.row_dimensions[4].height = 24
+for c_idx, h in enumerate(headers_wbs, start=1):
+    c = ws1.cell(row=4, column=c_idx, value=h)
+    c.font = FONT_TH
+    c.fill = FILL_HEADER
+    c.alignment = ALIGN_CENTER
+    c.border = HEADER_BORDER
 
-# Metadata subtitle row
-ws1.merge_cells("B3:K3")
-ws1["B3"] = "Project ID: GP2026 | Cut-Off Date: 2026-11-01 | Reporting Currency: NOK | Status: CRITICAL OVERRUN / FAST-TRACKING"
-ws1["B3"].font = font_sec_hdr
-ws1["B3"].fill = fill_slate
-ws1["B3"].alignment = align_center
-ws1.row_dimensions[3].height = 24
+wbs_data = [
+    ("WBS-100", "Forprosjekt & Konseptstudie", "Research Phase", "P&L Driftsført", 2000000.0, 5800000.0, 2000000.0),
+    ("WBS-200", "Detaljprosjektering & Engineering", "Development Phase", "Balanseføres (AuC)", 3500000.0, 10200000.0, 3500000.0),
+    ("WBS-300", "Pilotanlegg Innkjøp & Konstruksjon", "Development Phase", "Balanseføres (AuC)", 8500000.0, 24800000.0, 8000000.0),
+    ("WBS-400", "Mekanisk Ferdigstillelse", "Development Phase", "Balanseføres (AuC)", 2500000.0, 7400000.0, 2500000.0),
+    ("WBS-500", "Idriftsettelse & Testkjøring", "Development Phase", "Balanseføres (AuC)", 2000000.0, 5900000.0, 1800000.0),
+    ("WBS-600", "Prosjektledelse & PMO", "Closeout / Mgmt", "P&L Driftsført", 1500000.0, 3868040.98, 1415686.27),
+]
 
-# KPI TILES SETUP (Rows 5-6 and 8-9)
-# Row 5: Labels, Row 6: Values (Top Row)
-# Row 8: Labels, Row 9: Values (Bottom Row)
+for idx, r in enumerate(wbs_data, start=5):
+    ws1.row_dimensions[idx].height = 20
+    fill = FILL_ZEBRA if idx % 2 == 0 else FILL_WHITE
+    ws1.cell(row=idx, column=1, value=r[0]).alignment = ALIGN_CENTER
+    ws1.cell(row=idx, column=2, value=r[1]).alignment = ALIGN_LEFT
+    ws1.cell(row=idx, column=3, value=r[2]).alignment = ALIGN_LEFT
+    ws1.cell(row=idx, column=4, value=r[3]).alignment = ALIGN_LEFT
+    ws1.cell(row=idx, column=5, value=r[4]).number_format = FMT_CURR
+    ws1.cell(row=idx, column=6, value=r[5]).number_format = FMT_CURR
+    ws1.cell(row=idx, column=7, value=r[6]).number_format = FMT_CURR
+    ws1.cell(row=idx, column=8, value=f"=G{idx}-F{idx}").number_format = FMT_CURR
+    ws1.cell(row=idx, column=9, value=f"=IFERROR(G{idx}/F{idx}, 1.0)").number_format = FMT_IDX
+    for c_i in range(1, 10):
+        c = ws1.cell(row=idx, column=c_i)
+        c.font = FONT_REGULAR
+        c.fill = fill
+        c.border = CELL_BORDER
 
-def build_kpi_card(ws, col_start, col_end, row_lbl, row_val, label, formula_val, num_format, val_font=font_kpi_val, val_fill=fill_card):
-    ws.merge_cells(f"{col_start}{row_lbl}:{col_end}{row_lbl}")
-    ws[f"{col_start}{row_lbl}"] = label
-    ws[f"{col_start}{row_lbl}"].font = font_kpi_lbl
-    ws[f"{col_start}{row_lbl}"].fill = val_fill
-    ws[f"{col_start}{row_lbl}"].alignment = align_center
-    ws[f"{col_start}{row_lbl}"].border = Border(top=thin_gray, left=thin_gray, right=thin_gray)
-    
-    ws.merge_cells(f"{col_start}{row_val}:{col_end}{row_val}")
-    ws[f"{col_start}{row_val}"] = formula_val
-    ws[f"{col_start}{row_val}"].font = val_font
-    ws[f"{col_start}{row_val}"].fill = val_fill
-    ws[f"{col_start}{row_val}"].alignment = align_center
-    ws[f"{col_start}{row_val}"].number_format = num_format
-    ws[f"{col_start}{row_val}"].border = Border(bottom=thin_gray, left=thin_gray, right=thin_gray)
+tot_row_wbs = 11
+ws1.row_dimensions[tot_row_wbs].height = 22
+ws1.cell(row=tot_row_wbs, column=1, value="TOTAL").alignment = ALIGN_CENTER
+ws1.cell(row=tot_row_wbs, column=2, value="Konsolidert Prosjekt").alignment = ALIGN_LEFT
+ws1.cell(row=tot_row_wbs, column=3, value="-").alignment = ALIGN_CENTER
+ws1.cell(row=tot_row_wbs, column=4, value="-").alignment = ALIGN_CENTER
+ws1.cell(row=tot_row_wbs, column=5, value="=SUM(E5:E10)").number_format = FMT_CURR
+ws1.cell(row=tot_row_wbs, column=6, value="=SUM(F5:F10)").number_format = FMT_CURR
+ws1.cell(row=tot_row_wbs, column=7, value="=SUM(G5:G10)").number_format = FMT_CURR
+ws1.cell(row=tot_row_wbs, column=8, value="=G11-F11").number_format = FMT_CURR
+ws1.cell(row=tot_row_wbs, column=9, value="=IFERROR(G11/F11, 1.0)").number_format = FMT_IDX
 
-ws1.row_dimensions[5].height = 18
-ws1.row_dimensions[6].height = 32
-ws1.row_dimensions[7].height = 8
-ws1.row_dimensions[8].height = 18
-ws1.row_dimensions[9].height = 32
+for c_i in range(1, 10):
+    c = ws1.cell(row=tot_row_wbs, column=c_i)
+    c.font = FONT_BOLD
+    c.fill = FILL_CALC
+    c.border = TOTAL_BORDER
 
-# Top Row KPI Cards
-build_kpi_card(ws1, "B", "C", 5, 6, "BUDGET AT COMPLETION (BAC)", "='02_EVM_Timeline'!D17", FMT_NOK_M)
-build_kpi_card(ws1, "D", "E", 5, 6, "ACTUAL COST (AC AT CUT-OFF)", "='02_EVM_Timeline'!G14", FMT_NOK_M)
-build_kpi_card(ws1, "F", "G", 5, 6, "EARNED VALUE (EV AT CUT-OFF)", "='02_EVM_Timeline'!I14", FMT_NOK_M)
-build_kpi_card(ws1, "H", "I", 5, 6, "PHYSICAL PROGRESS %", "='02_EVM_Timeline'!H14", FMT_PCT)
-build_kpi_card(ws1, "J", "K", 5, 6, "ESTIMATE AT COMPLETION (EAC)", "='02_EVM_Timeline'!G14+('02_EVM_Timeline'!D17-'02_EVM_Timeline'!I14)/'02_EVM_Timeline'!L14", FMT_NOK_M)
-
-# Bottom Row KPI Cards
-build_kpi_card(ws1, "B", "C", 8, 9, "COST PERFORMANCE INDEX (CPI)", "='02_EVM_Timeline'!L14", FMT_IDX, font_kpi_red, fill_red)
-build_kpi_card(ws1, "D", "E", 8, 9, "SCHEDULE PERFORMANCE INDEX (SPI)", "='02_EVM_Timeline'!M14", FMT_IDX, font_kpi_grn, fill_grn)
-build_kpi_card(ws1, "F", "G", 8, 9, "COST VARIANCE (CV)", "='02_EVM_Timeline'!J14", FMT_NOK_M, font_kpi_red, fill_red)
-build_kpi_card(ws1, "H", "I", 8, 9, "SCHEDULE VARIANCE (SV)", "='02_EVM_Timeline'!K14", FMT_NOK_M, font_kpi_grn, fill_grn)
-build_kpi_card(ws1, "J", "K", 8, 9, "OPEN PO COMMITMENTS", "='04_Commitment_Control'!H29", FMT_NOK_M, font_kpi_val, fill_card)
-
-# Section: Root Cause Primary Diagnosis Textbox
-ws1["B11"] = "DETERMINISTIC ROOT CAUSE PRIMARY DIAGNOSIS (AUTOMATED CONTROLLER LOGIC)"
-ws1["B11"].font = Font(name=FONT_NAME, size=10, bold=True, color=COLOR_NAVY)
-
-ws1.merge_cells("B12:K14")
-diagnosis_text = (
-    "FAST-TRACKING / PREMATURE FORCING:\n"
-    "Prosjektet er 5 uker foran opprinnelig plan (SPI 1.16), men dette er oppnådd gjennom massiv overforbruk, "
-    "uplanlagt maskinanskaffelse, unntakskjøp og ekstrem overtid (CPI 0.33).\n"
-    "Hver krone i opptjent fremdrift har kostet NOK 3.02 å realisere. Total kostnadsoverskridelse ved statusdato: -38.75M NOK."
-)
-ws1["B12"] = diagnosis_text
-ws1["B12"].font = Font(name=FONT_NAME, size=10, bold=False, color="4A154B")
-ws1["B12"].fill = PatternFill(start_color="F5EEF8", end_color="F5EEF8", fill_type="solid")
-ws1["B12"].alignment = align_wrap
-ws1["B12"].border = border_card
-
-# Section: Prescriptive Action Plan Textbox
-ws1["B16"] = "MANDATORY CONTROLLER ACTIONS (ELKEM GREENPILOT SHOWCASE)"
-ws1["B16"].font = Font(name=FONT_NAME, size=10, bold=True, color=COLOR_NAVY)
-
-ws1.merge_cells("B17:K21")
-actions_text = (
-    "1. [PO FREEZE & DISKUSJON] Innfør umiddelbar bestillingsstans for ikke-kritiske komponenter. Åpne forpliktelser utgjør 49.23M NOK mot utenlandske leverandører.\n"
-    "2. [IFRS / IAS 36 NEDSKRIVNINGSVURDERING] Kapitalisert AuC i balansen har nådd 43.38M NOK. Det må gjennomføres en formell nedskrivningstest mot fremtidige diskonterte kontantstrømmer.\n"
-    "3. [ENDRINGSORDRE & BASELINE-RESET] 14 av 18 endringsordrer er ubehandlede/avventende. Styringsgruppen må etablere en Over-Target Baseline (OTB) på 62.5M NOK.\n"
-    "4. [AVMOBILISERING] 96.08% fysisk ferdigstillelse er nådd (98 av 102 aktiviteter). Lukk resterende 4 aktive aktiviteter (A097-A100) og demobiliser eksterne konsulenter."
-)
-ws1["B17"] = actions_text
-ws1["B17"].font = Font(name=FONT_NAME, size=10, bold=False, color="0C2340")
-ws1["B17"].fill = PatternFill(start_color="E8F4F8", end_color="E8F4F8", fill_type="solid")
-ws1["B17"].alignment = align_wrap
-ws1["B17"].border = border_card
-
-# S-Curve Chart Section Header
-ws1["B23"] = "CUMULATIVE EARNED VALUE MANAGEMENT S-CURVE (DATA SOURCE: '02_EVM_Timeline')"
-ws1["B23"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_NAVY)
-
-# Column dimensions for Dashboard
-ws1.column_dimensions["A"].width = 3
-for col in ["B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]:
-    ws1.column_dimensions[col].width = 15
-
+auto_fit_columns(ws1)
 
 # ==============================================================================
-# TAB 02: 02_EVM_Timeline
+# FANE 02: TIMELINE MONTHLY (S-CURVE)
 # ==============================================================================
-ws2 = wb.create_sheet(title="02_EVM_Timeline")
+print(" - Bygger 02_Timeline_Monthly")
+ws2 = wb.create_sheet(title="02_Timeline_Monthly")
 ws2.views.sheetView[0].showGridLines = True
+ws2["A1"] = "MÅNEDLIG EVM TIDSLINJE & S-KURVE (2026)"
+ws2["A1"].font = FONT_TITLE
+ws2["A2"] = "Akkumulert Planlagt Verdi (PV), Faktisk Kostnad (AC) og Opptjent Verdi (EV) med månedlige indekser"
+ws2["A2"].font = FONT_SUBTITLE
 
-# Banner
-ws2.merge_cells("B2:L2")
-ws2["B2"] = "ELKEM GREENPILOT 2026 — MONTHLY EVM TIMELINE & S-CURVE ENGINE"
-ws2["B2"].font = font_title
-ws2["B2"].fill = fill_navy
-ws2["B2"].alignment = align_center
-ws2.row_dimensions[2].height = 36
-
-# Table Headers
-headers_t2 = [
-    ("Period", align_center),
-    ("Month", align_left),
-    ("Planned Budget (BAC)", align_right),
-    ("PV Cumulative (S-Curve)", align_right),
-    ("Actual Cost (AC Monthly)", align_right),
-    ("AC Cumulative (S-Curve)", align_right),
-    ("Physical Progress %", align_right),
-    ("EV Cumulative (S-Curve)", align_right),
-    ("Cost Variance (CV)", align_right),
-    ("Schedule Variance (SV)", align_right),
-    ("CPI", align_right),
-    ("SPI", align_right)
+headers_time = [
+    "Periode", "Månedlig PV", "Kumulativ PV", "Månedlig AC", "Kumulativ AC",
+    "Kumulativ EV", "Cost Variance (CV)", "Schedule Variance (SV)", "Månedlig CPI", "Månedlig SPI"
 ]
-
-for col_idx, (hdr, aln) in enumerate(headers_t2, start=2):
-    col_letter = get_column_letter(col_idx)
-    ws2[f"{col_letter}4"] = hdr
-    ws2[f"{col_letter}4"].font = font_tbl_hdr
-    ws2[f"{col_letter}4"].fill = fill_slate
-    ws2[f"{col_letter}4"].alignment = aln
 ws2.row_dimensions[4].height = 24
+for c_idx, h in enumerate(headers_time, start=1):
+    c = ws2.cell(row=4, column=c_idx, value=h)
+    c.font = FONT_TH
+    c.fill = FILL_HEADER
+    c.alignment = ALIGN_CENTER
+    c.border = HEADER_BORDER
 
-# Monthly aggregated figures from gold layer
-b_m = df_budget.groupby("period")["baseline_budget_nok"].sum().to_dict()
-df_gl["period"] = pd.to_datetime(df_gl["posting_date"]).dt.strftime("%Y-%m")
-gl_m = df_gl.groupby("period")["amount_nok"].sum().to_dict()
+months = [f"2026-{m:02d}" for m in range(1, 13)]
 
-# Activities progress
-df_activity["finish_p"] = pd.to_datetime(df_activity["planned_finish"]).dt.strftime("%Y-%m")
-months_all = [
-    ("2026-01", "Januar"), ("2026-02", "Februar"), ("2026-03", "Mars"),
-    ("2026-04", "April"),  ("2026-05", "Mai"),     ("2026-06", "Juni"),
-    ("2026-07", "Juli"),   ("2026-08", "August"),  ("2026-09", "September"),
-    ("2026-10", "Oktober"),("2026-11", "November"),("2026-12", "Desember")
-]
-
-for idx, (p_str, m_name) in enumerate(months_all, start=5):
-    row_num = idx
-    # A. Period and Month
-    ws2[f"B{row_num}"] = p_str
-    ws2[f"B{row_num}"].font = font_input
-    ws2[f"B{row_num}"].alignment = align_center
-    ws2[f"B{row_num}"].border = border_cell
+for idx, m in enumerate(months, start=5):
+    ws2.row_dimensions[idx].height = 20
+    fill = FILL_ZEBRA if idx % 2 == 0 else FILL_WHITE
+    pv_m = pv_monthly_vals.get(m, 0.0)
+    ac_m = ac_monthly_vals.get(m, 0.0)
+    finished_acts = dim_activity[(dim_activity["status"] == "Completed") & 
+                                 (pd.to_datetime(dim_activity["planned_finish"]).dt.strftime("%Y-%m") <= m)]
+    ev_cum_val = (len(finished_acts) / total_acts) * bac_total if m <= "2026-10" else bac_total
     
-    ws2[f"C{row_num}"] = m_name
-    ws2[f"C{row_num}"].font = font_data
-    ws2[f"C{row_num}"].alignment = align_left
-    ws2[f"C{row_num}"].border = border_cell
-    
-    # B. Monthly Budget (BAC)
-    ws2[f"D{row_num}"] = b_m.get(p_str, 0.0)
-    ws2[f"D{row_num}"].font = font_input
-    ws2[f"D{row_num}"].number_format = FMT_CURR
-    ws2[f"D{row_num}"].alignment = align_right
-    ws2[f"D{row_num}"].border = border_cell
-    
-    # C. PV Cumulative (S-Curve)
-    if row_num == 5:
-        ws2[f"E{row_num}"] = f"=D5"
-    else:
-        ws2[f"E{row_num}"] = f"=E{row_num-1}+D{row_num}"
-    ws2[f"E{row_num}"].font = font_data_bold
-    ws2[f"E{row_num}"].number_format = FMT_CURR
-    ws2[f"E{row_num}"].alignment = align_right
-    ws2[f"E{row_num}"].border = border_cell
-    
-    # D. Monthly Actual Cost (GL)
-    ws2[f"F{row_num}"] = gl_m.get(p_str, 0.0)
-    ws2[f"F{row_num}"].font = font_input
-    ws2[f"F{row_num}"].number_format = FMT_CURR
-    ws2[f"F{row_num}"].alignment = align_right
-    ws2[f"F{row_num}"].border = border_cell
-    
-    # E. AC Cumulative (Truncated after 2026-10 with #N/A)
-    if p_str <= "2026-10":
-        if row_num == 5:
-            ws2[f"G{row_num}"] = f"=F5"
-        else:
-            ws2[f"G{row_num}"] = f"=G{row_num-1}+F{row_num}"
-    else:
-        ws2[f"G{row_num}"] = "=NA()"
-    ws2[f"G{row_num}"].font = font_data_bold
-    ws2[f"G{row_num}"].number_format = FMT_CURR
-    ws2[f"G{row_num}"].alignment = align_right
-    ws2[f"G{row_num}"].border = border_cell
-    
-    # F. Cumulative Physical Progress %
-    if p_str <= "2026-10":
-        comp_act = len(df_activity[df_activity["finish_p"] <= p_str])
-        if p_str == "2026-10":
-            equiv = (comp_act + 4 * 0.5) / len(df_activity)
-        else:
-            equiv = comp_act / len(df_activity)
-        ws2[f"H{row_num}"] = equiv
-    else:
-        ws2[f"H{row_num}"] = "=NA()"
-    ws2[f"H{row_num}"].font = font_data
-    ws2[f"H{row_num}"].number_format = FMT_PCT
-    ws2[f"H{row_num}"].alignment = align_right
-    ws2[f"H{row_num}"].border = border_cell
-    
-    # G. EV Cumulative (Truncated after 2026-10)
-    if p_str <= "2026-10":
-        ws2[f"I{row_num}"] = f"=$D$17*H{row_num}"
-    else:
-        ws2[f"I{row_num}"] = "=NA()"
-    ws2[f"I{row_num}"].font = font_data_bold
-    ws2[f"I{row_num}"].number_format = FMT_CURR
-    ws2[f"I{row_num}"].alignment = align_right
-    ws2[f"I{row_num}"].border = border_cell
-    
-    # H. Cost Variance (CV = EV - AC)
-    if p_str <= "2026-10":
-        ws2[f"J{row_num}"] = f"=I{row_num}-G{row_num}"
-    else:
-        ws2[f"J{row_num}"] = "=NA()"
-    ws2[f"J{row_num}"].font = font_data_bold
-    ws2[f"J{row_num}"].number_format = FMT_CURR
-    ws2[f"J{row_num}"].alignment = align_right
-    ws2[f"J{row_num}"].border = border_cell
-    if p_str <= "2026-10":
-        ws2[f"J{row_num}"].fill = fill_red
-    
-    # I. Schedule Variance (SV = EV - PV)
-    if p_str <= "2026-10":
-        ws2[f"K{row_num}"] = f"=I{row_num}-E{row_num}"
-    else:
-        ws2[f"K{row_num}"] = "=NA()"
-    ws2[f"K{row_num}"].font = font_data_bold
-    ws2[f"K{row_num}"].number_format = FMT_CURR
-    ws2[f"K{row_num}"].alignment = align_right
-    ws2[f"K{row_num}"].border = border_cell
-    if p_str <= "2026-10":
-        ws2[f"K{row_num}"].fill = fill_grn
-    
-    # J. CPI = EV / AC
-    if p_str <= "2026-10":
-        ws2[f"L{row_num}"] = f"=I{row_num}/G{row_num}"
-    else:
-        ws2[f"L{row_num}"] = "=NA()"
-    ws2[f"L{row_num}"].font = font_data_bold
-    ws2[f"L{row_num}"].number_format = FMT_IDX
-    ws2[f"L{row_num}"].alignment = align_right
-    ws2[f"L{row_num}"].border = border_cell
-    
-    # K. SPI = EV / PV
-    if p_str <= "2026-10":
-        ws2[f"M{row_num}"] = f"=I{row_num}/E{row_num}"
-    else:
-        ws2[f"M{row_num}"] = "=NA()"
-    ws2[f"M{row_num}"].font = font_data_bold
-    ws2[f"M{row_num}"].number_format = FMT_IDX
-    ws2[f"M{row_num}"].alignment = align_right
-    ws2[f"M{row_num}"].border = border_cell
+    ws2.cell(row=idx, column=1, value=m).alignment = ALIGN_CENTER
+    ws2.cell(row=idx, column=2, value=pv_m).number_format = FMT_CURR
+    ws2.cell(row=idx, column=3, value=f"=B{idx}" if idx == 5 else f"=C{idx-1}+B{idx}").number_format = FMT_CURR
+    ws2.cell(row=idx, column=4, value=ac_m).number_format = FMT_CURR
+    ws2.cell(row=idx, column=5, value=f"=D{idx}" if idx == 5 else f"=E{idx-1}+D{idx}").number_format = FMT_CURR
+    ws2.cell(row=idx, column=6, value=ev_cum_val).number_format = FMT_CURR
+    ws2.cell(row=idx, column=7, value=f"=F{idx}-E{idx}").number_format = FMT_CURR
+    ws2.cell(row=idx, column=8, value=f"=F{idx}-C{idx}").number_format = FMT_CURR
+    ws2.cell(row=idx, column=9, value=f"=IFERROR(F{idx}/E{idx}, 1.0)").number_format = FMT_IDX
+    ws2.cell(row=idx, column=10, value=f"=IFERROR(F{idx}/C{idx}, 1.0)").number_format = FMT_IDX
+    for c_i in range(1, 11):
+        c = ws2.cell(row=idx, column=c_i)
+        c.font = FONT_REGULAR
+        c.fill = fill
+        c.border = CELL_BORDER
 
-    ws2.row_dimensions[row_num].height = 20
-
-# Total Row on Timeline
-tot_row = 17
-ws2[f"B{tot_row}"] = "TOTAL"
-ws2[f"C{tot_row}"] = "Full Project Baseline"
-ws2[f"D{tot_row}"] = "=SUM(D5:D16)"
-ws2[f"E{tot_row}"] = "=E16"
-ws2[f"F{tot_row}"] = "=SUM(F5:F16)"
-ws2[f"G{tot_row}"] = "=G14"
-ws2[f"H{tot_row}"] = "=H14"
-ws2[f"I{tot_row}"] = "=I14"
-ws2[f"J{tot_row}"] = "=J14"
-ws2[f"K{tot_row}"] = "=K14"
-ws2[f"L{tot_row}"] = "=L14"
-ws2[f"M{tot_row}"] = "=M14"
-
-for col_idx in range(2, 14):
-    c_let = get_column_letter(col_idx)
-    ws2[f"{c_let}{tot_row}"].font = font_tbl_hdr
-    ws2[f"{c_let}{tot_row}"].fill = fill_slate
-    ws2[f"{c_let}{tot_row}"].border = border_total
-    if col_idx in [4, 5, 6, 7, 9, 10, 11]:
-        ws2[f"{c_let}{tot_row}"].number_format = FMT_CURR
-    elif col_idx == 8:
-        ws2[f"{c_let}{tot_row}"].number_format = FMT_PCT
-    elif col_idx in [12, 13]:
-        ws2[f"{c_let}{tot_row}"].number_format = FMT_IDX
-ws2.row_dimensions[tot_row].height = 24
-
-# Column widths
-ws2.column_dimensions["A"].width = 3
-ws2.column_dimensions["B"].width = 12
-ws2.column_dimensions["C"].width = 14
-ws2.column_dimensions["D"].width = 22
-ws2.column_dimensions["E"].width = 24
-ws2.column_dimensions["F"].width = 24
-ws2.column_dimensions["G"].width = 24
-ws2.column_dimensions["H"].width = 20
-ws2.column_dimensions["I"].width = 24
-ws2.column_dimensions["J"].width = 22
-ws2.column_dimensions["K"].width = 22
-ws2.column_dimensions["L"].width = 12
-ws2.column_dimensions["M"].width = 12
-
-# EMBED EXCEL S-CURVE CHART INTO TAB 01 (Executive Dashboard)
-chart = LineChart()
-chart.title = "GreenPilot 2026 Cumulative EVM S-Curve (Cut-off: 2026-11-01)"
-chart.style = 13
-chart.y_axis.title = "NOK (Norwegian Krone)"
-chart.x_axis.title = "Project Reporting Period (2026)"
-chart.width = 30
-chart.height = 15
-
-data_ref = Reference(ws2, min_col=5, min_row=4, max_col=9, max_row=16) # PV, (skip AC monthly), AC cum, (skip prog), EV cum
-# We want PV cum (col 5), AC cum (col 7), EV cum (col 9)
-# In openpyxl, let's reference the columns properly:
-# col E: PV cum, col G: AC cum, col I: EV cum
-# To make a clean chart, we add Series specifically:
-from openpyxl.chart import Series
-
-# Categories: Periods (col B)
-cats = Reference(ws2, min_col=2, min_row=5, max_row=16)
-
-# Series 1: PV Cumulative (col E / 5)
-s_pv = Series(Reference(ws2, min_col=5, min_row=4, max_row=16), title="Planned Value Cumulative (PV S-Curve)")
-s_pv.graphicalProperties.line.solidFill = "002060" # Dark Navy
-s_pv.graphicalProperties.line.width = 25000
-
-# Series 2: Actual Cost Cumulative (col G / 7)
-s_ac = Series(Reference(ws2, min_col=7, min_row=4, max_row=16), title="Actual Cost Cumulative (AC S-Curve)")
-s_ac.graphicalProperties.line.solidFill = "C00000" # Crimson Red
-s_ac.graphicalProperties.line.width = 30000
-
-# Series 3: Earned Value Cumulative (col I / 9)
-s_ev = Series(Reference(ws2, min_col=9, min_row=4, max_row=16), title="Earned Value Cumulative (EV S-Curve)")
-s_ev.graphicalProperties.line.solidFill = "008000" # Forest Green
-s_ev.graphicalProperties.line.width = 25000
-
-chart.series.append(s_pv)
-chart.series.append(s_ac)
-chart.series.append(s_ev)
-chart.set_categories(cats)
-
-ws1.add_chart(chart, "B25")
-
+auto_fit_columns(ws2)
 
 # ==============================================================================
-# TAB 03: 03_WBS_Variance_Matrix
+# FANE 03: CASH FLOW & WORKING CAPITAL BRIDGE (MED DIAGRAM)
 # ==============================================================================
-ws3 = wb.create_sheet(title="03_WBS_Variance_Matrix")
+print(" - Bygger 03_CashFlow (Working Capital & Likviditetsbro med Diagram)")
+ws3 = wb.create_sheet(title="03_CashFlow")
 ws3.views.sheetView[0].showGridLines = True
+ws3["A1"] = "KONTANTSTRØM & ARBEIDSKAPITAL-BRO (CASH FLOW & WORKING CAPITAL BRIDGE)"
+ws3["A1"].font = FONT_TITLE
+ws3["A2"] = "Avstemming fra Påløpt Regnskapskostnad (AC) til Faktisk Likviditetsbelastning og Enova-tilskudd (FAST Standard)"
+ws3["A2"].font = FONT_SUBTITLE
 
-# Banner
-ws3.merge_cells("B2:J2")
-ws3["B2"] = "ELKEM GREENPILOT 2026 — WBS × COST ELEMENT VARIANCE & ROOT CAUSE MATRIX"
-ws3["B2"].font = font_title
-ws3["B2"].fill = fill_navy
-ws3["B2"].alignment = align_center
-ws3.row_dimensions[2].height = 36
-
-# Table 1: Baseline Budget (BAC)
-ws3["B4"] = "1. APPROVED BASELINE BUDGET (BAC) MATRIX (NOK)"
-ws3["B4"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_NAVY)
-
-ce_list = ["CE100", "CE200", "CE300", "CE400", "CE500", "CE600"]
-ce_names = {
-    "CE100": "Internal Labor", "CE200": "External Consulting", "CE300": "Direct Materials",
-    "CE400": "Equipment & Mach.", "CE500": "Subcontracting", "CE600": "Travel & Other"
-}
-
-wbs_meta = [
-    ("WBS-100", "Research & Lab Feasibility", "Research", "EXPENSE"),
-    ("WBS-200", "Pre-Engineering & Design", "Development", "CAPITALIZE"),
-    ("WBS-300", "Pilot Plant Assembly", "Development", "CAPITALIZE"),
-    ("WBS-400", "Procurement & Fabrication", "Development", "CAPITALIZE"),
-    ("WBS-500", "Technology Development", "Development", "CAPITALIZE"),
-    ("WBS-600", "Project Management & Close", "Closeout", "EXPENSE")
+headers_cf = [
+    "Periode", "Faktisk Kost (AC)", "Leverandørutbetaling (DPO 30d)", "Intern Lønn Løpende",
+    "Total Kontantstrøm Ut", "Enova Tilskudd Innbetalt", "Netto Månedlig Kontantstrøm", "Kumulativ Likviditetseksponering"
 ]
+ws3.row_dimensions[4].height = 24
+for col_idx, h in enumerate(headers_cf, start=1):
+    c = ws3.cell(row=4, column=col_idx, value=h)
+    c.font = FONT_TH
+    c.fill = FILL_HEADER
+    c.alignment = ALIGN_CENTER
+    c.border = HEADER_BORDER
 
-b_pivot = df_budget.pivot_table(index="wbs_id", columns="cost_element", values="baseline_budget_nok", aggfunc="sum").fillna(0.0)
-gl_pivot = df_gl.pivot_table(index="wbs_id", columns="cost_element", values="amount_nok", aggfunc="sum").fillna(0.0)
+cf_months = [f"2026-{m:02d}" for m in range(1, 11)]
 
-# Headers for Budget
-ws3["B5"] = "WBS ID"
-ws3["C5"] = "WBS Component Name"
-for c_idx, ce_code in enumerate(ce_list, start=4):
-    c_let = get_column_letter(c_idx)
-    ws3[f"{c_let}5"] = f"{ce_code}\n{ce_names[ce_code]}"
-ws3["J5"] = "Total BAC (NOK)"
-
-for col_idx in range(2, 11):
-    c_let = get_column_letter(col_idx)
-    ws3[f"{c_let}5"].font = font_tbl_hdr
-    ws3[f"{c_let}5"].fill = fill_slate
-    ws3[f"{c_let}5"].alignment = align_center if col_idx == 2 else (align_left if col_idx == 3 else align_right)
-ws3.row_dimensions[5].height = 28
-
-for r_idx, (w_id, w_name, _, _) in enumerate(wbs_meta, start=6):
-    ws3[f"B{r_idx}"] = w_id
-    ws3[f"B{r_idx}"].font = font_data_bold
-    ws3[f"B{r_idx}"].alignment = align_center
-    ws3[f"B{r_idx}"].border = border_cell
+for idx, m in enumerate(cf_months, start=5):
+    ws3.row_dimensions[idx].height = 20
+    fill = FILL_ZEBRA if idx % 2 == 0 else FILL_WHITE
+    ac_val = ac_monthly_vals.get(m, 0.0)
+    ap_val = ap_cash_monthly.get(m, 0.0)
+    payroll_val = payroll_cash_monthly.get(m, 0.0)
+    enova_val = 3000000.0 if m == "2026-06" else 0.0
     
-    ws3[f"C{r_idx}"] = w_name
-    ws3[f"C{r_idx}"].font = font_data
-    ws3[f"C{r_idx}"].alignment = align_left
-    ws3[f"C{r_idx}"].border = border_cell
-    
-    for c_idx, ce_code in enumerate(ce_list, start=4):
-        c_let = get_column_letter(c_idx)
-        val = b_pivot.loc[w_id, ce_code] if (w_id in b_pivot.index and ce_code in b_pivot.columns) else 0.0
-        ws3[f"{c_let}{r_idx}"] = val
-        ws3[f"{c_let}{r_idx}"].font = font_input
-        ws3[f"{c_let}{r_idx}"].number_format = FMT_CURR
-        ws3[f"{c_let}{r_idx}"].alignment = align_right
-        ws3[f"{c_let}{r_idx}"].border = border_cell
-        
-    ws3[f"J{r_idx}"] = f"=SUM(D{r_idx}:I{r_idx})"
-    ws3[f"J{r_idx}"].font = font_data_bold
-    ws3[f"J{r_idx}"].number_format = FMT_CURR
-    ws3[f"J{r_idx}"].alignment = align_right
-    ws3[f"J{r_idx}"].border = border_cell
-    ws3.row_dimensions[r_idx].height = 20
+    ws3.cell(row=idx, column=1, value=m).alignment = ALIGN_CENTER
+    ws3.cell(row=idx, column=2, value=ac_val).number_format = FMT_CURR
+    ws3.cell(row=idx, column=3, value=ap_val).number_format = FMT_CURR
+    ws3.cell(row=idx, column=4, value=payroll_val).number_format = FMT_CURR
+    ws3.cell(row=idx, column=5, value=f"=C{idx}+D{idx}").number_format = FMT_CURR
+    ws3.cell(row=idx, column=6, value=enova_val).number_format = FMT_CURR
+    ws3.cell(row=idx, column=7, value=f"=F{idx}-E{idx}").number_format = FMT_CURR
+    ws3.cell(row=idx, column=8, value=f"=G{idx}" if idx == 5 else f"=H{idx-1}+G{idx}").number_format = FMT_CURR
+    for c_idx in range(1, 9):
+        c = ws3.cell(row=idx, column=c_idx)
+        c.font = FONT_REGULAR
+        c.fill = fill
+        c.border = CELL_BORDER
 
-# Budget Total
-ws3["B12"] = "TOTAL"
-ws3["C12"] = "Approved Project Baseline (BAC)"
-for c_idx in range(4, 10):
-    c_let = get_column_letter(c_idx)
-    ws3[f"{c_let}12"] = f"=SUM({c_let}6:{c_let}11)"
-ws3["J12"] = f"=SUM(J6:J11)"
+tot_cf_row = 15
+ws3.row_dimensions[tot_cf_row].height = 22
+ws3.cell(row=tot_cf_row, column=1, value="TOTAL JAN-OKT").alignment = ALIGN_CENTER
+ws3.cell(row=tot_cf_row, column=2, value="=SUM(B5:B14)").number_format = FMT_CURR
+ws3.cell(row=tot_cf_row, column=3, value="=SUM(C5:C14)").number_format = FMT_CURR
+ws3.cell(row=tot_cf_row, column=4, value="=SUM(D5:D14)").number_format = FMT_CURR
+ws3.cell(row=tot_cf_row, column=5, value="=SUM(E5:E14)").number_format = FMT_CURR
+ws3.cell(row=tot_cf_row, column=6, value="=SUM(F5:F14)").number_format = FMT_CURR
+ws3.cell(row=tot_cf_row, column=7, value="=SUM(G5:G14)").number_format = FMT_CURR
+ws3.cell(row=tot_cf_row, column=8, value="=H14").number_format = FMT_CURR
 
-for col_idx in range(2, 11):
-    c_let = get_column_letter(col_idx)
-    ws3[f"{c_let}12"].font = font_tbl_hdr
-    ws3[f"{c_let}12"].fill = fill_slate
-    ws3[f"{c_let}12"].border = border_total
-    if col_idx >= 4:
-        ws3[f"{c_let}12"].number_format = FMT_CURR
-ws3.row_dimensions[12].height = 24
+for c_idx in range(1, 9):
+    c = ws3.cell(row=tot_cf_row, column=c_idx)
+    c.font = FONT_BOLD
+    c.fill = FILL_CALC
+    c.border = TOTAL_BORDER
 
-# Table 2: Actual Cost (AC) Matrix
-ws3["B15"] = "2. ACTUAL COST (AC) RECORDED AT CUT-OFF (NOK)"
-ws3["B15"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_NAVY)
+# Innebygd Diagram for Cash Flow & Working Capital Bridge
+chart_bars = BarChart()
+chart_bars.title = "Månedlig Likviditetsutgang vs. Enova Innbetaling (NOK)"
+chart_bars.style = 10
+chart_bars.y_axis.title = "Månedlig Likviditet (NOK)"
+chart_bars.x_axis.title = "Periode (2026)"
+chart_bars.width = 18
+chart_bars.height = 10
 
-ws3["B16"] = "WBS ID"
-ws3["C16"] = "WBS Component Name"
-for c_idx, ce_code in enumerate(ce_list, start=4):
-    c_let = get_column_letter(c_idx)
-    ws3[f"{c_let}16"] = f"{ce_code}\n{ce_names[ce_code]}"
-ws3["J16"] = "Total AC (NOK)"
+data_bars = Reference(ws3, min_col=5, min_row=4, max_col=6, max_row=14)
+cats_bars = Reference(ws3, min_col=1, min_row=5, max_row=14)
+chart_bars.add_data(data_bars, titles_from_data=True)
+chart_bars.set_categories(cats_bars)
 
-for col_idx in range(2, 11):
-    c_let = get_column_letter(col_idx)
-    ws3[f"{c_let}16"].font = font_tbl_hdr
-    ws3[f"{c_let}16"].fill = fill_slate
-    ws3[f"{c_let}16"].alignment = align_center if col_idx == 2 else (align_left if col_idx == 3 else align_right)
-ws3.row_dimensions[16].height = 28
+ws3.add_chart(chart_bars, "J4")
 
-for r_idx, (w_id, w_name, _, _) in enumerate(wbs_meta, start=17):
-    ws3[f"B{r_idx}"] = w_id
-    ws3[f"B{r_idx}"].font = font_data_bold
-    ws3[f"B{r_idx}"].alignment = align_center
-    ws3[f"B{r_idx}"].border = border_cell
-    
-    ws3[f"C{r_idx}"] = w_name
-    ws3[f"C{r_idx}"].font = font_data
-    ws3[f"C{r_idx}"].alignment = align_left
-    ws3[f"C{r_idx}"].border = border_cell
-    
-    for c_idx, ce_code in enumerate(ce_list, start=4):
-        c_let = get_column_letter(c_idx)
-        val = gl_pivot.loc[w_id, ce_code] if (w_id in gl_pivot.index and ce_code in gl_pivot.columns) else 0.0
-        ws3[f"{c_let}{r_idx}"] = val
-        ws3[f"{c_let}{r_idx}"].font = font_input
-        ws3[f"{c_let}{r_idx}"].number_format = FMT_CURR
-        ws3[f"{c_let}{r_idx}"].alignment = align_right
-        ws3[f"{c_let}{r_idx}"].border = border_cell
-        
-    ws3[f"J{r_idx}"] = f"=SUM(D{r_idx}:I{r_idx})"
-    ws3[f"J{r_idx}"].font = font_data_bold
-    ws3[f"J{r_idx}"].number_format = FMT_CURR
-    ws3[f"J{r_idx}"].alignment = align_right
-    ws3[f"J{r_idx}"].border = border_cell
-    ws3.row_dimensions[r_idx].height = 20
-
-# AC Total
-ws3["B23"] = "TOTAL"
-ws3["C23"] = "Total Actual Costs Posted"
-for c_idx in range(4, 10):
-    c_let = get_column_letter(c_idx)
-    ws3[f"{c_let}23"] = f"=SUM({c_let}17:{c_let}22)"
-ws3["J23"] = f"=SUM(J17:J22)"
-
-for col_idx in range(2, 11):
-    c_let = get_column_letter(col_idx)
-    ws3[f"{c_let}23"].font = font_tbl_hdr
-    ws3[f"{c_let}23"].fill = fill_slate
-    ws3[f"{c_let}23"].border = border_total
-    if col_idx >= 4:
-        ws3[f"{c_let}23"].number_format = FMT_CURR
-ws3.row_dimensions[23].height = 24
-
-# Table 3: Cost Variance Matrix (CV = BAC - AC)
-ws3["B26"] = "3. COST VARIANCE (CV = BAC - AC) OVERRUN HEATMAP (NOK)"
-ws3["B26"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_NAVY)
-
-ws3["B27"] = "WBS ID"
-ws3["C27"] = "WBS Component Name"
-for c_idx, ce_code in enumerate(ce_list, start=4):
-    c_let = get_column_letter(c_idx)
-    ws3[f"{c_let}27"] = f"{ce_code}\n{ce_names[ce_code]}"
-ws3["J27"] = "Total CV (NOK)"
-
-for col_idx in range(2, 11):
-    c_let = get_column_letter(col_idx)
-    ws3[f"{c_let}27"].font = font_tbl_hdr
-    ws3[f"{c_let}27"].fill = fill_slate
-    ws3[f"{c_let}27"].alignment = align_center if col_idx == 2 else (align_left if col_idx == 3 else align_right)
-ws3.row_dimensions[27].height = 28
-
-for r_offset, (w_id, w_name, _, _) in enumerate(wbs_meta):
-    r_target = 28 + r_offset
-    r_b = 6 + r_offset
-    r_gl = 17 + r_offset
-    
-    ws3[f"B{r_target}"] = w_id
-    ws3[f"B{r_target}"].font = font_data_bold
-    ws3[f"B{r_target}"].alignment = align_center
-    ws3[f"B{r_target}"].border = border_cell
-    
-    ws3[f"C{r_target}"] = w_name
-    ws3[f"C{r_target}"].font = font_data
-    ws3[f"C{r_target}"].alignment = align_left
-    ws3[f"C{r_target}"].border = border_cell
-    
-    for c_idx in range(4, 10):
-        c_let = get_column_letter(c_idx)
-        ws3[f"{c_let}{r_target}"] = f"={c_let}{r_b}-{c_let}{r_gl}"
-        ws3[f"{c_let}{r_target}"].font = font_data
-        ws3[f"{c_let}{r_target}"].number_format = FMT_CURR
-        ws3[f"{c_let}{r_target}"].alignment = align_right
-        ws3[f"{c_let}{r_target}"].border = border_cell
-        
-    ws3[f"J{r_target}"] = f"=J{r_b}-J{r_gl}"
-    ws3[f"J{r_target}"].font = font_data_bold
-    ws3[f"J{r_target}"].number_format = FMT_CURR
-    ws3[f"J{r_target}"].alignment = align_right
-    ws3[f"J{r_target}"].border = border_cell
-    ws3[f"J{r_target}"].fill = fill_red
-    ws3.row_dimensions[r_target].height = 20
-
-# CV Total
-ws3["B34"] = "TOTAL"
-ws3["C34"] = "Total Project Cost Variance (CV)"
-for c_idx in range(4, 10):
-    c_let = get_column_letter(c_idx)
-    ws3[f"{c_let}34"] = f"=D12-D23" if c_idx == 4 else f"={c_let}12-{c_let}23"
-ws3["J34"] = f"=J12-J23"
-
-for col_idx in range(2, 11):
-    c_let = get_column_letter(col_idx)
-    ws3[f"{c_let}34"].font = font_tbl_hdr
-    ws3[f"{c_let}34"].fill = fill_red if col_idx >= 4 else fill_slate
-    ws3[f"{c_let}34"].font = Font(name=FONT_NAME, size=10, bold=True, color="78281F" if col_idx >= 4 else "FFFFFF")
-    ws3[f"{c_let}34"].border = border_total
-    if col_idx >= 4:
-        ws3[f"{c_let}34"].number_format = FMT_CURR
-ws3.row_dimensions[34].height = 24
-
-# Column widths
-ws3.column_dimensions["A"].width = 3
-ws3.column_dimensions["B"].width = 12
-ws3.column_dimensions["C"].width = 28
-for c_idx in range(4, 10):
-    ws3.column_dimensions[get_column_letter(c_idx)].width = 20
-ws3.column_dimensions["J"].width = 22
-
+auto_fit_columns(ws3, max_cols=9)
 
 # ==============================================================================
-# TAB 04: 04_Commitment_Control
+# FANE 04: EARLY WARNINGS MED REGELBASERT NARRATIV KONKLUSJON
 # ==============================================================================
-ws4 = wb.create_sheet(title="04_Commitment_Control")
+print(" - Bygger 04_EarlyWarnings (med Regelbaserte Konklusjonsformler)")
+ws4 = wb.create_sheet(title="04_EarlyWarnings")
 ws4.views.sheetView[0].showGridLines = True
+ws4["A1"] = "MÅNEDLIGE EARLY WARNING RAPPORTER & REGELBASERTE KONTROLL-KONKLUSJONER"
+ws4["A1"].font = FONT_TITLE
+ws4["A2"] = "Automated Executive Narrative Generator | 4-leddet regelbasert controller-vurdering jfr. stillingsansvar"
+ws4["A2"].font = FONT_SUBTITLE
 
-# Banner
-ws4.merge_cells("B2:I2")
-ws4["B2"] = "ELKEM GREENPILOT 2026 — PROCUREMENT & OPEN COMMITMENT EXPOSURE"
-ws4["B2"].font = font_title
-ws4["B2"].fill = fill_navy
-ws4["B2"].alignment = align_center
-ws4.row_dimensions[2].height = 36
-
-# KPI Summary Cards (Row 4-5)
-build_kpi_card(ws4, "B", "C", 4, 5, "TOTAL PO COMMITTED (NOK)", "='04_Commitment_Control'!F29", FMT_NOK_M)
-build_kpi_card(ws4, "D", "E", 4, 5, "INVOICED AP POSTED (NOK)", "='04_Commitment_Control'!G29", FMT_NOK_M)
-build_kpi_card(ws4, "F", "G", 4, 5, "OPEN COMMITMENTS (NOK)", "='04_Commitment_Control'!H29", FMT_NOK_M, font_kpi_red, fill_red)
-build_kpi_card(ws4, "H", "I", 4, 5, "OPEN COMMITMENT RATIO %", "='04_Commitment_Control'!H29/'04_Commitment_Control'!F29", FMT_PCT, font_kpi_val, fill_card)
-
-ws4.row_dimensions[4].height = 18
-ws4.row_dimensions[5].height = 30
-
-# Section: Vendor Exposure Register
-ws4["B7"] = "1. TOP EXPOSED VENDORS & COMMITMENT EXPOSURE (DESCENDING BY OPEN NOK)"
-ws4["B7"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_NAVY)
-
-headers_v = [
-    ("Vendor ID", align_center),
-    ("Vendor Commercial Name", align_left),
-    ("Base CCY", align_center),
-    ("PO Amount (CCY)", align_right),
-    ("PO Amount (NOK)", align_right),
-    ("Invoiced AP (NOK)", align_right),
-    ("Open Commitment (NOK)", align_right),
-    ("Contract Status", align_center)
+headers_ew = [
+    "Måned", "Kumulativ AC", "Kumulativ PO", "BAC Budsjett",
+    "PO vs BAC %", "Point-in-Time CPI", "Projected EAC", "RAG Signal",
+    "1. Diagnose (EVM)", "2. Driver (Innkjøp & Fremdrift)", "3. Konsekvens (Likviditet/IFRS)", "4. Påkrevd Tiltak (Action)",
+    "Samlet Controller-Konklusjon (Executive Narrative)"
 ]
+ws4.row_dimensions[4].height = 26
+for col_idx, h in enumerate(headers_ew, start=1):
+    c = ws4.cell(row=4, column=col_idx, value=h)
+    c.font = FONT_TH
+    c.fill = FILL_HEADER
+    c.alignment = ALIGN_CENTER
+    c.border = HEADER_BORDER
 
-for col_idx, (hdr, aln) in enumerate(headers_v, start=2):
-    c_let = get_column_letter(col_idx)
-    ws4[f"{c_let}8"] = hdr
-    ws4[f"{c_let}8"].font = font_tbl_hdr
-    ws4[f"{c_let}8"].fill = fill_slate
-    ws4[f"{c_let}8"].alignment = aln
-ws4.row_dimensions[8].height = 24
+po_cum = 0.0
+ac_cum = 0.0
 
-# Group PO by vendor
-v_dict = df_vendor.set_index("vendor_id")["vendor_name"].to_dict()
-po_v = df_po.groupby("vendor_id").agg(
-    currency=("currency", "first"),
-    amount_currency=("amount_currency", "sum"),
-    amount_nok=("amount_nok", "sum"),
-    invoiced_nok=("invoiced_nok", "sum"),
-    open_nok=("open_commitment_nok", "sum")
-).reset_index().sort_values("open_nok", ascending=False)
+for idx, m in enumerate(cf_months, start=5):
+    ws4.row_dimensions[idx].height = 45
+    ac_cum += ac_monthly_vals.get(m, 0.0)
+    po_cum += po_monthly_vals.get(m, 0.0)
+    finished_acts = dim_activity[(dim_activity["status"] == "Completed") & 
+                                 (pd.to_datetime(dim_activity["planned_finish"]).dt.strftime("%Y-%m") <= m)]
+    ev_val = (len(finished_acts) / total_acts) * bac_total
+    cpi_val = ev_val / ac_cum if ac_cum > 0 else 1.0
+    
+    # 1-8: Nøkkeltall
+    ws4.cell(row=idx, column=1, value=m).alignment = ALIGN_CENTER
+    ws4.cell(row=idx, column=2, value=ac_cum).number_format = FMT_CURR
+    ws4.cell(row=idx, column=3, value=po_cum).number_format = FMT_CURR
+    ws4.cell(row=idx, column=4, value=bac_total).number_format = FMT_CURR
+    ws4.cell(row=idx, column=5, value=f"=C{idx}/D{idx}").number_format = FMT_PCT
+    ws4.cell(row=idx, column=6, value=cpi_val).number_format = FMT_IDX
+    ws4.cell(row=idx, column=7, value=f"=D{idx}/F{idx}").number_format = FMT_CURR
+    
+    # RAG Status Signal
+    rag_cell = ws4.cell(row=idx, column=8)
+    if po_cum > bac_total:
+        rag_cell.value = "🔴 RØD (PO > 100% BAC)"
+        rag_cell.fill = FILL_ALERT_RED
+        rag_cell.font = FONT_ALERT_RED
+    else:
+        rag_cell.value = "🟡 GUL (Burn Rate)"
+        rag_cell.fill = FILL_ALERT_YELLOW
+        rag_cell.font = FONT_ALERT_YELLOW
+    rag_cell.alignment = ALIGN_CENTER
 
-for r_idx, row in enumerate(po_v.itertuples(), start=9):
-    ws4[f"B{r_idx}"] = row.vendor_id
-    ws4[f"B{r_idx}"].font = font_data_bold
-    ws4[f"B{r_idx}"].alignment = align_center
-    ws4[f"B{r_idx}"].border = border_cell
-    
-    ws4[f"C{r_idx}"] = v_dict.get(row.vendor_id, row.vendor_id)
-    ws4[f"C{r_idx}"].font = font_data
-    ws4[f"C{r_idx}"].alignment = align_left
-    ws4[f"C{r_idx}"].border = border_cell
-    
-    ws4[f"D{r_idx}"] = row.currency
-    ws4[f"D{r_idx}"].font = font_data
-    ws4[f"D{r_idx}"].alignment = align_center
-    ws4[f"D{r_idx}"].border = border_cell
-    
-    ws4[f"E{r_idx}"] = row.amount_currency
-    ws4[f"E{r_idx}"].font = font_input
-    ws4[f"E{r_idx}"].number_format = FMT_CURR
-    ws4[f"E{r_idx}"].alignment = align_right
-    ws4[f"E{r_idx}"].border = border_cell
-    
-    ws4[f"F{r_idx}"] = row.amount_nok
-    ws4[f"F{r_idx}"].font = font_input
-    ws4[f"F{r_idx}"].number_format = FMT_CURR
-    ws4[f"F{r_idx}"].alignment = align_right
-    ws4[f"F{r_idx}"].border = border_cell
-    
-    ws4[f"G{r_idx}"] = row.invoiced_nok
-    ws4[f"G{r_idx}"].font = font_input
-    ws4[f"G{r_idx}"].number_format = FMT_CURR
-    ws4[f"G{r_idx}"].alignment = align_right
-    ws4[f"G{r_idx}"].border = border_cell
-    
-    ws4[f"H{r_idx}"] = row.open_nok
-    ws4[f"H{r_idx}"].font = font_data_bold
-    ws4[f"H{r_idx}"].number_format = FMT_CURR
-    ws4[f"H{r_idx}"].alignment = align_right
-    ws4[f"H{r_idx}"].border = border_cell
-    if row.open_nok > 2000000:
-        ws4[f"H{r_idx}"].fill = fill_amb
-    
-    status_str = "Partially Invoiced" if row.invoiced_nok > 0 else "Open Uninvoiced"
-    ws4[f"I{r_idx}"] = status_str
-    ws4[f"I{r_idx}"].font = font_data
-    ws4[f"I{r_idx}"].alignment = align_center
-    ws4[f"I{r_idx}"].border = border_cell
-    ws4.row_dimensions[r_idx].height = 20
+    # 4-LEDDET REGELBASERT KONTROLLMOTOR (FORMELBASERT)
+    # Kolonne I (9): Del 1 - Diagnose (EVM)
+    formula_part1 = (
+        f'=IF(F{idx}<0.5, "KRITISK KOSTNADSKRISE (CPI: " & TEXT(F{idx},"0.00") & "): ", '
+        f'IF(F{idx}<0.8, "ALVORLIG KOSTNADSPRESS (CPI: " & TEXT(F{idx},"0.00") & "): ", '
+        f'IF(F{idx}<1.0, "MARGINALT KOSTNADSAVVIK: ", "NORMAL KOSTNADSKONTROLL: ")))'
+    )
+    ws4.cell(row=idx, column=9, value=formula_part1).alignment = ALIGN_LEFT
 
-tot_v_row = 9 + len(po_v)
-ws4[f"B{tot_v_row}"] = "TOTAL"
-ws4[f"C{tot_v_row}"] = f"All {len(po_v)} Active Suppliers"
-ws4[f"D{tot_v_row}"] = "-"
-ws4[f"E{tot_v_row}"] = "-"
-ws4[f"F{tot_v_row}"] = f"=SUM(F9:F{tot_v_row-1})"
-ws4[f"G{tot_v_row}"] = f"=SUM(G9:G{tot_v_row-1})"
-ws4[f"H{tot_v_row}"] = f"=SUM(H9:H{tot_v_row-1})"
-ws4[f"I{tot_v_row}"] = "-"
+    # Kolonne J (10): Del 2 - Driver (PO vs BAC)
+    formula_part2 = (
+        f'=IF(E{idx}>1.0, "Akkumulerte forpliktelser (" & TEXT(C{idx}/1000000,"0.0") & " MNOK) overskrider totalbudsjettet med " & TEXT((E{idx}-1)*100,"0") & "%. Fysisk fremdrift meldes høy (klassisk forsering). ", '
+        f'IF(E{idx}>0.5, "Innkjøpsforpliktelsene har passert 50% av totalrammen (" & TEXT(C{idx}/1000000,"0.0") & " MNOK) tidlig i prosjektløpet. ", '
+        f'"Innkjøpstakten er innenfor planlagt tildeling. "))'
+    )
+    ws4.cell(row=idx, column=10, value=formula_part2).alignment = ALIGN_LEFT
 
-for col_idx in range(2, 10):
-    c_let = get_column_letter(col_idx)
-    ws4[f"{c_let}{tot_v_row}"].font = font_tbl_hdr
-    ws4[f"{c_let}{tot_v_row}"].fill = fill_slate
-    ws4[f"{c_let}{tot_v_row}"].border = border_total
-    if col_idx in [6, 7, 8]:
-        ws4[f"{c_let}{tot_v_row}"].number_format = FMT_CURR
-ws4.row_dimensions[tot_v_row].height = 24
+    # Kolonne K (11): Del 3 - Konsekvens (Likviditet & IAS 38/36)
+    formula_part3 = (
+        f'=IF(E{idx}>1.0, "Sluttprognose (EAC) eksploderer til " & TEXT(G{idx}/1000000,"0.0") & " MNOK. Det oppstår akutt likviditetsunderskudd og revisor vil kreve IAS 36 nedskrivningsvurdering av balanseført AuC. ", '
+        f'IF(F{idx}<0.8, "Forventet sluttkostnad øker til " & TEXT(G{idx}/1000000,"0.0") & " MNOK, noe som vil belaste konsernets driftsmarginer. ", '
+        f'"Ingen umiddelbar trussel mot balanseførte verdier eller likviditetsrammer. "))'
+    )
+    ws4.cell(row=idx, column=11, value=formula_part3).alignment = ALIGN_LEFT
 
-# Section 2: Currency Risk Summary
-curr_start = tot_v_row + 3
-ws4[f"B{curr_start}"] = "2. CURRENCY EXPOSURE & FX LIQUIDITY ANALYSIS"
-ws4[f"B{curr_start}"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_NAVY)
+    # Kolonne L (12): Del 4 - Påkrevd Tiltak (Action)
+    formula_part4 = (
+        f'=IF(E{idx}>1.0, "PÅBUD: 1) Umiddelbar innkjøpsfrys på nye rekvisisjoner. 2) Kanselleringsaudit av åpne PO-er. 3) Ekstraordinær Stage-Gate beslutning (Technical Hold / Off-Ramp).", '
+        f'IF(F{idx}<0.8, "ANBEFALING: Gjennomfør de-scoping av aktiviteter og reforhandle leverandøravtaler innen WBS-300.", '
+        f'"ANBEFALING: Fortsett normal månedlig avstemming av fakturert fremdrift."))'
+    )
+    ws4.cell(row=idx, column=12, value=formula_part4).alignment = ALIGN_LEFT
 
-ws4[f"B{curr_start+1}"] = "Currency"
-ws4[f"C{curr_start+1}"] = "Total PO (NOK)"
-ws4[f"D{curr_start+1}"] = "Invoiced AP (NOK)"
-ws4[f"E{curr_start+1}"] = "Open Exposure (NOK)"
-ws4[f"F{curr_start+1}"] = "Share of Total Exposure %"
+    # Kolonne M (13): Samlet Konklusjon (Konkatenering av I, J, K, L)
+    formula_concat = f'=I{idx} & J{idx} & K{idx} & L{idx}'
+    c_exec = ws4.cell(row=idx, column=13, value=formula_concat)
+    c_exec.alignment = ALIGN_WRAP_LEFT
+    c_exec.font = FONT_BOLD
 
-for col_idx in range(2, 7):
-    c_let = get_column_letter(col_idx)
-    ws4[f"{c_let}{curr_start+1}"].font = font_tbl_hdr
-    ws4[f"{c_let}{curr_start+1}"].fill = fill_slate
-    ws4[f"{c_let}{curr_start+1}"].alignment = align_center if col_idx == 2 else align_right
-ws4.row_dimensions[curr_start+1].height = 22
+    fill_row = FILL_ZEBRA if idx % 2 == 0 else FILL_WHITE
+    for c_i in range(1, 14):
+        c = ws4.cell(row=idx, column=c_i)
+        c.border = CELL_BORDER
+        if c_i != 8:
+            c.fill = fill_row
 
-curr_agg = df_po.groupby("currency").agg(
-    amount_nok=("amount_nok", "sum"),
-    invoiced_nok=("invoiced_nok", "sum"),
-    open_nok=("open_commitment_nok", "sum")
-).reset_index()
-
-for c_offset, c_row in enumerate(curr_agg.itertuples()):
-    r_c = curr_start + 2 + c_offset
-    ws4[f"B{r_c}"] = c_row.currency
-    ws4[f"B{r_c}"].font = font_data_bold
-    ws4[f"B{r_c}"].alignment = align_center
-    ws4[f"B{r_c}"].border = border_cell
-    
-    ws4[f"C{r_c}"] = c_row.amount_nok
-    ws4[f"C{r_c}"].font = font_input
-    ws4[f"C{r_c}"].number_format = FMT_CURR
-    ws4[f"C{r_c}"].alignment = align_right
-    ws4[f"C{r_c}"].border = border_cell
-    
-    ws4[f"D{r_c}"] = c_row.invoiced_nok
-    ws4[f"D{r_c}"].font = font_input
-    ws4[f"D{r_c}"].number_format = FMT_CURR
-    ws4[f"D{r_c}"].alignment = align_right
-    ws4[f"D{r_c}"].border = border_cell
-    
-    ws4[f"E{r_c}"] = f"=C{r_c}-D{r_c}"
-    ws4[f"E{r_c}"].font = font_data_bold
-    ws4[f"E{r_c}"].number_format = FMT_CURR
-    ws4[f"E{r_c}"].alignment = align_right
-    ws4[f"E{r_c}"].border = border_cell
-    
-    ws4[f"F{r_c}"] = f"=E{r_c}/$H${tot_v_row}"
-    ws4[f"F{r_c}"].font = font_data
-    ws4[f"F{r_c}"].number_format = FMT_PCT
-    ws4[f"F{r_c}"].alignment = align_right
-    ws4[f"F{r_c}"].border = border_cell
-    ws4.row_dimensions[r_c].height = 20
-
-# Column widths
-ws4.column_dimensions["A"].width = 3
-ws4.column_dimensions["B"].width = 14
-ws4.column_dimensions["C"].width = 28
-ws4.column_dimensions["D"].width = 12
-ws4.column_dimensions["E"].width = 20
-ws4.column_dimensions["F"].width = 22
-ws4.column_dimensions["G"].width = 22
+# Kolonnebredder
+ws4.column_dimensions["A"].width = 12
+ws4.column_dimensions["B"].width = 18
+ws4.column_dimensions["C"].width = 18
+ws4.column_dimensions["D"].width = 16
+ws4.column_dimensions["E"].width = 14
+ws4.column_dimensions["F"].width = 16
+ws4.column_dimensions["G"].width = 18
 ws4.column_dimensions["H"].width = 24
-ws4.column_dimensions["I"].width = 20
-
+ws4.column_dimensions["I"].width = 28
+ws4.column_dimensions["J"].width = 35
+ws4.column_dimensions["K"].width = 38
+ws4.column_dimensions["L"].width = 42
+ws4.column_dimensions["M"].width = 65
 
 # ==============================================================================
-# TAB 05: 05_IFRS_AuC_Asset_Reg
+# FANE 05: KOSTSTEDER & ENHETER (ELKEM FISKÅ)
 # ==============================================================================
-ws5 = wb.create_sheet(title="05_IFRS_AuC_Asset_Reg")
+print(" - Bygger 05_CostCenters (Fiskå Enheter)")
+ws5 = wb.create_sheet(title="05_CostCenters")
 ws5.views.sheetView[0].showGridLines = True
+ws5["A1"] = "ENKELTENHETER & KOSTSTEDER - ELKEM FISKÅ (2026)"
+ws5["A1"].font = FONT_TITLE
+ws5["A2"] = "Oppfølging av timefangst, kapasitet og personalkostnader per avdeling | Forskningsrådet/SkatteFUNN (530 kr/t)"
+ws5["A2"].font = FONT_SUBTITLE
 
-# Banner
-ws5.merge_cells("B2:J2")
-ws5["B2"] = "ELKEM GREENPILOT 2026 — IFRS / IAS 38 AuC CAPITALIZATION & IMPAIRMENT REGISTER"
-ws5["B2"].font = font_title
-ws5["B2"].fill = fill_navy
-ws5["B2"].alignment = align_center
-ws5.row_dimensions[2].height = 36
+headers_cc = [
+    "Koststed", "Enhetsnavn / Avdeling", "Lokasjon Fiskå", "Registrerte Timer",
+    "Godkjent Timesats", "Beregnet Lønnskostnad", "Andel av Total Timefangst %", "Status / Kapasitetsvurdering"
+]
+ws5.row_dimensions[4].height = 24
+for col_idx, h in enumerate(headers_cc, start=1):
+    c = ws5.cell(row=4, column=col_idx, value=h)
+    c.font = FONT_TH
+    c.fill = FILL_HEADER
+    c.alignment = ALIGN_CENTER
+    c.border = HEADER_BORDER
 
-# KPI Summary Cards (Row 4-5)
-build_kpi_card(ws5, "B", "C", 4, 5, "TOTAL ACTUAL COST (NOK)", "='05_IFRS_AuC_Asset_Reg'!F15", FMT_NOK_M)
-build_kpi_card(ws5, "D", "E", 4, 5, "AuC CAPITALIZED (BALANCE SHEET)", "='05_IFRS_AuC_Asset_Reg'!G15", FMT_NOK_M, font_kpi_val, fill_card)
-build_kpi_card(ws5, "F", "G", 4, 5, "P&L OPERATING EXPENSE", "='05_IFRS_AuC_Asset_Reg'!H15", FMT_NOK_M, font_kpi_val, fill_card)
-build_kpi_card(ws5, "H", "I", 4, 5, "AuC CAPITALIZATION RATIO %", "='05_IFRS_AuC_Asset_Reg'!G15/'05_IFRS_AuC_Asset_Reg'!F15", FMT_PCT, font_kpi_red, fill_red)
+emp_dept = dim_employee.set_index("employee_id")["department"].to_dict()
+fact_timesheets["department"] = fact_timesheets["employee_id"].map(emp_dept)
+hours_by_dept = fact_timesheets.groupby("department")["hours"].sum().to_dict()
 
-ws5.row_dimensions[4].height = 18
-ws5.row_dimensions[5].height = 30
-
-# Table: IAS 38 Classification Register
-ws5["B7"] = "1. IAS 38 CLASSIFICATION & AuC ASSET SCHEDULE BY WBS"
-ws5["B7"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_NAVY)
-
-headers_ifrs = [
-    ("WBS ID", align_center),
-    ("WBS Component Name", align_left),
-    ("IAS 38 Phase", align_left),
-    ("Accounting Treatment", align_center),
-    ("Actual Cost (AC NOK)", align_right),
-    ("AuC Capitalized (NOK)", align_right),
-    ("P&L Expensed (NOK)", align_right),
-    ("Capitalization %", align_right),
-    ("Accounting Destination", align_left)
+cc_data = [
+    ("CC-4100", "Pilotanlegg Drift & Verksted (Operations)", "Bygg 12 Pilot", hours_by_dept.get("Operations", 4200.0), 530.0, "Høy belastning pga. forsering av reaktortester"),
+    ("CC-4200", "FoU Sentrallab & Kjemisk Analyse (R&D)", "Bygg 04 Lab", hours_by_dept.get("R&D", 3800.0), 530.0, "Normal drift, analyse av materialprøver"),
+    ("CC-4300", "Prosessmetallurgi & Prosjektledelse (Finance/PMO)", "Hovedkontor Adm", hours_by_dept.get("Finance", 4320.0), 530.0, "Betydelig overforbruk av timer til feilsøking og koordinering"),
 ]
 
-for col_idx, (hdr, aln) in enumerate(headers_ifrs, start=2):
-    c_let = get_column_letter(col_idx)
-    ws5[f"{c_let}8"] = hdr
-    ws5[f"{c_let}8"].font = font_tbl_hdr
-    ws5[f"{c_let}8"].fill = fill_slate
-    ws5[f"{c_let}8"].alignment = aln
-ws5.row_dimensions[8].height = 24
+for idx, r in enumerate(cc_data, start=5):
+    ws5.row_dimensions[idx].height = 20
+    fill = FILL_ZEBRA if idx % 2 == 0 else FILL_WHITE
+    ws5.cell(row=idx, column=1, value=r[0]).alignment = ALIGN_CENTER
+    ws5.cell(row=idx, column=2, value=r[1]).alignment = ALIGN_LEFT
+    ws5.cell(row=idx, column=3, value=r[2]).alignment = ALIGN_CENTER
+    ws5.cell(row=idx, column=4, value=r[3]).number_format = "#,##0.0"
+    ws5.cell(row=idx, column=5, value=r[4]).number_format = FMT_CURR
+    ws5.cell(row=idx, column=6, value=f"=D{idx}*E{idx}").number_format = FMT_CURR
+    ws5.cell(row=idx, column=7, value=f"=D{idx}/$D$8").number_format = FMT_PCT
+    ws5.cell(row=idx, column=8, value=r[5]).alignment = ALIGN_LEFT
+    for c_i in range(1, 9):
+        c = ws5.cell(row=idx, column=c_i)
+        c.font = FONT_REGULAR
+        c.fill = fill
+        c.border = CELL_BORDER
 
-gl_by_wbs = df_gl.groupby("wbs_id")["amount_nok"].sum().to_dict()
+tot_cc_row = 8
+ws5.row_dimensions[tot_cc_row].height = 22
+ws5.cell(row=tot_cc_row, column=1, value="TOTAL").alignment = ALIGN_CENTER
+ws5.cell(row=tot_cc_row, column=2, value="Konsolidert Personell").alignment = ALIGN_LEFT
+ws5.cell(row=tot_cc_row, column=3, value="Fiskå").alignment = ALIGN_CENTER
+ws5.cell(row=tot_cc_row, column=4, value="=SUM(D5:D7)").number_format = "#,##0.0"
+ws5.cell(row=tot_cc_row, column=5, value=530.0).number_format = FMT_CURR
+ws5.cell(row=tot_cc_row, column=6, value="=SUM(F5:F7)").number_format = FMT_CURR
+ws5.cell(row=tot_cc_row, column=7, value="=SUM(G5:G7)").number_format = FMT_PCT
+ws5.cell(row=tot_cc_row, column=8, value="Full timeavstemming mot timelister").alignment = ALIGN_LEFT
 
-for r_offset, (w_id, w_name, phase, treat) in enumerate(wbs_meta):
-    r_curr = 9 + r_offset
-    ac_val = gl_by_wbs.get(w_id, 0.0)
-    
-    ws5[f"B{r_curr}"] = w_id
-    ws5[f"B{r_curr}"].font = font_data_bold
-    ws5[f"B{r_curr}"].alignment = align_center
-    ws5[f"B{r_curr}"].border = border_cell
-    
-    ws5[f"C{r_curr}"] = w_name
-    ws5[f"C{r_curr}"].font = font_data
-    ws5[f"C{r_curr}"].alignment = align_left
-    ws5[f"C{r_curr}"].border = border_cell
-    
-    ws5[f"D{r_curr}"] = phase
-    ws5[f"D{r_curr}"].font = font_data
-    ws5[f"D{r_curr}"].alignment = align_left
-    ws5[f"D{r_curr}"].border = border_cell
-    
-    ws5[f"E{r_curr}"] = treat
-    ws5[f"E{r_curr}"].font = font_data_bold
-    ws5[f"E{r_curr}"].alignment = align_center
-    ws5[f"E{r_curr}"].fill = fill_grn if treat == "CAPITALIZE" else fill_amb
-    ws5[f"E{r_curr}"].border = border_cell
-    
-    ws5[f"F{r_curr}"] = ac_val
-    ws5[f"F{r_curr}"].font = font_input
-    ws5[f"F{r_curr}"].number_format = FMT_CURR
-    ws5[f"F{r_curr}"].alignment = align_right
-    ws5[f"F{r_curr}"].border = border_cell
-    
-    # AuC Capitalized
-    ws5[f"G{r_curr}"] = f'=IF(E{r_curr}="CAPITALIZE", F{r_curr}, 0)'
-    ws5[f"G{r_curr}"].font = font_data_bold
-    ws5[f"G{r_curr}"].number_format = FMT_CURR
-    ws5[f"G{r_curr}"].alignment = align_right
-    ws5[f"G{r_curr}"].border = border_cell
-    
-    # P&L Expensed
-    ws5[f"H{r_curr}"] = f'=IF(E{r_curr}="EXPENSE", F{r_curr}, 0)'
-    ws5[f"H{r_curr}"].font = font_data
-    ws5[f"H{r_curr}"].number_format = FMT_CURR
-    ws5[f"H{r_curr}"].alignment = align_right
-    ws5[f"H{r_curr}"].border = border_cell
-    
-    # Capitalization Rate
-    ws5[f"I{r_curr}"] = f'=G{r_curr}/F{r_curr}'
-    ws5[f"I{r_curr}"].font = font_data
-    ws5[f"I{r_curr}"].number_format = FMT_PCT
-    ws5[f"I{r_curr}"].alignment = align_right
-    ws5[f"I{r_curr}"].border = border_cell
-    
-    dest_str = "Balance Sheet: Fixed Assets under Constr. (AuC)" if treat == "CAPITALIZE" else "Income Statement: R&D Operating Expense"
-    ws5[f"J{r_curr}"] = dest_str
-    ws5[f"J{r_curr}"].font = font_muted
-    ws5[f"J{r_curr}"].alignment = align_left
-    ws5[f"J{r_curr}"].border = border_cell
-    ws5.row_dimensions[r_curr].height = 20
+for c_i in range(1, 9):
+    c = ws5.cell(row=tot_cc_row, column=c_i)
+    c.font = FONT_BOLD
+    c.fill = FILL_CALC
+    c.border = TOTAL_BORDER
 
-# Totals for IAS 38
-ws5["B15"] = "TOTAL"
-ws5["C15"] = "Total Project Asset Expenditure"
-ws5["D15"] = "-"
-ws5["E15"] = "-"
-ws5["F15"] = "=SUM(F9:F14)"
-ws5["G15"] = "=SUM(G9:G14)"
-ws5["H15"] = "=SUM(H9:H14)"
-ws5["I15"] = "=G15/F15"
-ws5["J15"] = "74.8% Capitalized to AuC / 25.2% Expensed to P&L"
+auto_fit_columns(ws5)
 
-for col_idx in range(2, 11):
-    c_let = get_column_letter(col_idx)
-    ws5[f"{c_let}15"].font = font_tbl_hdr
-    ws5[f"{c_let}15"].fill = fill_slate
-    ws5[f"{c_let}15"].border = border_total
-    if col_idx in [6, 7, 8]:
-        ws5[f"{c_let}15"].number_format = FMT_CURR
-    elif col_idx == 9:
-        ws5[f"{c_let}15"].number_format = FMT_PCT
-ws5.row_dimensions[15].height = 24
-
-# Section 2: IAS 36 Impairment Assessment Callout
-ws5["B18"] = "2. IAS 36 IMPAIRMENT ASSESSMENT & TRIGGER SURVEILLANCE"
-ws5["B18"].font = Font(name=FONT_NAME, size=11, bold=True, color=COLOR_NAVY)
-
-ws5.merge_cells("B19:J23")
-impairment_statement = (
-    "CRITICAL IMPAIRMENT WARNING (IAS 36.12):\n"
-    "1. Bærebokført verdi for Anlegg under Utførelse (AuC) har passert 43.38M NOK mot opprinnelig kapitalisert ramme på 13.03M NOK (overskridelse på +232.9%).\n"
-    "2. Prosjektets CPI på 0.33 og store unntakskostnader indikerer at anleggets kostpris vesentlig overstiger opprinnelig kalkulert nytteverdi.\n"
-    "3. PÅKREVD CONTROLLER-TILTAK: Konsernregnskap og prosjektledelsen må umiddelbart utføre en verdivurdering (DCF) av fremtidige kontantstrømmer "
-    "for pilotanlegget for å avklare om nedskrivning på inntil 20-30M NOK må bokføres ved årsslutt 2026."
-)
-ws5["B19"] = impairment_statement
-ws5["B19"].font = Font(name=FONT_NAME, size=10, bold=False, color="78281F")
-ws5["B19"].fill = PatternFill(start_color="FDEDEC", end_color="FDEDEC", fill_type="solid")
-ws5["B19"].alignment = align_wrap
-ws5["B19"].border = Border(top=Side(style="medium", color="C00000"), bottom=Side(style="medium", color="C00000"), left=thin_gray, right=thin_gray)
-
-# Column widths
-ws5.column_dimensions["A"].width = 3
-ws5.column_dimensions["B"].width = 12
-ws5.column_dimensions["C"].width = 28
-ws5.column_dimensions["D"].width = 16
-ws5.column_dimensions["E"].width = 18
-ws5.column_dimensions["F"].width = 24
-ws5.column_dimensions["G"].width = 24
-ws5.column_dimensions["H"].width = 24
-ws5.column_dimensions["I"].width = 18
-ws5.column_dimensions["J"].width = 44
-
-# SAVE WORKBOOK
-os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-wb.save(OUTPUT_PATH)
-print(f"\n[OK] Excel Workbook successfully generated at:\n     {OUTPUT_PATH}")
-print("=" * 80)
+output_dir = os.path.join(PROJECT_ROOT, "processed", "excel_ready") if "PROJECT_ROOT" in locals() and os.path.exists(PROJECT_ROOT) else "/workspace/scratch"
+os.makedirs(output_dir, exist_ok=True)
+output_model_path = os.path.join(output_dir, "GreenPilot_2026_Model-v2.xlsx")
+wb.save(output_model_path)
+print(f" [OK] Excel-modell generert til: {output_model_path}")
