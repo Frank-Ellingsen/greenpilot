@@ -1,714 +1,361 @@
 table _Measures
-	lineageTag: 1ed40b8b-1f75-4e61-bc7a-059be942261d
+	lineageTag: a7e39958-8686-4fbf-93ba-f27eb66b5930
 
-	measure 'Budget at Completion (BAC)' = SUM ( Fact_BudgetBaseline[baseline_budget_nok] )
-		formatString: #,0
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: 6b614cb1-a196-4012-aece-f1b4fa7a8bf8
+	measure 'Budget at Completion (BAC)' =
+		CALCULATE(SUM(Fact_BudgetBaseline[baseline_budget_nok]))
+		formatString: #,##0.00
+		displayFolder: 01 Core EVM
+		description: Total godkjent baseline budsjettramme for GreenPilot 2026 (NOK 20.0M).
+		lineageTag: 7734000860113684475
 
-	measure 'Planned Value (PV)' = [Planned Value Cumulative (PV S-Curve)]
-		formatString: #,0
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: 84f0c2d7-0f8c-436d-8084-1cdb1542bcdd
+	measure 'Planned Value (PV)' =
+		VAR MaxDate = MAX(Dim_Date[Date])
+		RETURN
+		CALCULATE(
+		    SUM(Fact_BudgetBaseline[baseline_budget_nok]),
+		    FILTER(
+		        ALL(Dim_Date),
+		        Dim_Date[Date] <= MaxDate
+		    )
+		)
+		formatString: #,##0.00
+		displayFolder: 01 Core EVM
+		description: Planlagt verdi (BCWS) akkumulert frem til valgt periode basert på baseline.
+		lineageTag: 8500438508629338778
 
-	measure 'Actual Cost (AC)' = SUM ( Fact_GLActuals[amount_nok] )
-		formatString: #,0
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: a9fa5bd8-0445-435f-899f-9806109f2b6a
+	measure 'Actual Cost (AC)' =
+		VAR StatusDate = MAX(Dim_Project[data_date])
+		VAR MaxDate = MAX(Dim_Date[Date])
+		RETURN
+		IF(
+		    MaxDate <= StatusDate || ISBLANK(MaxDate),
+		    CALCULATE(
+		        SUM(Fact_GLActuals[amount_nok]),
+		        FILTER(ALL(Dim_Date), Dim_Date[Date] <= MaxDate)
+		    ),
+		    BLANK()
+		)
+		formatString: #,##0.00
+		displayFolder: 01 Core EVM
+		description: Faktisk bokførte kostnader (ACWP) i SAP ERP hovedbok frem til Data Date (31.10.2026).
+		lineageTag: 5190781646456255324
 
-	measure 'Actual Cost (AC) Cumulative' = [Actual Cost Cumulative (AC S-Curve)]
-		formatString: #,0
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: de71db63-3125-4a5c-823d-af8447f87fe6
+	measure 'Earned Value (EV)' =
+		VAR StatusDate = MAX(Dim_Project[data_date])
+		VAR MaxDate = MAX(Dim_Date[Date])
+		VAR TotalWeight = COUNTROWS(ALL(Dim_Activity))
+		VAR CompletedWeight = CALCULATE(
+		    COUNTROWS(Dim_Activity),
+		    FILTER(
+		        ALL(Dim_Activity),
+		        Dim_Activity[status] = "Completed" &&
+		        Dim_Activity[planned_finish] <= MaxDate
+		    )
+		)
+		RETURN
+		IF(
+		    MaxDate <= StatusDate || ISBLANK(MaxDate),
+		    DIVIDE(CompletedWeight, TotalWeight, 0) * [Budget at Completion (BAC)],
+		    BLANK()
+		)
+		formatString: #,##0.00
+		displayFolder: 01 Core EVM
+		description: Opptjent verdi (BCWP) beregnet ut fra fysisk ferdiggrad i Primavera P6 ganget med BAC.
+		lineageTag: 1216018221261104684
 
-	measure 'Actual Cost Capitalized (AuC)' =
-			CALCULATE (
-			    [Actual Cost (AC)],
-			    Dim_WBS[ias38_treatment] = "CAPITALIZE"
-			)
-		formatString: #,0
-		displayFolder: 05 IFRS & REGNSKAP (IAS 38 / AuC)
-		lineageTag: ca8e9fd9-dba4-4aa8-8213-2c6632e9afe3
+	measure 'Cost Variance (CV)' =
+		[Earned Value (EV)] - [Actual Cost (AC)]
+		formatString: #,##0.00
+		displayFolder: 02 Variances & Indices
+		description: Kostnadsavvik i NOK (EV - AC). Negativ verdi = overskridelse.
+		lineageTag: 2386106979605474468
 
-	measure 'Actual Cost Expensed (P&L)' =
-			CALCULATE (
-			    [Actual Cost (AC)],
-			    Dim_WBS[ias38_treatment] = "EXPENSE"
-			)
-		formatString: #,0
-		displayFolder: 05 IFRS & REGNSKAP (IAS 38 / AuC)
-		lineageTag: dd7e0a02-7aa4-424c-8698-7c00f77328af
+	measure 'Schedule Variance (SV)' =
+		[Earned Value (EV)] - [Planned Value (PV)]
+		formatString: #,##0.00
+		displayFolder: 02 Variances & Indices
+		description: Tidsavvik uttrykt i NOK (EV - PV). Negativ verdi = forsinkelse.
+		lineageTag: 6218881817231526794
 
-	measure 'Capitalization Rate %' = DIVIDE ( [Actual Cost Capitalized (AuC)], [Actual Cost (AC)], 0 )
+	measure 'Cost Performance Index (CPI)' =
+		DIVIDE([Earned Value (EV)], [Actual Cost (AC)], 1.0)
+		formatString: 0.000
+		displayFolder: 02 Variances & Indices
+		description: Kostnadseffektivitetsindeks (EV / AC). Under 1.00 = overbudsjett.
+		lineageTag: 824218611232528185
+
+	measure 'Schedule Performance Index (SPI)' =
+		DIVIDE([Earned Value (EV)], [Planned Value (PV)], 1.0)
+		formatString: 0.000
+		displayFolder: 02 Variances & Indices
+		description: Fremdriftsindeks (EV / PV). Under 1.00 = bak tidsplan.
+		lineageTag: 6752141415315172060
+
+	measure 'Critical Ratio (CR)' =
+		[Cost Performance Index (CPI)] * [Schedule Performance Index (SPI)]
+		formatString: 0.000
+		displayFolder: 02 Variances & Indices
+		description: Kombinert helseindikator (CPI * SPI). Under 0.90 = akutt alarm.
+		lineageTag: 2885054611201651336
+
+	measure 'Estimate at Completion (EAC CPI)' =
+		DIVIDE([Budget at Completion (BAC)], [Cost Performance Index (CPI)], [Budget at Completion (BAC)])
+		formatString: #,##0.00
+		displayFolder: 03 Forecasting
+		description: Statistisk sluttkostnad basert på historisk kostnadseffektivitet (BAC / CPI).
+		lineageTag: 6716038945395196477
+
+	measure 'Estimate to Complete (ETC)' =
+		MAX(0, [Estimate at Completion (EAC CPI)] - [Actual Cost (AC)])
+		formatString: #,##0.00
+		displayFolder: 03 Forecasting
+		description: Gjenstående kapitalbehov for å fullføre prosjektet (EAC - AC).
+		lineageTag: 5581487578755883596
+
+	measure 'Variance at Completion (VAC)' =
+		[Budget at Completion (BAC)] - [Estimate at Completion (EAC CPI)]
+		formatString: #,##0.00
+		displayFolder: 03 Forecasting
+		description: Forventet budsjettavvik ved ferdigstillelse (BAC - EAC).
+		lineageTag: 3942820119674663926
+
+	measure 'To-Complete Performance Index (TCPI BAC)' =
+		DIVIDE([Budget at Completion (BAC)] - [Earned Value (EV)], [Budget at Completion (BAC)] - [Actual Cost (AC)], 1.0)
+		formatString: 0.00
+		displayFolder: 03 Forecasting
+		description: Nødvendig effektivitet på gjenstående arbeid for å nå opprinnelig BAC (Urealistisk hvis > 1.10).
+		lineageTag: 4194185532021917159
+
+	measure 'AuC Capitalized (Balance Sheet)' =
+		CALCULATE(
+		    SUM(Fact_GLActuals[amount_nok]),
+		    Fact_GLActuals[ias38_treatment] = "CAPITALIZE"
+		)
+		formatString: #,##0.00
+		displayFolder: 04 IFRS & Accounting
+		description: Utviklingskostnader balanseført som Anlegg under utførelse (IAS 38 § 57, WBS-200 til 500).
+		lineageTag: 6833853486802446828
+
+	measure 'P&L Expensed (Research & PMO)' =
+		CALCULATE(
+		    SUM(Fact_GLActuals[amount_nok]),
+		    Fact_GLActuals[ias38_treatment] = "EXPENSE"
+		)
+		formatString: #,##0.00
+		displayFolder: 04 IFRS & Accounting
+		description: Forsknings- og administrasjonskostnader driftsført direkte i resultat (IAS 38 § 54, WBS-100 og 600).
+		lineageTag: 3916115144686256517
+
+	measure 'AuC Capitalization Ratio %' =
+		DIVIDE([AuC Capitalized (Balance Sheet)], [Actual Cost (AC)], 0.0)
 		formatString: 0.0%
-		displayFolder: 05 IFRS & REGNSKAP (IAS 38 / AuC)
-		lineageTag: 0f732f4e-2a87-493b-8e59-301c19ab9f71
+		displayFolder: 04 IFRS & Accounting
+		description: Andel av faktiske kostnader som er aktivert i balansen som AuC.
+		lineageTag: 3997559176271821028
 
-	measure 'Physical Progress % (Current)' = AVERAGE ( Dim_Activity[progress_pct] ) / 100
-		formatString: 0.00%
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: 1d7658ad-30aa-4a47-8703-73455491508b
+	measure 'IAS 36 Impairment Trigger Flag' =
+		IF(
+		    [Cost Performance Index (CPI)] < 0.50 && [AuC Capitalized (Balance Sheet)] > 20000000,
+		    "🔴 TRIGGER: Formell IAS 36 Nedskrivningstest Påkrevd",
+		    "🟢 OK: Ingen akutt verdifallstest utløst"
+		)
+		formatString: @
+		displayFolder: 04 IFRS & Accounting
+		description: Flagg som indikerer om formell verdifallstest kreves etter IAS 36 § 12 (utløst ved CPI < 0.50).
+		lineageTag: 2788837504084879419
 
-	measure 'Earned Value (EV)' = [Earned Value Cumulative (EV S-Curve)]
-		formatString: #,0
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: b646fe1b-85ce-4a4a-851f-2b871a53887f
+	measure 'PO Committed (Total)' =
+		SUM(Fact_PurchaseOrders[amount_nok])
+		formatString: #,##0.00
+		displayFolder: 05 Procurement & Commitments
+		description: Total verdi av godkjente og utstedte innkjøpsordrer i SAP ERP.
+		lineageTag: 6355061336434622017
 
-	measure 'Planned Value Cumulative (PV S-Curve)' =
-			VAR MaxDate = MAX ( Dim_Date[Date] )
-			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
-			VAR IsDateInScope = ISINSCOPE ( Dim_Date[Date] ) || ISINSCOPE ( Dim_Date[Period] ) || ISINSCOPE ( Dim_Date[Month] )
-			RETURN
-			    IF (
-			        IsDateInScope,
-			        CALCULATE (
-			            [Budget at Completion (BAC)],
-			            FILTER ( ALL ( Dim_Date ), Dim_Date[Date] <= MaxDate )
-			        ),
-			        CALCULATE (
-			            [Budget at Completion (BAC)],
-			            FILTER ( ALL ( Dim_Date ), Dim_Date[Date] < ProjectDataDate )
-			        )
-			    )
-		formatString: #,0
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: da34fdf5-726e-4ecb-84e4-92cfcf992977
+	measure 'PO Invoiced (Total)' =
+		SUM(Fact_PurchaseOrders[invoiced_nok])
+		formatString: #,##0.00
+		displayFolder: 05 Procurement & Commitments
+		description: Fakturert andel av innkjøpsordrer basert på inngående leverandørfakturaer.
+		lineageTag: 6857865523265390517
 
-	measure 'Actual Cost Cumulative (AC S-Curve)' =
-			VAR MaxDate = MAX ( Dim_Date[Date] )
-			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
-			VAR IsDateInScope = ISINSCOPE ( Dim_Date[Date] ) || ISINSCOPE ( Dim_Date[Period] ) || ISINSCOPE ( Dim_Date[Month] )
-			RETURN
-			    IF (
-			        IsDateInScope,
-			        IF (
-			            MaxDate <= ProjectDataDate,
-			            CALCULATE (
-			                [Actual Cost (AC)],
-			                FILTER ( ALL ( Dim_Date ), Dim_Date[Date] <= MaxDate )
-			            ),
-			            BLANK ()
-			        ),
-			        CALCULATE (
-			            [Actual Cost (AC)],
-			            FILTER ( ALL ( Dim_Date ), Dim_Date[Date] <= ProjectDataDate )
-			        )
-			    )
-		formatString: #,0
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: 4bed1ea2-55b2-4c3b-93fe-dd1b786ff8c0
+	measure 'Open Commitments (Total)' =
+		SUM(Fact_PurchaseOrders[open_commitment_nok])
+		formatString: #,##0.00
+		displayFolder: 05 Procurement & Commitments
+		description: Åpne, uavsluttede innkjøpsforpliktelser (PO Committed - Invoiced). Likviditetsrisiko.
+		lineageTag: 8543848659345311504
 
-	measure 'Physical Progress % Cumulative' =
-			VAR MaxSelectedDate = MAX ( Dim_Date[Date] )
-			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
-			VAR TotalActivities = COUNTROWS ( ALL ( Dim_Activity ) )
-			VAR CompletedToDate =
-			    CALCULATE (
-			        COUNTROWS ( Dim_Activity ),
-			        Dim_Activity[planned_finish] <= MaxSelectedDate,
-			        ALL ( Dim_Date ),
-			        ALL ( Dim_WBS )
-			    )
-			VAR ProgressAtCutoff =
-			    CALCULATE (
-			        SUMX (
-			            Dim_Activity,
-			            IF (
-			                Dim_Activity[planned_finish] <= MaxSelectedDate,
-			                1.0,
-			                IF ( Dim_Activity[planned_start] <= MaxSelectedDate, ( Dim_Activity[progress_pct] / 100 ), 0.0 )
-			            )
-			        ),
-			        ALL ( Dim_Date ),
-			        ALL ( Dim_WBS )
-			    )
-			RETURN
-			    IF (
-			        ISBLANK ( MaxSelectedDate ),
-			        CALCULATE ( [Physical Progress % (Current)], ALL ( Dim_Activity ) ),
-			        IF (
-			            MaxSelectedDate >= ProjectDataDate - 1,
-			            DIVIDE ( ProgressAtCutoff, TotalActivities, 0 ),
-			            DIVIDE ( CompletedToDate, TotalActivities, 0 )
-			        )
-			    )
-		formatString: 0.00%
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: b533f444-c2c5-4c08-81e4-6fe076fd17d4
+	measure 'Total Financial Exposure' =
+		[Actual Cost (AC)] + [Open Commitments (Total)]
+		formatString: #,##0.00
+		displayFolder: 05 Procurement & Commitments
+		description: Total finansiell forpliktelse for Elkem: Bokført kostnad + Uavsluttede innkjøpsordrer.
+		lineageTag: 2100197653410409745
 
-	measure 'Earned Value Cumulative (EV S-Curve)' =
-			VAR MaxDate = MAX ( Dim_Date[Date] )
-			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
-			VAR TotalBAC = CALCULATE ( [Budget at Completion (BAC)], ALL ( Dim_Date ) )
-			VAR IsDateInScope = ISINSCOPE ( Dim_Date[Date] ) || ISINSCOPE ( Dim_Date[Period] ) || ISINSCOPE ( Dim_Date[Month] )
-			RETURN
-			    IF (
-			        IsDateInScope,
-			        IF (
-			            MaxDate <= ProjectDataDate,
-			            TotalBAC * [Physical Progress % Cumulative],
-			            BLANK ()
-			        ),
-			        TotalBAC * CALCULATE ( [Physical Progress % (Current)], ALL ( Dim_Activity ) )
-			    )
-		formatString: #,0
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: b07ac07d-f2d6-478f-96b3-ed3e75052370
-
-	measure 'Cost Variance (CV)' = [Earned Value Cumulative (EV S-Curve)] - [Actual Cost Cumulative (AC S-Curve)]
-		formatString: #,0
-		displayFolder: 02 EVM YTELSE & AVVIK (CV, SV, CPI, SPI)
-		lineageTag: 9390f270-26b7-49c9-9d67-ccda4123ab10
-
-	measure 'Cost Performance Index (CPI)' = DIVIDE ( [Earned Value Cumulative (EV S-Curve)], [Actual Cost Cumulative (AC S-Curve)], BLANK () )
-		formatString: 0.00
-		displayFolder: 02 EVM YTELSE & AVVIK (CV, SV, CPI, SPI)
-		lineageTag: 4e824f6b-db26-4d95-b241-4d762f9333b8
-
-	measure 'Schedule Variance (SV)' = [Earned Value Cumulative (EV S-Curve)] - [Planned Value Cumulative (PV S-Curve)]
-		formatString: #,0
-		displayFolder: 02 EVM YTELSE & AVVIK (CV, SV, CPI, SPI)
-		lineageTag: e0397412-4bbd-4459-8484-033c4de9b744
-
-	measure 'Schedule Performance Index (SPI)' = DIVIDE ( [Earned Value Cumulative (EV S-Curve)], [Planned Value Cumulative (PV S-Curve)], BLANK () )
-		formatString: 0.00
-		displayFolder: 02 EVM YTELSE & AVVIK (CV, SV, CPI, SPI)
-		lineageTag: 3d7a8269-fd50-4359-9662-afdf902b28d1
-
-	measure 'EV End Point Label' =
-			VAR CurrentDate = MAX ( Dim_Date[Date] )
-			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
-			VAR EV = [Earned Value Cumulative (EV S-Curve)]
-			VAR AC = [Actual Cost Cumulative (AC S-Curve)]
-			VAR PV = [Planned Value Cumulative (PV S-Curve)]
-			VAR CV = EV - AC
-			VAR SV = EV - PV
-			RETURN
-			    IF (
-			        ( CurrentDate = ProjectDataDate || CurrentDate = ProjectDataDate - 1 ) && NOT ( ISBLANK ( EV ) ),
-			        "EV: " & FORMAT ( EV / 1e6, "#,0.00" ) & "M" & UNICHAR ( 10 ) &
-			        "CV: " & FORMAT ( CV / 1e6, "+#,0.00;-#,0.00" ) & "M" & UNICHAR ( 10 ) &
-			        "SV: " & FORMAT ( SV / 1e6, "+#,0.00;-#,0.00" ) & "M",
-			        BLANK ()
-			    )
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: 6443dbbe-b440-4b64-979a-15f2da73d7e6
-
-	measure 'Status Date Dynamic Line' =
-			VAR CurrentDate = MAX ( Dim_Date[Date] )
-			VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
-			VAR MaxChartHeight = CALCULATE ( [Actual Cost (AC)], ALL ( Dim_Date ) ) * 1.05
-			RETURN
-			    IF (
-			        CurrentDate = ProjectDataDate || CurrentDate = ProjectDataDate - 1,
-			        MaxChartHeight,
-			        BLANK ()
-			    )
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: 27bff0ad-9543-40a3-870d-9c86567fb8a1
-
-	measure 'Estimate at Completion (EAC)' =
-			VAR CurrentCPI = [Cost Performance Index (CPI)]
-			RETURN
-			    IF (
-			        CurrentCPI > 0,
-			        [Actual Cost (AC)] + DIVIDE ( [Budget at Completion (BAC)] - [Earned Value Cumulative (EV S-Curve)], CurrentCPI ),
-			        [Actual Cost (AC)]
-			    )
-		formatString: #,0
-		displayFolder: 03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)
-		lineageTag: 623686e2-a1ed-4718-82d1-5b0c89b6f82f
-
-	measure 'Variance at Completion (VAC)' = [Budget at Completion (BAC)] - [Estimate at Completion (EAC)]
-		formatString: #,0
-		displayFolder: 03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)
-		lineageTag: 5d24a114-650f-46c6-9bcb-59503b089ddd
-
-	measure 'To-Complete Performance Index (TCPI)' = [To Complete Performance Index (TCPI EAC)]
-		formatString: 0.00
-		displayFolder: 03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)
-		lineageTag: 49099a05-366e-4e69-929a-1cd1553ab2d4
-
-	measure 'Planned Hours (P6)' = SUM ( Fact_ResourceAssignments[planned_hours] )
-		formatString: #,0
-		displayFolder: 08 RESSURS & TIMEAVSTEMMING
-		lineageTag: f86b1e8a-14cb-429d-b34d-2b05e8f2ed78
-
-	measure 'Actual Hours (HR)' = SUM ( Fact_Timesheets[hours] )
-		formatString: #,0
-		displayFolder: 08 RESSURS & TIMEAVSTEMMING
-		lineageTag: dbffbeda-a174-4207-92ec-1e62f10f5186
-
-	measure 'Hours Variance' = [Planned Hours (P6)] - [Actual Hours (HR)]
-		formatString: #,0
-		displayFolder: 08 RESSURS & TIMEAVSTEMMING
-		lineageTag: ea3248d7-bc11-41ea-a2bd-e5484115dde8
-
-	measure 'Hours Burn Rate %' = DIVIDE ( [Actual Hours (HR)], [Planned Hours (P6)], BLANK () )
+	measure 'PO vs BAC Ratio %' =
+		DIVIDE([PO Committed (Total)], [Budget at Completion (BAC)], 0.0)
 		formatString: 0.0%
-		displayFolder: 08 RESSURS & TIMEAVSTEMMING
-		lineageTag: 0d2f727f-8991-421a-8996-ccf4c4666e1e
+		displayFolder: 05 Procurement & Commitments
+		description: Forholdet mellom forpliktede innkjøp og totalbudsjett. Alarm hvis > 100%.
+		lineageTag: 1775285738262590638
 
-	measure 'To Complete Performance Index (TCPI EAC)' =
-			VAR RemainingWork = [Budget at Completion (BAC)] - [Earned Value Cumulative (EV S-Curve)]
-			VAR RemainingFunds = [Estimate at Completion (EAC)] - [Actual Cost (AC)]
-			RETURN
-			    IF ( RemainingFunds > 0, DIVIDE ( RemainingWork, RemainingFunds ), BLANK () )
-		formatString: 0.00
-		displayFolder: 03 PROGNOSER & SLUTTKOSTNAD (EAC, VAC, TCPI)
-		lineageTag: 49099a05-366e-4e69-929a-1cd1553ab2c3
+	measure 'Supplier AP Paid NOK' =
+		SUM(Fact_CashFlowBridge[supplier_ap_paid_nok])
+		formatString: #,##0.00
+		displayFolder: 06 Cash Flow & Working Capital
+		description: Faktiske utbetalinger til leverandører etter 30 dagers forfall (DPO).
+		lineageTag: 518848028656688399
 
-	measure 'Root Cause Primary Diagnosis' =
-			VAR CurrentCPI = [Cost Performance Index (CPI)]
-			VAR CurrentSPI = [Schedule Performance Index (SPI)]
-			VAR OpenCommitments = SUM ( Fact_PurchaseOrders[open_commitment_nok] )
-			VAR BAC = CALCULATE ( [Budget at Completion (BAC)], ALL ( Dim_Date ) )
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    CurrentSPI >= 1.05 && CurrentCPI < 0.70,
-			        "FAST-TRACKING / PREMATURE FORCING: Schedule is 5 weeks ahead (SPI 1.16), but achieved via excessive premium freight, unbudgeted equipment purchases, and heavy overtime. Work delivered at 3x planned unit cost.",
-			    CurrentSPI < 0.90 && CurrentCPI < 0.90,
-			        "PRODUCTIVITY COLLAPSE: Severe execution bottlenecks with compounding delays and budget overruns.",
-			    OpenCommitments > (BAC * 0.50),
-			        "PROCUREMENT CONTROL BREACH: Uncontrolled Purchase Orders issued without gate approvals.",
-			    "STABLE / MINOR VARIANCE: Project progressing within acceptable operational variance."
-			)
-		displayFolder: 04 ROOT CAUSE & PRESCRIPTIVE ENGINE
-		lineageTag: a1c85304-4531-4821-b3b1-0498ac1239aa
+	measure 'Internal Payroll Paid NOK' =
+		SUM(Fact_CashFlowBridge[internal_payroll_paid_nok])
+		formatString: #,##0.00
+		displayFolder: 06 Cash Flow & Working Capital
+		description: Lønnsutbetalinger til egne ansatte på prosjektet.
+		lineageTag: 2973748052837334673
 
-	measure 'Root Cause Driver Decomposition' =
-			"VARIANCE DRIVERS (Total CV: " & FORMAT([Cost Variance (CV)] / 1e6, "-0.00") & "M NOK):" & UNICHAR(10) &
-			"1. Technology Development (WBS-500): -13.13M NOK (Overrun +417%)" & UNICHAR(10) &
-			"2. Equipment & Machinery (CE400):   -10.15M NOK (Overrun +312%)" & UNICHAR(10) &
-			"3. Pilot Plant Assembly (WBS-300):   -9.90M NOK (Overrun +295%)" & UNICHAR(10) &
-			"4. Internal Labor / Overtime (CE100): -9.52M NOK (Overrun +263%)" & UNICHAR(10) &
-			"5. Project Management (WBS-600):     -9.57M NOK (Overrun +282%)"
-		displayFolder: 04 ROOT CAUSE & PRESCRIPTIVE ENGINE
-		lineageTag: c2d96415-5642-4932-c4c2-1509bd234abb
+	measure 'Total Cash Outflow NOK' =
+		SUM(Fact_CashFlowBridge[total_cash_outflow_nok])
+		formatString: #,##0.00
+		displayFolder: 06 Cash Flow & Working Capital
+		description: Samlet månedlig likviditetsbelastning for prosjektet (Leverandører + Lønn).
+		lineageTag: 1461235138823348300
 
-	measure 'Prescriptive Controller Actions' =
-			VAR OpenCommitments = SUM ( Fact_PurchaseOrders[open_commitment_nok] )
-			VAR CapitalizedAuC =
-			    CALCULATE (
-			        SUM ( Fact_GLActuals[amount_nok] ),
-			        Dim_WBS[ias38_treatment] = "CAPITALIZE"
-			    )
-			RETURN
-			"MANDATORY CONTROLLER ACTIONS (ELKEM PILOT CONTROL):" & UNICHAR(10) &
-			"1. [IMMEDIATE PO FREEZE] Cancel unfulfilled line items in Fact_PurchaseOrders. Open exposure is currently " &
-			    FORMAT(OpenCommitments / 1e6, "0.00") & "M NOK across foreign vendors." & UNICHAR(10) &
-			"2. [IFRS / IAS 36 IMPAIRMENT REVIEW] Capitalized AuC on balance sheet has reached " &
-			    FORMAT(CapitalizedAuC / 1e6, "0.00") & "M NOK. Corporate finance must assess if future commercial cash flows support this asset base." & UNICHAR(10) &
-			"3. [CHANGE ORDER BASELINE RESET] 14 out of 18 Change Orders remain unapproved or pending. The steering committee must establish an Over-Target Baseline (OTB) of 62.5M NOK." & UNICHAR(10) &
-			"4. [TIME CONTROL] 96.08% physical completion reached. Close remaining 4 active activities (A097-A100) and demobilize external personnel."
-		displayFolder: 04 ROOT CAUSE & PRESCRIPTIVE ENGINE
-		lineageTag: e3fa7526-6753-4a43-d5d3-2610ce345bcc
+	measure 'Enova Grant Cash In NOK' =
+		SUM(Fact_CashFlowBridge[enova_grant_cash_in_nok])
+		formatString: #,##0.00
+		displayFolder: 06 Cash Flow & Working Capital
+		description: Innbetalte tilskuddsmidler fra Enova ved oppnådde milepæler.
+		lineageTag: 5572401597693593246
 
-	measure 'S-Curve Subtitle KPI' =
-			"Status Date: " & FORMAT ( MAX ( Dim_Project[data_date] ), "yyyy-MM-dd" ) &
-			" | BAC: " & FORMAT ( [Budget at Completion (BAC)] / 1e6, "#,0.00" ) & "M NOK" &
-			" | AC: " & FORMAT ( [Actual Cost (AC)] / 1e6, "#,0.00" ) & "M NOK" &
-			" | EV: " & FORMAT ( [Earned Value Cumulative (EV S-Curve)] / 1e6, "#,0.00" ) & "M NOK" &
-			" | CPI: " & FORMAT ( [Cost Performance Index (CPI)], "0.00" ) &
-			" | SPI: " & FORMAT ( [Schedule Performance Index (SPI)], "0.00" )
-		displayFolder: 01 EVM KJERNE (BAC, PV, AC, EV)
-		lineageTag: f491ba37-7864-4b54-e6e4-3721df456cdd
+	measure 'Net Monthly Cash Flow NOK' =
+		[Enova Grant Cash In NOK] - [Total Cash Outflow NOK]
+		formatString: #,##0.00
+		displayFolder: 06 Cash Flow & Working Capital
+		description: Månedlig netto kontantstrøm for Elkem (Tilskudd inn - Utbetalinger ut).
+		lineageTag: 7739604353421477045
 
-	measure 'IAS 36 Impairment Callout' =
-			VAR CapAuC = [Actual Cost Capitalized (AuC)]
-			VAR CapRate = [Capitalization Rate %]
-			RETURN
-			IF (
-			    CapRate > 0.60,
-			    "CRITICAL IMPAIRMENT WARNING (IAS 36): AuC Capitalization has reached " & FORMAT ( CapAuC / 1e6, "0.00" ) &
-			    "M NOK (" & FORMAT ( CapRate, "0.0%" ) & " of total expenditure). Since budget overrun is +190% (CPI 0.33), immediate impairment test is required against future discounted cash flows.",
-			    "IAS 36 STATUS: Normal capitalization within baseline limits."
-			)
-		displayFolder: 05 IFRS & REGNSKAP (IAS 38 / AuC)
-		lineageTag: f8a12903-8172-4b63-95cf-3129841ca012
+	measure 'Cumulative Net Cash Flow NOK' =
+		VAR MaxDate = MAX(Dim_Date[Date])
+		RETURN
+		CALCULATE(
+		    [Net Monthly Cash Flow NOK],
+		    FILTER(
+		        ALL(Dim_Date),
+		        Dim_Date[Date] <= MaxDate
+		    )
+		)
+		formatString: #,##0.00
+		displayFolder: 06 Cash Flow & Working Capital
+		description: Akkumulert kontantposisjon som viser Elkems maksimale kapitalbinding (Peak Working Capital Exposure).
+		lineageTag: 8656063398157707745
 
-	measure 'PO Amount NOK' = SUM ( Fact_PurchaseOrders[amount_nok] )
-		formatString: #,0
-		displayFolder: 06 INNKJØP & FORPLIKTELSER (PO & AP)
-		lineageTag: b3941829-87c1-4b19-92da-1904bca91201
+	measure 'Faktiske Timer Koststed' =
+		SUM(Fact_Timesheets[hours])
+		formatString: #,##0.0
+		displayFolder: 07 Koststeder & Enheter
+		description: Totalt antall registrerte timer fra timelister for valgt koststed/avdeling.
+		lineageTag: 1123764999304202613
 
-	measure 'PO Invoiced NOK' = SUM ( Fact_PurchaseOrders[invoiced_nok] )
-		formatString: #,0
-		displayFolder: 06 INNKJØP & FORPLIKTELSER (PO & AP)
-		lineageTag: a72b4910-1829-4e7a-bc12-89bca7102391
+	measure 'Personalkostnad Koststed NOK' =
+		[Faktiske Timer Koststed] * 530.0
+		formatString: #,##0.00
+		displayFolder: 07 Koststeder & Enheter
+		description: Beregnet personalkostnad for koststedet basert på SkatteFUNN-godkjent sats (maks 530 kr/t).
+		lineageTag: 5693191482134641209
 
-	measure 'PO Open Commitment NOK' = SUM ( Fact_PurchaseOrders[open_commitment_nok] )
-		formatString: #,0
-		displayFolder: 06 INNKJØP & FORPLIKTELSER (PO & AP)
-		lineageTag: 5291b849-37a1-49cf-b102-4820bc918231
-
-	measure 'PO Open Commitment %' = DIVIDE ( [PO Open Commitment NOK], [PO Amount NOK], 0 )
+	measure 'Koststedsandel %' =
+		DIVIDE(
+		    [Actual Cost (AC)],
+		    CALCULATE([Actual Cost (AC)], ALLSELECTED(Dim_CostCenter)),
+		    0.0
+		)
 		formatString: 0.0%
-		displayFolder: 06 INNKJØP & FORPLIKTELSER (PO & AP)
-		lineageTag: c8172901-4b82-4190-8ba2-92817ba01928
+		displayFolder: 07 Koststeder & Enheter
+		description: Koststedets relative andel av de samlede faktiske prosjektkostnadene.
+		lineageTag: 917700157147998323
 
-	measure 'Change Orders Total Requested' = SUM ( Fact_ChangeOrders[requested_amount_nok] )
-		formatString: #,0
-		displayFolder: 07 ENDRINGSORDRE & KONTROLL
-		lineageTag: d8192731-5012-4c81-b921-81720a918231
+	measure 'Early Warning Status Signal' =
+		SWITCH(
+		    TRUE(),
+		    [PO vs BAC Ratio %] > 1.0, "🔴 KRITISK: Forpliktelser > 100% BAC (Innkjøpsfrys)",
+		    [Cost Performance Index (CPI)] < 0.80, "🔴 RØD: Alvorlig kostnadsoverskridelse",
+		    [Cost Performance Index (CPI)] < 0.90, "🟡 GUL: Kostnadspress / Marginavvik",
+		    "🟢 GRØNN: Normal drift"
+		)
+		formatString: @
+		displayFolder: 08 Early Warnings & RAG
+		description: Overordnet varselindikator basert på ledende forpliktelses- og effektivitetsgrenser.
+		lineageTag: 1665697515642283447
 
-	measure 'Change Orders Total Approved' = SUM ( Fact_ChangeOrders[approved_amount_nok] )
-		formatString: #,0
-		displayFolder: 07 ENDRINGSORDRE & KONTROLL
-		lineageTag: e9281724-6123-4d92-ca32-92831b029341
+	measure 'Early Warning Color Hex' =
+		SWITCH(
+		    TRUE(),
+		    [PO vs BAC Ratio %] > 1.0, "#D32F2F",   // Mørkerød
+		    [Cost Performance Index (CPI)] < 0.80, "#E53935",   // Rød
+		    [Cost Performance Index (CPI)] < 0.90, "#FB8C00",   // Oransje/Gul
+		    "#43A047"                                           // Grønn
+		)
+		formatString: @
+		displayFolder: 08 Early Warnings & RAG
+		description: Hex-fargekode for betinget formatering av tabeller og KPI-kort.
+		lineageTag: 3287851543390474168
 
-	measure 'Change Orders Pending Count' = COUNTROWS ( FILTER ( Fact_ChangeOrders, Fact_ChangeOrders[status] IN { "SUBMITTED", "PENDING" } ) )
-		formatString: 0
-		displayFolder: 07 ENDRINGSORDRE & KONTROLL
-		lineageTag: a1928374-7234-4ea3-db43-039481bca012
+	measure 'CPI RAG Color' =
+		VAR Val = [Cost Performance Index (CPI)]
+		RETURN
+		SWITCH(
+		    TRUE(),
+		    ISBLANK(Val), "#737373",
+		    Val < 0.90, "#D32F2F",
+		    Val < 1.00, "#FB8C00",
+		    "#43A047"
+		)
+		formatString: @
+		displayFolder: 08 Early Warnings & RAG
+		description: Fargekode for CPI (Grønn >= 1.0, Gul 0.90-1.0, Rød < 0.90).
+		lineageTag: 7856153931673516947
 
-	measure 'Remaining Activities Count' = COUNTROWS ( FILTER ( Dim_Activity, Dim_Activity[status] IN { "In Progress", "Not Started" } ) )
-		formatString: 0
-		displayFolder: 07 ENDRINGSORDRE & KONTROLL
-		lineageTag: b2938475-8345-4fb4-ec54-140592cdb123
+	measure 'SPI RAG Color' =
+		VAR Val = [Schedule Performance Index (SPI)]
+		RETURN
+		SWITCH(
+		    TRUE(),
+		    ISBLANK(Val), "#737373",
+		    Val < 0.90, "#D32F2F",
+		    Val < 1.00, "#FB8C00",
+		    "#43A047"
+		)
+		formatString: @
+		displayFolder: 08 Early Warnings & RAG
+		description: Fargekode for SPI (Grønn >= 1.0, Gul 0.90-1.0, Rød < 0.90).
+		lineageTag: 5206145584053128121
 
 	measure 'CPI Status RAG' =
-			VAR V = [Cost Performance Index (CPI)]
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( V ), BLANK (),
-			    V >= 0.95, "🟢 Green (" & FORMAT ( V, "0.00" ) & ")",
-			    V >= 0.85, "🟡 Amber (" & FORMAT ( V, "0.00" ) & ")",
-			    "🔴 Red (" & FORMAT ( V, "0.00" ) & ")"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: 6115c72a-174d-4ee8-a8b4-36729bf674a2
-
-	measure 'CPI Color RAG' =
-			VAR V = [Cost Performance Index (CPI)]
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( V ), BLANK (),
-			    V >= 0.95, "#15803D",
-			    V >= 0.85, "#D97706",
-			    "#BE123C"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: 1f76c3b1-3d3b-4dd8-aa1a-3987bf59dfdc
+		VAR Val = [Cost Performance Index (CPI)]
+		RETURN
+		SWITCH(
+		    TRUE(),
+		    ISBLANK(Val), "⚪",
+		    Val < 0.90, "🔴",
+		    Val < 1.00, "🟡",
+		    "🟢"
+		)
+		formatString: @
+		displayFolder: 08 Early Warnings & RAG
+		description: Dynamisk RAG-statusikon for CPI (Grønn >= 1.0, Gul 0.90-1.0, Rød < 0.90).
+		lineageTag: 6711191166060907210
 
 	measure 'SPI Status RAG' =
-			VAR V = [Schedule Performance Index (SPI)]
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( V ), BLANK (),
-			    V >= 0.95, "🟢 Green (" & FORMAT ( V, "0.00" ) & ")",
-			    V >= 0.85, "🟡 Amber (" & FORMAT ( V, "0.00" ) & ")",
-			    "🔴 Red (" & FORMAT ( V, "0.00" ) & ")"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: bdbf0abc-c01f-42d0-8e78-06613aa545e1
-
-	measure 'SPI Color RAG' =
-			VAR V = [Schedule Performance Index (SPI)]
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( V ), BLANK (),
-			    V >= 0.95, "#15803D",
-			    V >= 0.85, "#D97706",
-			    "#BE123C"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: 9942664c-7bca-4e93-a1c7-91c67601031f
-
-	measure 'CV Status RAG' =
-			VAR V = [Cost Variance (CV)]
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( V ), BLANK (),
-			    V >= 0, "🟢 On Budget (+" & FORMAT ( V / 1e6, "0.00" ) & "M)",
-			    V >= -1000000, "🟡 Minor Overrun (" & FORMAT ( V / 1e6, "0.00" ) & "M)",
-			    "🔴 Critical Overrun (" & FORMAT ( V / 1e6, "0.00" ) & "M)"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: 16af8ab2-b337-47eb-8a06-6c68e3de2a51
-
-	measure 'CV Color RAG' =
-			VAR V = [Cost Variance (CV)]
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( V ), BLANK (),
-			    V >= 0, "#15803D",
-			    V >= -1000000, "#D97706",
-			    "#BE123C"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: 3222295a-cbbb-4351-9255-dfbebc693acf
-
-	measure 'SV Status RAG' =
-			VAR V = [Schedule Variance (SV)]
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( V ), BLANK (),
-			    V >= 0, "🟢 Ahead (+" & FORMAT ( V / 1e6, "0.00" ) & "M)",
-			    V >= -500000, "🟡 Minor Delay (" & FORMAT ( V / 1e6, "0.00" ) & "M)",
-			    "🔴 Critical Delay (" & FORMAT ( V / 1e6, "0.00" ) & "M)"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: 9e4b5e40-697f-436b-bddd-44cc3b4335fa
-
-	measure 'SV Color RAG' =
-			VAR V = [Schedule Variance (SV)]
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( V ), BLANK (),
-			    V >= 0, "#15803D",
-			    V >= -500000, "#D97706",
-			    "#BE123C"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: cb460689-94c0-4169-99e2-d23798418ea8
-
-	measure 'PO Commitment Exposure RAG' =
-			VAR OpenPO = [PO Open Commitment NOK]
-			VAR TotalPO = [PO Amount NOK]
-			VAR Rate = DIVIDE ( OpenPO, TotalPO, 0 )
-			VAR IsVendorScope = ISINSCOPE ( Dim_Vendor[vendor_name] )
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( OpenPO ), BLANK (),
-			    IsVendorScope && ( OpenPO >= 1500000 || Rate >= 0.60 ), "🔴 High Exposure (" & FORMAT ( OpenPO / 1e6, "0.00" ) & "M)",
-			    IsVendorScope && ( OpenPO >= 500000 || Rate >= 0.35 ), "🟡 Moderate Exposure (" & FORMAT ( OpenPO / 1e6, "0.00" ) & "M)",
-			    IsVendorScope, "🟢 Controlled Exposure (" & FORMAT ( OpenPO / 1e6, "0.00" ) & "M)",
-			    OpenPO > 25000000, "🔴 High Exposure (>25M)",
-			    OpenPO > 10000000, "🟡 Moderate Exposure (10-25M)",
-			    "🟢 Controlled Exposure (<10M)"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: fd6e8b62-559c-4f15-8d54-1c31611d0c70
-
-	measure 'PO Commitment Color RAG' =
-			VAR OpenPO = [PO Open Commitment NOK]
-			VAR TotalPO = [PO Amount NOK]
-			VAR Rate = DIVIDE ( OpenPO, TotalPO, 0 )
-			VAR IsVendorScope = ISINSCOPE ( Dim_Vendor[vendor_name] )
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( OpenPO ), BLANK (),
-			    IsVendorScope && ( OpenPO >= 1500000 || Rate >= 0.60 ), "#BE123C",
-			    IsVendorScope && ( OpenPO >= 500000 || Rate >= 0.35 ), "#D97706",
-			    IsVendorScope, "#15803D",
-			    OpenPO > 25000000, "#BE123C",
-			    OpenPO > 10000000, "#D97706",
-			    "#15803D"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: e439978c-3dda-45d9-8088-d8e6d092c4f6
-
-	measure 'AuC Capitalization Rate RAG' =
-			VAR Rate = [Capitalization Rate %]
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( Rate ), BLANK (),
-			    Rate > 0.80, "🔴 High Impairment Risk (>80%)",
-			    Rate > 0.60, "🟡 Elevated AuC (60-80%)",
-			    "🟢 Normal (<60%)"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: fd78a71c-b3ea-4b45-b5e5-d3c3defcfbac
-
-	measure 'AuC Capitalization Color RAG' =
-			VAR Rate = [Capitalization Rate %]
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( Rate ), BLANK (),
-			    Rate > 0.80, "#BE123C",
-			    Rate > 0.60, "#D97706",
-			    "#15803D"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: c9c95415-c63c-4960-b588-99eab9681843
-
-	measure 'Overall Project Health RAG' =
-			VAR CPI = [Cost Performance Index (CPI)]
-			VAR SPI = [Schedule Performance Index (SPI)]
-			VAR OpenPO = [PO Open Commitment NOK]
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    CPI < 0.80 || OpenPO > 25000000, "🔴 CRITICAL OVERRUN (CPI: " & FORMAT ( CPI, "0.00" ) & " | Open PO: " & FORMAT ( OpenPO / 1e6, "0.0" ) & "M NOK)",
-			    CPI < 0.95 || SPI < 0.95, "🟡 CAUTION (CPI: " & FORMAT ( CPI, "0.00" ) & " | SPI: " & FORMAT ( SPI, "0.00" ) & ")",
-			    "🟢 ON TRACK (CPI: " & FORMAT ( CPI, "0.00" ) & " | SPI: " & FORMAT ( SPI, "0.00" ) & ")"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: e2d6ef16-28f9-438b-a1f8-9173ec03a442
-
-	measure 'Overall Project Health Color RAG' =
-			VAR CPI = [Cost Performance Index (CPI)]
-			VAR OpenPO = [PO Open Commitment NOK]
-			RETURN
-			IF ( CPI < 0.80 || OpenPO > 25000000, "#BE123C", IF ( CPI < 0.95, "#D97706", "#15803D" ) )
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: 4b04ee03-79c3-4aba-ba66-1b57760497fb
-
-	measure 'Cost Variance Bar' =
-			VAR Val = [Cost Variance (CV)]
-			VAR MaxScale = 15000000
-			VAR BarMaxLen = 12
-			VAR Ratio = MIN ( 1.0, DIVIDE ( ABS ( Val ), MaxScale, 0 ) )
-			VAR BarLen = MAX ( 1, ROUND ( Ratio * BarMaxLen, 0 ) )
-			VAR BarStr = REPT ( "█", BarLen )
-			RETURN
-			IF (
-			    ISBLANK ( Val ),
-			    BLANK (),
-			    IF ( Val >= 0, "🟩 " & BarStr & " (+" & FORMAT ( Val / 1e6, "0.0" ) & "M)", "🟥 " & BarStr & " (" & FORMAT ( Val / 1e6, "0.0" ) & "M)" )
-			)
-		displayFolder: 10 BETINGET STOLPELENGDE
-		lineageTag: f84baccd-0dce-4af3-ae17-ffa5823cb43a
-
-	measure 'Physical Progress Bar' =
-			VAR Pct = [Physical Progress % (Current)]
-			VAR BarMax = 10
-			VAR Filled = MIN ( BarMax, MAX ( 0, ROUND ( Pct * BarMax, 0 ) ) )
-			VAR Unfilled = BarMax - Filled
-			RETURN
-			IF ( ISBLANK ( Pct ), BLANK (), REPT ( "█", Filled ) & REPT ( "░", Unfilled ) & " " & FORMAT ( Pct, "0.0%" ) )
-		displayFolder: 10 BETINGET STOLPELENGDE
-		lineageTag: bf809736-34b2-4c18-aeb9-c38bf06bbb0e
-
-	measure 'Activity Progress Bar' =
-			VAR Pct = DIVIDE ( AVERAGE ( Dim_Activity[progress_pct] ), 100, 0 )
-			VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Pct * 10, 0 ) ) )
-			VAR Unfilled = 10 - Filled
-			VAR Icon = SWITCH ( TRUE (), Pct >= 1.0, "🟩 ", Pct > 0, "🟧 ", "🟥 " )
-			RETURN
-			IF ( ISBLANK ( Pct ), BLANK (), Icon & REPT ( "█", Filled ) & REPT ( "░", Unfilled ) & " " & FORMAT ( Pct, "0%" ) )
-		displayFolder: 10 BETINGET STOLPELENGDE
-		lineageTag: 02c3b21f-2673-49d7-85db-77fc88f72314
-
-	measure 'Budget Consumption Bar' =
-			VAR BAC = [Budget at Completion (BAC)]
-			VAR AC = [Actual Cost (AC)]
-			VAR Ratio = DIVIDE ( AC, BAC, 0 )
-			VAR BarLen = MIN ( 15, MAX ( 1, ROUND ( Ratio * 4, 0 ) ) )
-			RETURN
-			IF (
-			    ISBLANK ( Ratio ) || BAC = 0,
-			    BLANK (),
-			    IF ( Ratio > 1.0, "🟥 " & REPT ( "■", BarLen ) & " " & FORMAT ( Ratio, "0.0%" ), "🟩 " & REPT ( "■", BarLen ) & " " & FORMAT ( Ratio, "0.0%" ) )
-			)
-		displayFolder: 10 BETINGET STOLPELENGDE
-		lineageTag: 4dfd9400-e2e3-48f0-afe8-8356ea694d2e
-
-	measure 'PO Commitment Exposure Bar' =
-			VAR OpenPO = [PO Open Commitment NOK]
-			VAR TotalPO = [PO Amount NOK]
-			VAR Rate = DIVIDE ( OpenPO, TotalPO, 0 )
-			VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
-			VAR Unfilled = 10 - Filled
-			VAR Icon = SWITCH ( TRUE (), Rate >= 0.60, "🟥 ", Rate >= 0.35, "🟧 ", "🟩 " )
-			RETURN
-			IF ( ISBLANK ( OpenPO ) || TotalPO = 0, BLANK (), Icon & REPT ( "■", Filled ) & REPT ( "□", Unfilled ) & " " & FORMAT ( Rate, "0.0%" ) )
-		displayFolder: 10 BETINGET STOLPELENGDE
-		lineageTag: fb0e5b0a-05fe-4d79-a18e-d2a2b1167a68
-
-	measure 'AuC Capitalization Bar' =
-			VAR Rate = [Capitalization Rate %]
-			VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
-			VAR Unfilled = 10 - Filled
-			RETURN
-			IF ( ISBLANK ( Rate ), BLANK (), "🟦 " & REPT ( "■", Filled ) & REPT ( "□", Unfilled ) & " " & FORMAT ( Rate, "0.0%" ) )
-		displayFolder: 10 BETINGET STOLPELENGDE
-		lineageTag: 74f05679-45df-4851-8ae5-91084c703c2e
-
-	measure 'Change Order Status RAG' =
-			VAR S = SELECTEDVALUE ( Fact_ChangeOrders[status] )
-			RETURN
-			SWITCH (
-			    S,
-			    "IMPLEMENTED", "🟢 Implemented",
-			    "APPROVED", "🟢 Approved",
-			    "SUBMITTED", "🟡 Pending Approval",
-			    "REJECTED", "🔴 Rejected",
-			    IF ( ISBLANK ( COUNTROWS ( Fact_ChangeOrders ) ), BLANK (), "⚪ Total (" & FORMAT ( COUNTROWS ( Fact_ChangeOrders ), "0" ) & " COs)" )
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445501
-
-	measure 'Change Order Status Color RAG' =
-			VAR S = SELECTEDVALUE ( Fact_ChangeOrders[status] )
-			RETURN
-			SWITCH (
-			    S,
-			    "IMPLEMENTED", "#15803D",
-			    "APPROVED", "#15803D",
-			    "SUBMITTED", "#D97706",
-			    "REJECTED", "#BE123C",
-			    "#334155"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445502
-
-	measure 'Change Order Exposure Bar' =
-			VAR Req = SUM ( Fact_ChangeOrders[requested_amount_nok] )
-			VAR S = SELECTEDVALUE ( Fact_ChangeOrders[status] )
-			VAR MaxReq = IF ( ISINSCOPE ( Fact_ChangeOrders[change_order_id] ), 350000, 4000000 )
-			VAR Ratio = MIN ( 1.0, DIVIDE ( Req, MaxReq, 0 ) )
-			VAR Filled = MIN ( 10, MAX ( 1, ROUND ( Ratio * 10, 0 ) ) )
-			VAR Unfilled = 10 - Filled
-			VAR Prefix = SWITCH ( S, "IMPLEMENTED", "🟩 ", "APPROVED", "🟩 ", "SUBMITTED", "🟧 ", "REJECTED", "🟥 ", "🟦 " )
-			RETURN
-			IF ( ISBLANK ( Req ), BLANK (), Prefix & REPT ( "█", Filled ) & REPT ( "░", Unfilled ) & " " & FORMAT ( Req / 1e3, "#,0" ) & "k" )
-		displayFolder: 10 BETINGET STOLPELENGDE
-		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445503
-
-	measure 'Activity Status RAG' =
-			VAR S = SELECTEDVALUE ( Dim_Activity[status] )
-			VAR Pct = DIVIDE ( AVERAGE ( Dim_Activity[progress_pct] ), 100, 0 )
-			RETURN
-			SWITCH (
-			    S,
-			    "Completed", "🟢 Completed (100%)",
-			    "In Progress", "🟡 In Progress (" & FORMAT ( Pct, "0%" ) & ")",
-			    "Not Started", "🔴 Not Started (0%)",
-			    IF ( ISBLANK ( Pct ), BLANK (), "🔵 Avg (" & FORMAT ( Pct, "0.0%" ) & ")" )
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445504
-
-	measure 'Activity Status Color RAG' =
-			VAR S = SELECTEDVALUE ( Dim_Activity[status] )
-			RETURN
-			SWITCH (
-			    S,
-			    "Completed", "#15803D",
-			    "In Progress", "#D97706",
-			    "Not Started", "#BE123C",
-			    "#15803D"
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445505
-
-	column Value
-		isHidden
-		lineageTag: 81b0148e-e3ef-41c5-a937-ca34a2fb4b1f
-		summarizeBy: none
-		isNameInferred
-		sourceColumn: [Value]
-
-		annotation SummarizationSetBy = Automatic
-
-	partition _Measures = calculated
-		mode: import
-		source = ({"dummy"})
-
-	annotation PBI_Id = 10ea645720ec4208b1cffb888a40c6d1
-
+		VAR Val = [Schedule Performance Index (SPI)]
+		RETURN
+		SWITCH(
+		    TRUE(),
+		    ISBLANK(Val), "⚪",
+		    Val < 0.90, "🔴",
+		    Val < 1.00, "🟡",
+		    "🟢"
+		)
+		formatString: @
+		displayFolder: 08 Early Warnings & RAG
+		description: Dynamisk RAG-statusikon for SPI (Grønn >= 1.0, Gul 0.90-1.0, Rød < 0.90).
+		lineageTag: 683671138300874724

@@ -1,4 +1,4 @@
-﻿receipt_id;po_line_id;receipt_date;amount_currency;receipt_type;currency;nok_rate;amount_nok
+receipt_id;po_line_id;receipt_date;amount_currency;receipt_type;currency;nok_rate;amount_nok
 GR0001;PO0001-10;2026-07-23;24648.84;GOODS;EUR;11.512653893723794;283773.5638017748
 GR0002;PO0002-10;2026-08-23;110465.94;GOODS;USD;10.52284085613597;1162415.5066434648
 GR0003;PO0003-10;2026-03-13;26279.33;SERVICE;NOK;1.0;26279.33

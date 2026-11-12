@@ -1,0 +1,4 @@
+cost_center_id;cost_center_name;location;department
+CC-4100;Pilotanlegg Drift & Mekanisk Verksted;Fiskå Bygg 12;Operations
+CC-4200;FoU Sentrallab & Kjemisk Analyse;Fiskå Bygg 04;R&D
+CC-4300;Prosessmetallurgi & Prosjektledelse;Fiskå Adm Hovedbygg;Finance

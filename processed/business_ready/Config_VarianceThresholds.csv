@@ -1,5 +1,5 @@
-﻿Metric;Yellow_Limit;Red_Limit;Trigger_Type;Controller_Action
-CPI;0.9;0.8;Min;Freeze non-critical POs, revise EAC
-SPI;0.9;0.8;Min;Assess schedule compression / reallocate labor
+Metric;Yellow_Limit;Red_Limit;Trigger_Type;Controller_Action
+CPI;0.90;0.80;Min;Freeze non-critical POs, revise EAC
+SPI;0.90;0.80;Min;Assess schedule compression / reallocate labor
 Open Commitments (MNOK);10.0;25.0;Max;Immediate PO cancellation audit
-AuC Capitalization Ratio;0.6;0.8;Max;Trigger mandatory IAS 36 Impairment Test
+AuC Capitalization Ratio;60%;80%;Max;Trigger mandatory IAS 36 Impairment Test

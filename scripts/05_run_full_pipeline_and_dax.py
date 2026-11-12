@@ -419,3 +419,10 @@ print("=" * 80)
 print(f"[OK] Master DAX-bibliotek lagret til: {dax_file_path}")
 print("Hele dataløpet og Power BI modellen er verifisert og 100% produksjonsklar!")
 print("=" * 80)
+
+
+from generate_dax_package import generate_dax_library_file, generate_tmdl_table
+
+print(">>> Genererer Master DAX-bibliotek og oppdaterer TMDL Semantic Model <<<")
+generate_dax_library_file()
+generate_tmdl_table()

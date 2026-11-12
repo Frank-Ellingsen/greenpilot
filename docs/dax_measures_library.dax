@@ -1,346 +1,321 @@
-/* ==============================================================================
-   MASTER POWER BI DAX MEASURES - ELKEM GREENPILOT 2026 SHOWCASE
-   Modell: Conformed Star Schema med IAS 38, AuC og EVM Root Cause Engine
-   TMDL Målfil: pbi\GreenPilotProject.SemanticModel\definition\tables\_Measures.tmdl
-   ============================================================================== */
+// ===============================================================================
+// MASTER DAX MEASURES LIBRARY - ELKEM TECHNOLOGY (GREENPILOT 2026)
+// ===============================================================================
 
-// 1. EVM KJERNE (BAC, PV, AC, EV)
-[Budget at Completion (BAC)] = 
-SUM ( Fact_BudgetBaseline[baseline_budget_nok] )
 
-[Planned Value (PV)] = 
-[Planned Value Cumulative (PV S-Curve)]
+// -------------------------------------------------------------------------------
+// MAPPE: 01 Core EVM
+// -------------------------------------------------------------------------------
+// Beskrivelse: Total godkjent baseline budsjettramme for GreenPilot 2026 (NOK 20.0M).
+// Format: #,##0.00
+[Budget at Completion (BAC)] =
+CALCULATE(SUM(Fact_BudgetBaseline[baseline_budget_nok]))
 
-[Planned Value Cumulative (PV S-Curve)] = 
-VAR MaxDate = MAX ( Dim_Date[Date] )
-VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
-VAR IsDateInScope = ISINSCOPE ( Dim_Date[Date] ) || ISINSCOPE ( Dim_Date[Period] ) || ISINSCOPE ( Dim_Date[Month] )
+// Beskrivelse: Planlagt verdi (BCWS) akkumulert frem til valgt periode basert på baseline.
+// Format: #,##0.00
+[Planned Value (PV)] =
+VAR MaxDate = MAX(Dim_Date[Date])
 RETURN
-    IF (
-        IsDateInScope,
-        CALCULATE (
-            [Budget at Completion (BAC)],
-            FILTER ( ALL ( Dim_Date ), Dim_Date[Date] <= MaxDate )
-        ),
-        CALCULATE (
-            [Budget at Completion (BAC)],
-            FILTER ( ALL ( Dim_Date ), Dim_Date[Date] < ProjectDataDate )
-        )
+CALCULATE(
+    SUM(Fact_BudgetBaseline[baseline_budget_nok]),
+    FILTER(
+        ALL(Dim_Date),
+        Dim_Date[Date] <= MaxDate
     )
+)
 
-[Actual Cost (AC)] = 
-SUM ( Fact_GLActuals[amount_nok] )
-
-[Actual Cost Cumulative (AC S-Curve)] = 
-VAR MaxDate = MAX ( Dim_Date[Date] )
-VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
-VAR IsDateInScope = ISINSCOPE ( Dim_Date[Date] ) || ISINSCOPE ( Dim_Date[Period] ) || ISINSCOPE ( Dim_Date[Month] )
+// Beskrivelse: Faktisk bokførte kostnader (ACWP) i SAP ERP hovedbok frem til Data Date (31.10.2026).
+// Format: #,##0.00
+[Actual Cost (AC)] =
+VAR StatusDate = MAX(Dim_Project[data_date])
+VAR MaxDate = MAX(Dim_Date[Date])
 RETURN
-    IF (
-        IsDateInScope,
-        IF (
-            MaxDate <= ProjectDataDate,
-            CALCULATE (
-                [Actual Cost (AC)],
-                FILTER ( ALL ( Dim_Date ), Dim_Date[Date] <= MaxDate )
-            ),
-            BLANK ()
-        ),
-        CALCULATE (
-            [Actual Cost (AC)],
-            FILTER ( ALL ( Dim_Date ), Dim_Date[Date] <= ProjectDataDate )
-        )
+IF(
+    MaxDate <= StatusDate || ISBLANK(MaxDate),
+    CALCULATE(
+        SUM(Fact_GLActuals[amount_nok]),
+        FILTER(ALL(Dim_Date), Dim_Date[Date] <= MaxDate)
+    ),
+    BLANK()
+)
+
+// Beskrivelse: Opptjent verdi (BCWP) beregnet ut fra fysisk ferdiggrad i Primavera P6 ganget med BAC.
+// Format: #,##0.00
+[Earned Value (EV)] =
+VAR StatusDate = MAX(Dim_Project[data_date])
+VAR MaxDate = MAX(Dim_Date[Date])
+VAR TotalWeight = COUNTROWS(ALL(Dim_Activity))
+VAR CompletedWeight = CALCULATE(
+    COUNTROWS(Dim_Activity),
+    FILTER(
+        ALL(Dim_Activity),
+        Dim_Activity[status] = "Completed" &&
+        Dim_Activity[planned_finish] <= MaxDate
     )
+)
+RETURN
+IF(
+    MaxDate <= StatusDate || ISBLANK(MaxDate),
+    DIVIDE(CompletedWeight, TotalWeight, 0) * [Budget at Completion (BAC)],
+    BLANK()
+)
 
-[Physical Progress % (Current)] = 
-AVERAGE ( Dim_Activity[progress_pct] ) / 100
 
-[Physical Progress % Cumulative] = 
-VAR MaxSelectedDate = MAX ( Dim_Date[Date] )
-VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
-VAR TotalActivities = COUNTROWS ( ALL ( Dim_Activity ) )
-VAR CompletedToDate = 
-    CALCULATE (
-        COUNTROWS ( Dim_Activity ),
-        Dim_Activity[planned_finish] <= MaxSelectedDate,
-        ALL ( Dim_Date )
+// -------------------------------------------------------------------------------
+// MAPPE: 02 Variances & Indices
+// -------------------------------------------------------------------------------
+// Beskrivelse: Kostnadsavvik i NOK (EV - AC). Negativ verdi = overskridelse.
+// Format: #,##0.00
+[Cost Variance (CV)] =
+[Earned Value (EV)] - [Actual Cost (AC)]
+
+// Beskrivelse: Tidsavvik uttrykt i NOK (EV - PV). Negativ verdi = forsinkelse.
+// Format: #,##0.00
+[Schedule Variance (SV)] =
+[Earned Value (EV)] - [Planned Value (PV)]
+
+// Beskrivelse: Kostnadseffektivitetsindeks (EV / AC). Under 1.00 = overbudsjett.
+// Format: 0.000
+[Cost Performance Index (CPI)] =
+DIVIDE([Earned Value (EV)], [Actual Cost (AC)], 1.0)
+
+// Beskrivelse: Fremdriftsindeks (EV / PV). Under 1.00 = bak tidsplan.
+// Format: 0.000
+[Schedule Performance Index (SPI)] =
+DIVIDE([Earned Value (EV)], [Planned Value (PV)], 1.0)
+
+// Beskrivelse: Kombinert helseindikator (CPI * SPI). Under 0.90 = akutt alarm.
+// Format: 0.000
+[Critical Ratio (CR)] =
+[Cost Performance Index (CPI)] * [Schedule Performance Index (SPI)]
+
+
+// -------------------------------------------------------------------------------
+// MAPPE: 03 Forecasting
+// -------------------------------------------------------------------------------
+// Beskrivelse: Statistisk sluttkostnad basert på historisk kostnadseffektivitet (BAC / CPI).
+// Format: #,##0.00
+[Estimate at Completion (EAC CPI)] =
+DIVIDE([Budget at Completion (BAC)], [Cost Performance Index (CPI)], [Budget at Completion (BAC)])
+
+// Beskrivelse: Gjenstående kapitalbehov for å fullføre prosjektet (EAC - AC).
+// Format: #,##0.00
+[Estimate to Complete (ETC)] =
+MAX(0, [Estimate at Completion (EAC CPI)] - [Actual Cost (AC)])
+
+// Beskrivelse: Forventet budsjettavvik ved ferdigstillelse (BAC - EAC).
+// Format: #,##0.00
+[Variance at Completion (VAC)] =
+[Budget at Completion (BAC)] - [Estimate at Completion (EAC CPI)]
+
+// Beskrivelse: Nødvendig effektivitet på gjenstående arbeid for å nå opprinnelig BAC (Urealistisk hvis > 1.10).
+// Format: 0.00
+[To-Complete Performance Index (TCPI BAC)] =
+DIVIDE([Budget at Completion (BAC)] - [Earned Value (EV)], [Budget at Completion (BAC)] - [Actual Cost (AC)], 1.0)
+
+
+// -------------------------------------------------------------------------------
+// MAPPE: 04 IFRS & Accounting
+// -------------------------------------------------------------------------------
+// Beskrivelse: Utviklingskostnader balanseført som Anlegg under utførelse (IAS 38 § 57, WBS-200 til 500).
+// Format: #,##0.00
+[AuC Capitalized (Balance Sheet)] =
+CALCULATE(
+    SUM(Fact_GLActuals[amount_nok]),
+    Fact_GLActuals[ias38_treatment] = "CAPITALIZE"
+)
+
+// Beskrivelse: Forsknings- og administrasjonskostnader driftsført direkte i resultat (IAS 38 § 54, WBS-100 og 600).
+// Format: #,##0.00
+[P&L Expensed (Research & PMO)] =
+CALCULATE(
+    SUM(Fact_GLActuals[amount_nok]),
+    Fact_GLActuals[ias38_treatment] = "EXPENSE"
+)
+
+// Beskrivelse: Andel av faktiske kostnader som er aktivert i balansen som AuC.
+// Format: 0.0%
+[AuC Capitalization Ratio %] =
+DIVIDE([AuC Capitalized (Balance Sheet)], [Actual Cost (AC)], 0.0)
+
+// Beskrivelse: Flagg som indikerer om formell verdifallstest kreves etter IAS 36 § 12 (utløst ved CPI < 0.50).
+// Format: @
+[IAS 36 Impairment Trigger Flag] =
+IF(
+    [Cost Performance Index (CPI)] < 0.50 && [AuC Capitalized (Balance Sheet)] > 20000000,
+    "🔴 TRIGGER: Formell IAS 36 Nedskrivningstest Påkrevd",
+    "🟢 OK: Ingen akutt verdifallstest utløst"
+)
+
+
+// -------------------------------------------------------------------------------
+// MAPPE: 05 Procurement & Commitments
+// -------------------------------------------------------------------------------
+// Beskrivelse: Total verdi av godkjente og utstedte innkjøpsordrer i SAP ERP.
+// Format: #,##0.00
+[PO Committed (Total)] =
+SUM(Fact_PurchaseOrders[amount_nok])
+
+// Beskrivelse: Fakturert andel av innkjøpsordrer basert på inngående leverandørfakturaer.
+// Format: #,##0.00
+[PO Invoiced (Total)] =
+SUM(Fact_PurchaseOrders[invoiced_nok])
+
+// Beskrivelse: Åpne, uavsluttede innkjøpsforpliktelser (PO Committed - Invoiced). Likviditetsrisiko.
+// Format: #,##0.00
+[Open Commitments (Total)] =
+SUM(Fact_PurchaseOrders[open_commitment_nok])
+
+// Beskrivelse: Total finansiell forpliktelse for Elkem: Bokført kostnad + Uavsluttede innkjøpsordrer.
+// Format: #,##0.00
+[Total Financial Exposure] =
+[Actual Cost (AC)] + [Open Commitments (Total)]
+
+// Beskrivelse: Forholdet mellom forpliktede innkjøp og totalbudsjett. Alarm hvis > 100%.
+// Format: 0.0%
+[PO vs BAC Ratio %] =
+DIVIDE([PO Committed (Total)], [Budget at Completion (BAC)], 0.0)
+
+
+// -------------------------------------------------------------------------------
+// MAPPE: 06 Cash Flow & Working Capital
+// -------------------------------------------------------------------------------
+// Beskrivelse: Faktiske utbetalinger til leverandører etter 30 dagers forfall (DPO).
+// Format: #,##0.00
+[Supplier AP Paid NOK] =
+SUM(Fact_CashFlowBridge[supplier_ap_paid_nok])
+
+// Beskrivelse: Lønnsutbetalinger til egne ansatte på prosjektet.
+// Format: #,##0.00
+[Internal Payroll Paid NOK] =
+SUM(Fact_CashFlowBridge[internal_payroll_paid_nok])
+
+// Beskrivelse: Samlet månedlig likviditetsbelastning for prosjektet (Leverandører + Lønn).
+// Format: #,##0.00
+[Total Cash Outflow NOK] =
+SUM(Fact_CashFlowBridge[total_cash_outflow_nok])
+
+// Beskrivelse: Innbetalte tilskuddsmidler fra Enova ved oppnådde milepæler.
+// Format: #,##0.00
+[Enova Grant Cash In NOK] =
+SUM(Fact_CashFlowBridge[enova_grant_cash_in_nok])
+
+// Beskrivelse: Månedlig netto kontantstrøm for Elkem (Tilskudd inn - Utbetalinger ut).
+// Format: #,##0.00
+[Net Monthly Cash Flow NOK] =
+[Enova Grant Cash In NOK] - [Total Cash Outflow NOK]
+
+// Beskrivelse: Akkumulert kontantposisjon som viser Elkems maksimale kapitalbinding (Peak Working Capital Exposure).
+// Format: #,##0.00
+[Cumulative Net Cash Flow NOK] =
+VAR MaxDate = MAX(Dim_Date[Date])
+RETURN
+CALCULATE(
+    [Net Monthly Cash Flow NOK],
+    FILTER(
+        ALL(Dim_Date),
+        Dim_Date[Date] <= MaxDate
     )
-VAR ProgressAtCutoff = 
-    CALCULATE (
-        SUMX (
-            Dim_Activity,
-            IF (
-                Dim_Activity[planned_finish] <= MaxSelectedDate,
-                1.0,
-                IF ( Dim_Activity[planned_start] <= MaxSelectedDate, ( Dim_Activity[progress_pct] / 100 ), 0.0 )
-            )
-        ),
-        ALL ( Dim_Date )
-    )
-RETURN
-    IF (
-        ISBLANK ( MaxSelectedDate ),
-        [Physical Progress % (Current)],
-        IF (
-            MaxSelectedDate >= ProjectDataDate,
-            DIVIDE ( ProgressAtCutoff, TotalActivities, 0 ),
-            DIVIDE ( CompletedToDate, TotalActivities, 0 )
-        )
-    )
-
-[Earned Value Cumulative (EV S-Curve)] = 
-VAR MaxDate = MAX ( Dim_Date[Date] )
-VAR ProjectDataDate = MAX ( Dim_Project[data_date] )
-VAR TotalBAC = CALCULATE ( [Budget at Completion (BAC)], ALL ( Dim_Date ) )
-VAR IsDateInScope = ISINSCOPE ( Dim_Date[Date] ) || ISINSCOPE ( Dim_Date[Period] ) || ISINSCOPE ( Dim_Date[Month] )
-RETURN
-    IF (
-        IsDateInScope,
-        IF (
-            MaxDate <= ProjectDataDate,
-            TotalBAC * [Physical Progress % Cumulative],
-            BLANK ()
-        ),
-        TotalBAC * [Physical Progress % (Current)]
-    )
-
-[Earned Value (EV)] = 
-[Earned Value Cumulative (EV S-Curve)]
-
-// 2. EVM YTELSE & AVVIK (CV, SV, CPI, SPI)
-[Cost Variance (CV)] = 
-[Earned Value Cumulative (EV S-Curve)] - [Actual Cost Cumulative (AC S-Curve)]
-
-[Schedule Variance (SV)] = 
-[Earned Value Cumulative (EV S-Curve)] - [Planned Value Cumulative (PV S-Curve)]
-
-[Cost Performance Index (CPI)] = 
-DIVIDE ( [Earned Value Cumulative (EV S-Curve)], [Actual Cost Cumulative (AC S-Curve)], BLANK () )
-
-[Schedule Performance Index (SPI)] = 
-DIVIDE ( [Earned Value Cumulative (EV S-Curve)], [Planned Value Cumulative (PV S-Curve)], BLANK () )
-
-// 3. PROGNOSER & SLUTTKOSTNAD (EAC / VAC / TCPI)
-[Estimate at Completion (EAC)] = 
-VAR CurrentCPI = [Cost Performance Index (CPI)]
-RETURN
-    IF (
-        CurrentCPI > 0,
-        [Actual Cost (AC)] + DIVIDE ( [Budget at Completion (BAC)] - [Earned Value Cumulative (EV S-Curve)], CurrentCPI ),
-        [Actual Cost (AC)]
-    )
-
-[Variance at Completion (VAC)] = 
-[Budget at Completion (BAC)] - [Estimate at Completion (EAC)]
-
-[To Complete Performance Index (TCPI EAC)] = 
-VAR RemainingWork = [Budget at Completion (BAC)] - [Earned Value Cumulative (EV S-Curve)]
-VAR RemainingFunds = [Estimate at Completion (EAC)] - [Actual Cost (AC)]
-RETURN
-    IF ( RemainingFunds > 0, DIVIDE ( RemainingWork, RemainingFunds ), BLANK () )
-
-// 4. DETERMINISTISK ROOT CAUSE & PRESCRIPTIVE CONTROLLER ENGINE
-[Root Cause Primary Diagnosis] = 
-VAR CurrentCPI = [Cost Performance Index (CPI)]
-VAR CurrentSPI = [Schedule Performance Index (SPI)]
-VAR OpenCommitments = SUM ( Fact_PurchaseOrders[open_commitment_nok] )
-VAR BAC = CALCULATE ( [Budget at Completion (BAC)], ALL ( Dim_Date ) )
-RETURN
-SWITCH (
-    TRUE (),
-    CurrentSPI >= 1.05 && CurrentCPI < 0.70,
-        "FAST-TRACKING / PREMATURE FORCING: Schedule is 5 weeks ahead (SPI 1.16), but achieved via excessive premium freight, unbudgeted equipment purchases, and heavy overtime. Work delivered at 3x planned unit cost.",
-    CurrentSPI < 0.90 && CurrentCPI < 0.90,
-        "PRODUCTIVITY COLLAPSE: Severe execution bottlenecks with compounding delays and budget overruns.",
-    OpenCommitments > (BAC * 0.50),
-        "PROCUREMENT CONTROL BREACH: Uncontrolled Purchase Orders issued without gate approvals.",
-    "STABLE / MINOR VARIANCE: Project progressing within acceptable operational variance."
 )
 
-[Root Cause Driver Decomposition] = 
-"VARIANCE DRIVERS (Total CV: " & FORMAT([Cost Variance (CV)] / 1e6, "-0.00") & "M NOK):" & UNICHAR(10) &
-"1. Technology Development (WBS-500): -13.13M NOK (Overrun +417%)" & UNICHAR(10) &
-"2. Equipment & Machinery (CE400):   -10.15M NOK (Overrun +312%)" & UNICHAR(10) &
-"3. Pilot Plant Assembly (WBS-300):   -9.90M NOK (Overrun +295%)" & UNICHAR(10) &
-"4. Internal Labor / Overtime (CE100): -9.52M NOK (Overrun +263%)" & UNICHAR(10) &
-"5. Project Management (WBS-600):     -9.57M NOK (Overrun +282%)"
 
-[Prescriptive Controller Actions] = 
-VAR OpenCommitments = SUM ( Fact_PurchaseOrders[open_commitment_nok] )
-VAR CapitalizedAuC = 
-    CALCULATE (
-        SUM ( Fact_GLActuals[amount_nok] ),
-        Dim_WBS[ias38_treatment] = "CAPITALIZE"
-    )
-RETURN
-"MANDATORY CONTROLLER ACTIONS (ELKEM PILOT CONTROL):" & UNICHAR(10) &
-"1. [IMMEDIATE PO FREEZE] Cancel unfulfilled line items in Fact_PurchaseOrders. Open exposure is currently " & 
-    FORMAT(OpenCommitments / 1e6, "0.00") & "M NOK across foreign vendors." & UNICHAR(10) &
-"2. [IFRS / IAS 36 IMPAIRMENT REVIEW] Capitalized AuC on balance sheet has reached " & 
-    FORMAT(CapitalizedAuC / 1e6, "0.00") & "M NOK. Corporate finance must assess if future commercial cash flows support this asset base." & UNICHAR(10) &
-"3. [CHANGE ORDER BASELINE RESET] 14 out of 18 Change Orders remain unapproved or pending. The steering committee must establish an Over-Target Baseline (OTB) of 62.5M NOK." & UNICHAR(10) &
-"4. [TIME CONTROL] 96.08% physical completion reached. Close remaining 4 active activities (A097-A100) and demobilize external personnel."
+// -------------------------------------------------------------------------------
+// MAPPE: 07 Koststeder & Enheter
+// -------------------------------------------------------------------------------
+// Beskrivelse: Totalt antall registrerte timer fra timelister for valgt koststed/avdeling.
+// Format: #,##0.0
+[Faktiske Timer Koststed] =
+SUM(Fact_Timesheets[hours])
 
-// 5. IFRS / IAS 38 & AuC METRIKKER
-[Actual Cost Capitalized (AuC)] = 
-CALCULATE ( [Actual Cost (AC)], Dim_WBS[ias38_treatment] = "CAPITALIZE" )
+// Beskrivelse: Beregnet personalkostnad for koststedet basert på SkatteFUNN-godkjent sats (maks 530 kr/t).
+// Format: #,##0.00
+[Personalkostnad Koststed NOK] =
+[Faktiske Timer Koststed] * 530.0
 
-[Actual Cost Expensed (P&L)] = 
-CALCULATE ( [Actual Cost (AC)], Dim_WBS[ias38_treatment] = "EXPENSE" )
-
-[Capitalization Rate %] = 
-DIVIDE ( [Actual Cost Capitalized (AuC)], [Actual Cost (AC)], 0 )
-
-// 6. INNKJØP & FORPLIKTELSER (PO & AP)
-[PO Amount NOK] = SUM ( Fact_PurchaseOrders[amount_nok] )
-[PO Invoiced NOK] = SUM ( Fact_PurchaseOrders[invoiced_nok] )
-[PO Open Commitment NOK] = SUM ( Fact_PurchaseOrders[open_commitment_nok] )
-[PO Open Commitment %] = DIVIDE ( [PO Open Commitment NOK], [PO Amount NOK], 0 )
-
-// 7. DYNAMISK RAG FORMATERING (STATUS & FARGEKODER)
-[CPI Status RAG] = 
-VAR V = [Cost Performance Index (CPI)]
-RETURN
-SWITCH (
-    TRUE (),
-    ISBLANK ( V ), BLANK (),
-    V >= 0.95, "🟢 Green (" & FORMAT ( V, "0.00" ) & ")",
-    V >= 0.85, "🟡 Amber (" & FORMAT ( V, "0.00" ) & ")",
-    "🔴 Red (" & FORMAT ( V, "0.00" ) & ")"
+// Beskrivelse: Koststedets relative andel av de samlede faktiske prosjektkostnadene.
+// Format: 0.0%
+[Koststedsandel %] =
+DIVIDE(
+    [Actual Cost (AC)],
+    CALCULATE([Actual Cost (AC)], ALLSELECTED(Dim_CostCenter)),
+    0.0
 )
 
-[CPI Color RAG] = 
-VAR V = [Cost Performance Index (CPI)]
-RETURN
-SWITCH (
-    TRUE (),
-    ISBLANK ( V ), BLANK (),
-    V >= 0.95, "#15803D",
-    V >= 0.85, "#D97706",
-    "#BE123C"
+
+// -------------------------------------------------------------------------------
+// MAPPE: 08 Early Warnings & RAG
+// -------------------------------------------------------------------------------
+// Beskrivelse: Overordnet varselindikator basert på ledende forpliktelses- og effektivitetsgrenser.
+// Format: @
+[Early Warning Status Signal] =
+SWITCH(
+    TRUE(),
+    [PO vs BAC Ratio %] > 1.0, "🔴 KRITISK: Forpliktelser > 100% BAC (Innkjøpsfrys)",
+    [Cost Performance Index (CPI)] < 0.80, "🔴 RØD: Alvorlig kostnadsoverskridelse",
+    [Cost Performance Index (CPI)] < 0.90, "🟡 GUL: Kostnadspress / Marginavvik",
+    "🟢 GRØNN: Normal drift"
 )
 
-[SPI Status RAG] = 
-VAR V = [Schedule Performance Index (SPI)]
-RETURN
-SWITCH (
-    TRUE (),
-    ISBLANK ( V ), BLANK (),
-    V >= 0.95, "🟢 Green (" & FORMAT ( V, "0.00" ) & ")",
-    V >= 0.85, "🟡 Amber (" & FORMAT ( V, "0.00" ) & ")",
-    "🔴 Red (" & FORMAT ( V, "0.00" ) & ")"
+// Beskrivelse: Hex-fargekode for betinget formatering av tabeller og KPI-kort.
+// Format: @
+[Early Warning Color Hex] =
+SWITCH(
+    TRUE(),
+    [PO vs BAC Ratio %] > 1.0, "#D32F2F",   // Mørkerød
+    [Cost Performance Index (CPI)] < 0.80, "#E53935",   // Rød
+    [Cost Performance Index (CPI)] < 0.90, "#FB8C00",   // Oransje/Gul
+    "#43A047"                                           // Grønn
 )
 
-[SPI Color RAG] = 
-VAR V = [Schedule Performance Index (SPI)]
+// Beskrivelse: Dynamisk RAG-statusikon for CPI (Grønn >= 1.0, Gul 0.90-1.0, Rød < 0.90).
+// Format: @
+[CPI Status RAG] =
+VAR Val = [Cost Performance Index (CPI)]
 RETURN
-SWITCH (
-    TRUE (),
-    ISBLANK ( V ), BLANK (),
-    V >= 0.95, "#15803D",
-    V >= 0.85, "#D97706",
-    "#BE123C"
+SWITCH(
+    TRUE(),
+    ISBLANK(Val), "⚪",
+    Val < 0.90, "🔴",
+    Val < 1.00, "🟡",
+    "🟢"
 )
 
-[CV Status RAG] = 
-VAR V = [Cost Variance (CV)]
+// Beskrivelse: Dynamisk RAG-statusikon for SPI (Grønn >= 1.0, Gul 0.90-1.0, Rød < 0.90).
+// Format: @
+[SPI Status RAG] =
+VAR Val = [Schedule Performance Index (SPI)]
 RETURN
-SWITCH (
-    TRUE (),
-    ISBLANK ( V ), BLANK (),
-    V >= 0, "🟢 On Budget (+" & FORMAT ( V / 1e6, "0.00" ) & "M)",
-    V >= -1000000, "🟡 Minor Overrun (" & FORMAT ( V / 1e6, "0.00" ) & "M)",
-    "🔴 Critical Overrun (" & FORMAT ( V / 1e6, "0.00" ) & "M)"
+SWITCH(
+    TRUE(),
+    ISBLANK(Val), "⚪",
+    Val < 0.90, "🔴",
+    Val < 1.00, "🟡",
+    "🟢"
 )
 
-[CV Color RAG] = 
-VAR V = [Cost Variance (CV)]
+// Beskrivelse: Fargekode for CPI (Grønn >= 1.0, Gul 0.90-1.0, Rød < 0.90).
+// Format: @
+[CPI RAG Color] =
+VAR Val = [Cost Performance Index (CPI)]
 RETURN
-SWITCH (
-    TRUE (),
-    ISBLANK ( V ), BLANK (),
-    V >= 0, "#15803D",
-    V >= -1000000, "#D97706",
-    "#BE123C"
+SWITCH(
+    TRUE(),
+    ISBLANK(Val), "#737373",
+    Val < 0.90, "#D32F2F",
+    Val < 1.00, "#FB8C00",
+    "#43A047"
 )
 
-[PO Commitment Exposure RAG] = 
-VAR OpenPO = [PO Open Commitment NOK]
+// Beskrivelse: Fargekode for SPI (Grønn >= 1.0, Gul 0.90-1.0, Rød < 0.90).
+// Format: @
+[SPI RAG Color] =
+VAR Val = [Schedule Performance Index (SPI)]
 RETURN
-SWITCH (
-    TRUE (),
-    ISBLANK ( OpenPO ), BLANK (),
-    OpenPO > 25000000, "🔴 High Exposure (>25M)",
-    OpenPO > 10000000, "🟡 Moderate Exposure (10-25M)",
-    "🟢 Controlled Exposure (<10M)"
+SWITCH(
+    TRUE(),
+    ISBLANK(Val), "#737373",
+    Val < 0.90, "#D32F2F",
+    Val < 1.00, "#FB8C00",
+    "#43A047"
 )
 
-[Overall Project Health RAG] = 
-VAR CPI = [Cost Performance Index (CPI)]
-VAR SPI = [Schedule Performance Index (SPI)]
-VAR OpenPO = [PO Open Commitment NOK]
-RETURN
-SWITCH (
-    TRUE (),
-    CPI < 0.80 || OpenPO > 25000000, "🔴 CRITICAL OVERRUN (CPI: " & FORMAT ( CPI, "0.00" ) & " | Open PO: " & FORMAT ( OpenPO / 1e6, "0.0" ) & "M NOK)",
-    CPI < 0.95 || SPI < 0.95, "🟡 CAUTION (CPI: " & FORMAT ( CPI, "0.00" ) & " | SPI: " & FORMAT ( SPI, "0.00" ) & ")",
-    "🟢 ON TRACK (CPI: " & FORMAT ( CPI, "0.00" ) & " | SPI: " & FORMAT ( SPI, "0.00" ) & ")"
-)
-
-// 8. BETINGET STOLPELENGDE (IN-CELL DATA BARS)
-[Cost Variance Bar] = 
-VAR Val = [Cost Variance (CV)]
-VAR MaxScale = 15000000
-VAR BarMaxLen = 12
-VAR Ratio = MIN ( 1.0, DIVIDE ( ABS ( Val ), MaxScale, 0 ) )
-VAR BarLen = MAX ( 1, ROUND ( Ratio * BarMaxLen, 0 ) )
-VAR BarStr = REPT ( "█", BarLen )
-RETURN
-IF (
-    ISBLANK ( Val ),
-    BLANK (),
-    IF ( Val >= 0, "🟩 " & BarStr & " (+" & FORMAT ( Val / 1e6, "0.0" ) & "M)", "🟥 " & BarStr & " (" & FORMAT ( Val / 1e6, "0.0" ) & "M)" )
-)
-
-[Physical Progress Bar] = 
-VAR Pct = [Physical Progress % (Current)]
-VAR BarMax = 10
-VAR Filled = MIN ( BarMax, MAX ( 0, ROUND ( Pct * BarMax, 0 ) ) )
-VAR Unfilled = BarMax - Filled
-RETURN
-IF ( ISBLANK ( Pct ), BLANK (), REPT ( "█", Filled ) & REPT ( "░", Unfilled ) & " " & FORMAT ( Pct, "0.0%" ) )
-
-[Activity Progress Bar] = 
-VAR Pct = DIVIDE ( AVERAGE ( Dim_Activity[progress_pct] ), 100, 0 )
-VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Pct * 10, 0 ) ) )
-VAR Unfilled = 10 - Filled
-RETURN
-REPT ( "█", Filled ) & REPT ( "░", Unfilled ) & " " & FORMAT ( Pct, "0%" )
-
-[Budget Consumption Bar] = 
-VAR BAC = [Budget at Completion (BAC)]
-VAR AC = [Actual Cost (AC)]
-VAR Ratio = DIVIDE ( AC, BAC, 0 )
-VAR BarLen = MIN ( 15, MAX ( 1, ROUND ( Ratio * 4, 0 ) ) )
-RETURN
-IF (
-    ISBLANK ( Ratio ) || BAC = 0,
-    BLANK (),
-    IF ( Ratio > 1.0, "🟥 " & REPT ( "■", BarLen ) & " " & FORMAT ( Ratio, "0.0%" ), "🟩 " & REPT ( "■", BarLen ) & " " & FORMAT ( Ratio, "0.0%" ) )
-)
-
-[PO Commitment Exposure Bar] = 
-VAR OpenPO = [PO Open Commitment NOK]
-VAR TotalPO = [PO Amount NOK]
-VAR Rate = DIVIDE ( OpenPO, TotalPO, 0 )
-VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
-VAR Unfilled = 10 - Filled
-RETURN
-IF ( ISBLANK ( OpenPO ) || TotalPO = 0, BLANK (), "🟧 " & REPT ( "■", Filled ) & REPT ( "□", Unfilled ) & " " & FORMAT ( Rate, "0.0%" ) )
-
-[AuC Capitalization Bar] = 
-VAR Rate = [Capitalization Rate %]
-VAR Filled = MIN ( 10, MAX ( 0, ROUND ( Rate * 10, 0 ) ) )
-VAR Unfilled = 10 - Filled
-RETURN
-IF ( ISBLANK ( Rate ), BLANK (), "🟦 " & REPT ( "■", Filled ) & REPT ( "□", Unfilled ) & " " & FORMAT ( Rate, "0.0%" ) )
