@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p2_waterfall_ce",
   "position": {
-    "x": 940,
-    "y": 540,
+    "x": 497.38582677165351,
+    "y": 539.71653543307082,
     "z": 1300,
-    "height": 510,
-    "width": 940,
+    "height": 509.48031496062987,
+    "width": 622.86614173228338,
     "tabOrder": 4000
   },
   "visual": {

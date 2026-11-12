@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p5_remaining_activities",
   "position": {
-    "x": 950,
-    "y": 460,
+    "x": 12.094488188976378,
+    "y": 628.91338582677167,
     "z": 1200,
-    "height": 590,
-    "width": 930,
+    "height": 450.51968503937007,
+    "width": 1040.1259842519685,
     "tabOrder": 3000
   },
   "visual": {
@@ -137,6 +137,23 @@
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Dim_Activity"
+                  }
+                },
+                "Property": "activity_name"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
       }
     }
   }

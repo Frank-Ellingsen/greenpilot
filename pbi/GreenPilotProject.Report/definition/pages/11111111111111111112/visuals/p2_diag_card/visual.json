@@ -2,18 +2,18 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p2_diag_card",
   "position": {
-    "x": 1140,
-    "y": 20,
+    "x": 0,
+    "y": 19.653543307086615,
     "z": 1100,
-    "height": 500,
-    "width": 740,
+    "height": 520.06299212598424,
+    "width": 1903.3700787401574,
     "tabOrder": 2000
   },
   "visual": {
-    "visualType": "multiRowCard",
+    "visualType": "cardVisual",
     "query": {
       "queryState": {
-        "Values": {
+        "Data": {
           "projections": [
             {
               "field": {
@@ -27,8 +27,7 @@
                 }
               },
               "queryRef": "_Measures.Overall Project Health RAG",
-              "nativeQueryRef": "Overall Project Health RAG",
-              "active": true
+              "nativeQueryRef": "Overall Project Health RAG"
             },
             {
               "field": {
@@ -42,8 +41,7 @@
                 }
               },
               "queryRef": "_Measures.Root Cause Primary Diagnosis",
-              "nativeQueryRef": "Root Cause Primary Diagnosis",
-              "active": true
+              "nativeQueryRef": "Root Cause Primary Diagnosis"
             },
             {
               "field": {
@@ -57,12 +55,57 @@
                 }
               },
               "queryRef": "_Measures.Root Cause Driver Decomposition",
-              "nativeQueryRef": "Root Cause Driver Decomposition",
-              "active": true
+              "nativeQueryRef": "Root Cause Driver Decomposition"
             }
           ]
         }
       }
+    },
+    "objects": {
+      "layout": [
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'top'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "value": [
+        {
+          "properties": {
+            "textWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          },
+          "selector": {
+            "id": "default"
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

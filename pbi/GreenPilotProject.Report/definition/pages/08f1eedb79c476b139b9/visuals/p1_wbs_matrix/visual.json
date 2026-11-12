@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "p1_wbs_matrix",
   "position": {
-    "x": 1120,
-    "y": 150,
+    "x": 0,
+    "y": 539.71653543307082,
     "z": 2100,
-    "height": 905,
-    "width": 760,
+    "height": 515.5275590551181,
+    "width": 1920,
     "tabOrder": 8000
   },
   "visual": {
@@ -231,7 +231,116 @@
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Dim_WBS"
+                  }
+                },
+                "Property": "wbs_id"
+              }
+            },
+            "direction": "Ascending"
+          },
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Dim_WBS"
+                  }
+                },
+                "Property": "wbs_name"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
       }
+    },
+    "objects": {
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "133.85038191504788D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Schedule Performance Index (SPI)"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "117.43309436091796D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Cost Performance Index (CPI)"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "126.03937252942063D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Budget at Completion (BAC)"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "93.74014942517879D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Planned Value (PV)"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "201.90551528766508D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Cost Variance Bar"
+          }
+        }
+      ],
+      "columnHeaders": [
+        {
+          "properties": {}
+        }
+      ]
     }
   }
 }
