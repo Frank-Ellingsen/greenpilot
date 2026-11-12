@@ -1,0 +1,106 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p6_cashflow_combo",
+  "position": {
+    "x": 40,
+    "y": 170,
+    "z": 2000,
+    "height": 430,
+    "width": 960,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "lineClusteredColumnComboChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_Date"
+                    }
+                  },
+                  "Property": "Date"
+                }
+              },
+              "queryRef": "Dim_Date.Date",
+              "nativeQueryRef": "Date",
+              "active": true
+            }
+          ]
+        },
+        "ColumnY": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Supplier AP Paid NOK"
+                }
+              },
+              "queryRef": "_Measures.Supplier AP Paid NOK",
+              "nativeQueryRef": "Supplier AP Paid NOK",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Internal Payroll Paid NOK"
+                }
+              },
+              "queryRef": "_Measures.Internal Payroll Paid NOK",
+              "nativeQueryRef": "Internal Payroll Paid NOK",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Enova Grant Cash In NOK"
+                }
+              },
+              "queryRef": "_Measures.Enova Grant Cash In NOK",
+              "nativeQueryRef": "Enova Grant Cash In NOK",
+              "active": true
+            }
+          ]
+        },
+        "LineY": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Cumulative Net Cash Flow NOK"
+                }
+              },
+              "queryRef": "_Measures.Cumulative Net Cash Flow NOK",
+              "nativeQueryRef": "Cumulative Net Cash Flow NOK",
+              "active": true
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,156 @@
+table Fact_MonthlyEarlyWarnings
+	lineageTag: c3300001-4100-4200-4300-000000000001
+
+	column period
+		dataType: string
+		lineageTag: c3300001-4100-4200-4300-000000000002
+		summarizeBy: none
+		sourceColumn: period
+
+		annotation SummarizationSetBy = Automatic
+
+	column pv_monthly_nok
+		dataType: double
+		lineageTag: c3300001-4100-4200-4300-000000000003
+		summarizeBy: sum
+		sourceColumn: pv_monthly_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column pv_cum_nok
+		dataType: double
+		lineageTag: c3300001-4100-4200-4300-000000000004
+		summarizeBy: sum
+		sourceColumn: pv_cum_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ac_monthly_nok
+		dataType: double
+		lineageTag: c3300001-4100-4200-4300-000000000005
+		summarizeBy: sum
+		sourceColumn: ac_monthly_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ac_cum_nok
+		dataType: double
+		lineageTag: c3300001-4100-4200-4300-000000000006
+		summarizeBy: sum
+		sourceColumn: ac_cum_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ev_cum_nok
+		dataType: double
+		lineageTag: c3300001-4100-4200-4300-000000000007
+		summarizeBy: sum
+		sourceColumn: ev_cum_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column po_committed_monthly_nok
+		dataType: double
+		lineageTag: c3300001-4100-4200-4300-000000000008
+		summarizeBy: sum
+		sourceColumn: po_committed_monthly_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column po_committed_cum_nok
+		dataType: double
+		lineageTag: c3300001-4100-4200-4300-000000000009
+		summarizeBy: sum
+		sourceColumn: po_committed_cum_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column po_vs_bac_ratio_pct
+		dataType: double
+		lineageTag: c3300001-4100-4200-4300-000000000010
+		summarizeBy: average
+		sourceColumn: po_vs_bac_ratio_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column cpi
+		dataType: double
+		lineageTag: c3300001-4100-4200-4300-000000000011
+		summarizeBy: average
+		sourceColumn: cpi
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column spi
+		dataType: double
+		lineageTag: c3300001-4100-4200-4300-000000000012
+		summarizeBy: average
+		sourceColumn: spi
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column projected_eac_nok
+		dataType: double
+		lineageTag: c3300001-4100-4200-4300-000000000013
+		summarizeBy: average
+		sourceColumn: projected_eac_nok
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column rag_status
+		dataType: string
+		lineageTag: c3300001-4100-4200-4300-000000000014
+		summarizeBy: none
+		sourceColumn: rag_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column signal_level
+		dataType: string
+		lineageTag: c3300001-4100-4200-4300-000000000015
+		summarizeBy: none
+		sourceColumn: signal_level
+
+		annotation SummarizationSetBy = Automatic
+
+	column controller_action_required
+		dataType: string
+		lineageTag: c3300001-4100-4200-4300-000000000016
+		summarizeBy: none
+		sourceColumn: controller_action_required
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Fact_MonthlyEarlyWarnings = m
+		mode: import
+		source =
+				let
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Fact_MonthlyEarlyWarnings.csv"), [Delimiter = ";", QuoteStyle = QuoteStyle.None]),
+				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				  #"Changed column type" = Table.TransformColumnTypes(#"Promoted headers", {{"period", type text}, {"pv_monthly_nok", type number}, {"pv_cum_nok", type number}, {"ac_monthly_nok", type number}, {"ac_cum_nok", type number}, {"ev_cum_nok", type number}, {"po_committed_monthly_nok", type number}, {"po_committed_cum_nok", type number}, {"po_vs_bac_ratio_pct", type number}, {"cpi", type number}, {"spi", type number}, {"projected_eac_nok", type number}, {"rag_status", type text}, {"signal_level", type text}, {"controller_action_required", type text}})
+				in
+				  #"Changed column type"
+
+	annotation PBI_ResultType = Table

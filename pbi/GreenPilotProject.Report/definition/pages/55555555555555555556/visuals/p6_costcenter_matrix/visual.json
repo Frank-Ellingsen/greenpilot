@@ -1,0 +1,177 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p6_costcenter_matrix",
+  "position": {
+    "x": 1020,
+    "y": 170,
+    "z": 2100,
+    "height": 430,
+    "width": 860,
+    "tabOrder": 6000
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_CostCenter"
+                    }
+                  },
+                  "Property": "cost_center_name"
+                }
+              },
+              "queryRef": "Dim_CostCenter.cost_center_name",
+              "nativeQueryRef": "cost_center_name",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_CostCenter"
+                    }
+                  },
+                  "Property": "department"
+                }
+              },
+              "queryRef": "Dim_CostCenter.department",
+              "nativeQueryRef": "department",
+              "active": true
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Faktiske Timer Koststed"
+                }
+              },
+              "queryRef": "_Measures.Faktiske Timer Koststed",
+              "nativeQueryRef": "Faktiske Timer Koststed",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Personalkostnad Koststed NOK"
+                }
+              },
+              "queryRef": "_Measures.Personalkostnad Koststed NOK",
+              "nativeQueryRef": "Personalkostnad Koststed NOK",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Andel Timer Koststed %"
+                }
+              },
+              "queryRef": "_Measures.Andel Timer Koststed %",
+              "nativeQueryRef": "Andel Timer Koststed %",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Koststed Timer Bar"
+                }
+              },
+              "queryRef": "_Measures.Koststed Timer Bar",
+              "nativeQueryRef": "Koststed Timer Bar",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "cellElements": [
+        {
+          "selector": {
+            "metadata": "_Measures.Andel Timer Koststed %"
+          },
+          "properties": {
+            "dataBars": {
+              "positiveColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#0284C7'"
+                      }
+                    }
+                  }
+                }
+              },
+              "negativeColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#BE123C'"
+                      }
+                    }
+                  }
+                }
+              },
+              "axisColor": {
+                "solid": {
+                  "color": {
+                    "expr": {
+                      "Literal": {
+                        "Value": "'#94A3B8'"
+                      }
+                    }
+                  }
+                }
+              },
+              "reverseDirection": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              },
+              "hideText": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p6_kpi_cum_net_cf",
+  "position": {
+    "x": 960,
+    "y": 20,
+    "z": 1200,
+    "height": 130,
+    "width": 440,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Cumulative Net Cash Flow NOK"
+                }
+              },
+              "queryRef": "_Measures.Cumulative Net Cash Flow NOK",
+              "nativeQueryRef": "Cumulative Net Cash Flow NOK",
+              "active": true
+            }
+          ]
+        }
+      }
+    }
+  }
+}

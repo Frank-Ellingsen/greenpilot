@@ -602,6 +602,120 @@ def build_pages():
     }
     write_visual(p5_dir, "p5_remaining_activities", rem_act_dict, 950, 460, 930, 590, 1200, 3000)
 
+    # =========================================================================
+    # PAGE 6: Likviditet & Koststeder Fiskå
+    # =========================================================================
+    p6_id = "55555555555555555556"
+    p6_dir = prepare_page(p6_id, "Likviditet & Koststeder Fiskå")
+    pages_meta.append(p6_id)
+
+    # Top Cards: Total Cash Outflow, Enova Grant In, Cumulative Net Cash Flow, Open PO Commitments
+    cf_cards = [
+        ("p6_kpi_cash_out", "_Measures", "Total Cash Outflow NOK", 40, 20, 440, 130, None),
+        ("p6_kpi_enova_in", "_Measures", "Enova Grant Cash In NOK", 500, 20, 440, 130, None),
+        ("p6_kpi_cum_net_cf", "_Measures", "Cumulative Net Cash Flow NOK", 960, 20, 440, 130, None),
+        ("p6_kpi_open_po", "_Measures", "PO Open Commitment NOK", 1420, 20, 460, 130, "PO Commitment Color RAG")
+    ]
+    for idx, (vname, ent, prop, x, y, w, h, color_measure) in enumerate(cf_cards):
+        vdict = {
+            "visualType": "card",
+            "query": {
+                "queryState": {
+                    "Values": {"projections": [make_projection_measure(ent, prop, active=True)]}
+                }
+            }
+        }
+        if color_measure:
+            vdict["objects"] = {
+                "labels": [
+                    {
+                        "properties": {
+                            "color": make_measure_color_expr("_Measures", color_measure)
+                        }
+                    }
+                ]
+            }
+        write_visual(p6_dir, vname, vdict, x, y, w, h, 1000 + idx * 100, (idx + 1) * 1000)
+
+    # Visual 2 (Middle Left): Cash Flow Bridge & Cumulative Working Capital Combo Chart
+    cf_combo_dict = {
+        "visualType": "lineClusteredColumnComboChart",
+        "query": {
+            "queryState": {
+                "Category": {"projections": [make_projection_column("Dim_Date", "Date", active=True)]},
+                "ColumnY": {
+                    "projections": [
+                        make_projection_measure("_Measures", "Supplier AP Paid NOK", active=True),
+                        make_projection_measure("_Measures", "Internal Payroll Paid NOK", active=True),
+                        make_projection_measure("_Measures", "Enova Grant Cash In NOK", active=True)
+                    ]
+                },
+                "LineY": {
+                    "projections": [
+                        make_projection_measure("_Measures", "Cumulative Net Cash Flow NOK", active=True)
+                    ]
+                }
+            }
+        }
+    }
+    write_visual(p6_dir, "p6_cashflow_combo", cf_combo_dict, 40, 170, 960, 430, 2000, 5000)
+
+    # Visual 3 (Middle Right): Elkem Fiskå Cost Center Matrix with Conditional Bar Length
+    cc_matrix_dict = {
+        "visualType": "pivotTable",
+        "query": {
+            "queryState": {
+                "Rows": {
+                    "projections": [
+                        make_projection_column("Dim_CostCenter", "cost_center_name", active=True),
+                        make_projection_column("Dim_CostCenter", "department", active=True)
+                    ]
+                },
+                "Values": {
+                    "projections": [
+                        make_projection_measure("_Measures", "Faktiske Timer Koststed", active=True),
+                        make_projection_measure("_Measures", "Personalkostnad Koststed NOK", active=True),
+                        make_projection_measure("_Measures", "Andel Timer Koststed %", active=True),
+                        make_projection_measure("_Measures", "Koststed Timer Bar", active=True)
+                    ]
+                }
+            }
+        },
+        "objects": {
+            "cellElements": [
+                make_cell_databars("_Measures.Andel Timer Koststed %", pos_hex="#0284C7", neg_hex="#BE123C")
+            ]
+        }
+    }
+    write_visual(p6_dir, "p6_costcenter_matrix", cc_matrix_dict, 1020, 170, 860, 430, 2100, 6000)
+
+    # Visual 4 (Bottom Full Width): Monthly Early Warning Log with Dynamic RAG & PO Exposure Bar
+    ew_table_dict = {
+        "visualType": "tableEx",
+        "query": {
+            "queryState": {
+                "Values": {
+                    "projections": [
+                        make_projection_column("Fact_MonthlyEarlyWarnings", "period", active=True),
+                        make_projection_measure("_Measures", "Early Warning Status RAG", active=True),
+                        make_projection_measure("_Measures", "Early Warning PO Exposure Bar", active=True),
+                        make_projection_column("Fact_MonthlyEarlyWarnings", "cpi", active=True),
+                        make_projection_column("Fact_MonthlyEarlyWarnings", "spi", active=True),
+                        make_projection_column("Fact_MonthlyEarlyWarnings", "projected_eac_nok", active=True),
+                        make_projection_column("Fact_MonthlyEarlyWarnings", "controller_action_required", active=True)
+                    ]
+                }
+            }
+        },
+        "objects": {
+            "cellElements": [
+                make_cell_font_color("_Measures.Early Warning Status RAG", "Early Warning Color RAG"),
+                make_cell_font_color("_Measures.Early Warning PO Exposure Bar", "Early Warning Color RAG")
+            ]
+        }
+    }
+    write_visual(p6_dir, "p6_early_warning_table", ew_table_dict, 40, 620, 1840, 430, 2200, 7000)
+
     # Update pages.json
     pages_json_path = os.path.join(PAGES_DIR, "pages.json")
     with open(pages_json_path, "w", encoding="utf-8") as f:

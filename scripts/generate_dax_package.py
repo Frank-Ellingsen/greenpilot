@@ -187,7 +187,7 @@ IF(
         "description": "Utviklingskostnader balanseført som Anlegg under utførelse (IAS 38 § 57, WBS-200 til 500).",
         "dax": """CALCULATE(
     SUM(Fact_GLActuals[amount_nok]),
-    Fact_GLActuals[ias38_treatment] = "CAPITALIZE"
+    Dim_WBS[ias38_treatment] = "CAPITALIZE"
 )"""
     },
     {
@@ -197,7 +197,7 @@ IF(
         "description": "Forsknings- og administrasjonskostnader driftsført direkte i resultat (IAS 38 § 54, WBS-100 og 600).",
         "dax": """CALCULATE(
     SUM(Fact_GLActuals[amount_nok]),
-    Fact_GLActuals[ias38_treatment] = "EXPENSE"
+    Dim_WBS[ias38_treatment] = "EXPENSE"
 )"""
     },
     {
@@ -364,10 +364,10 @@ CALCULATE(
         "description": "Hex-fargekode for betinget formatering av tabeller og KPI-kort.",
         "dax": """SWITCH(
     TRUE(),
-    [PO vs BAC Ratio %] > 1.0, "#D32F2F",   // Mørkerød
-    [Cost Performance Index (CPI)] < 0.80, "#E53935",   // Rød
-    [Cost Performance Index (CPI)] < 0.90, "#FB8C00",   // Oransje/Gul
-    "#43A047"                                           // Grønn
+    [PO vs BAC Ratio %] > 1.0, "#D32F2F",
+    [Cost Performance Index (CPI)] < 0.80, "#E53935",
+    [Cost Performance Index (CPI)] < 0.90, "#FB8C00",
+    "#43A047"
 )"""
     },
     {
@@ -454,63 +454,114 @@ def generate_dax_library_file():
     print(f" [OK] {len(DAX_MEASURES)} DAX-mål eksportert til {OUTPUT_DAX_FILE}")
 
 import re
+import uuid
+
+DEFAULT_TMDL_TRAILER = """\tcolumn Value
+\t\tisHidden
+\t\tlineageTag: 81b0148e-e3ef-41c5-a937-ca34a2fb4b1f
+\t\tsummarizeBy: none
+\t\tisNameInferred
+\t\tsourceColumn: [Value]
+
+\t\tannotation SummarizationSetBy = Automatic
+
+\tpartition _Measures = calculated
+\t\tmode: import
+\t\tsource = ({"dummy"})
+
+\tannotation PBI_Id = 10ea645720ec4208b1cffb888a40c6d1
+"""
 
 def generate_tmdl_table():
     if not os.path.exists(os.path.dirname(OUTPUT_TMDL_MEASURES)):
         print(f"Merk: Fant ikke TMDL-katalog ({OUTPUT_TMDL_MEASURES}). Hopper over TMDL-oppdatering.")
         return
-        
+
     print(f"Oppdaterer (Merger) TMDL _Measures til: {OUTPUT_TMDL_MEASURES}")
-    
+
     header_lines = [
         "table _Measures",
         "\tlineageTag: a7e39958-8686-4fbf-93ba-f27eb66b5930",
         ""
     ]
     existing_blocks = {}
-    
-    # 1. Les eksisterende mål hvis filen finnes fra før (bevarer alle 22 Dynamic RAG & In-Cell Bar-mål)
+    trailer_text = DEFAULT_TMDL_TRAILER
+
+    # 1. Les eksisterende mål og skill ut 'column Value' + 'partition _Measures' trailer-blokken
     if os.path.exists(OUTPUT_TMDL_MEASURES):
         with open(OUTPUT_TMDL_MEASURES, "r", encoding="utf-8") as f:
             content = f.read()
-        
+
+        if "\n\tcolumn Value\n" in content:
+            measures_part, trailer_part = content.split("\n\tcolumn Value\n", 1)
+            trailer_text = "\tcolumn Value\n" + trailer_part.lstrip("\r\n")
+        else:
+            measures_part = content
+
         current_name = None
         current_lines = []
-        for line in content.splitlines():
+        pending_comments = []
+        for line in measures_part.splitlines():
+            if line.startswith("table _Measures") or line.startswith("\tlineageTag: a7e39958"):
+                continue
+            if line.startswith("\t///"):
+                if current_name:
+                    while current_lines and current_lines[-1] == "":
+                        current_lines.pop()
+                    existing_blocks[current_name] = current_lines
+                    current_name = None
+                    current_lines = []
+                pending_comments.append(line)
+                continue
             match = re.match(r"^\tmeasure '([^']+)' =", line)
             if match:
                 if current_name:
+                    while current_lines and current_lines[-1] == "":
+                        current_lines.pop()
                     existing_blocks[current_name] = current_lines
                 current_name = match.group(1)
-                current_lines = [line]
+                current_lines = pending_comments + [line]
+                pending_comments = []
             elif current_name:
                 current_lines.append(line)
         if current_name:
+            while current_lines and current_lines[-1] == "":
+                current_lines.pop()
             existing_blocks[current_name] = current_lines
-            
-    # 2. Merge / Oppdater med de nye og forbedrede målene fra DAX_MEASURES
+
+    # 2. Legg til kun manglende mål fra DAX_MEASURES med gyldig TMDL-syntaks (aldri overskriv eksisterende mål)
+    added_count = 0
     for m in DAX_MEASURES:
-        m_lines = [f"\tmeasure '{m['name']}' ="]
-        for dl in m["dax"].split("\n"):
-            m_lines.append(f"\t\t{dl}")
-        m_lines.append(f"\t\tformatString: {m['format']}")
+        if m["name"] in existing_blocks:
+            continue
+        m_lines = []
+        if m.get("description"):
+            m_lines.append(f"\t/// {m['description']}")
+        dax_lines = m["dax"].split("\n")
+        if len(dax_lines) == 1:
+            m_lines.append(f"\tmeasure '{m['name']}' = {dax_lines[0]}")
+        else:
+            m_lines.append(f"\tmeasure '{m['name']}' =")
+            for dl in dax_lines:
+                m_lines.append(f"\t\t\t{dl}")
+        if m.get("format") and m["format"] != "@":
+            m_lines.append(f"\t\tformatString: {m['format']}")
         m_lines.append(f"\t\tdisplayFolder: {m['folder']}")
-        m_lines.append(f"\t\tdescription: {m['description']}")
-        m_lines.append(f"\t\tlineageTag: {abs(hash(m['name']))}")
-        m_lines.append("")
+        m_lines.append(f"\t\tlineageTag: {uuid.uuid5(uuid.NAMESPACE_DNS, m['name'])}")
         existing_blocks[m["name"]] = m_lines
-        
-    # 3. Skriv ut samlet TMDL med alle mål intakt
+        added_count += 1
+
+    # 3. Skriv ut samlet TMDL med alle mål og gyldig column/partition-trailer intakt
     out_lines = header_lines[:]
     for name, blk in existing_blocks.items():
         out_lines.extend(blk)
-        if blk and blk[-1] != "":
-            out_lines.append("")
-            
+        out_lines.append("")
+
+    full_text = "\n".join(out_lines) + "\n" + trailer_text
     with open(OUTPUT_TMDL_MEASURES, "w", encoding="utf-8") as f:
-        f.write("\n".join(out_lines))
-        
-    print(f" [OK] TMDL-tabell merget! Totalt {len(existing_blocks)} mål bevart og oppdatert.")
+        f.write(full_text)
+
+    print(f" [OK] TMDL-tabell merget! Totalt {len(existing_blocks)} mål ({added_count} nye lagt til) og gyldig trailer bevart.")
 
 if __name__ == "__main__":
     print("=" * 80)

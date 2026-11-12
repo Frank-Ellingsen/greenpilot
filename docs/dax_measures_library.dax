@@ -122,7 +122,7 @@ DIVIDE([Budget at Completion (BAC)] - [Earned Value (EV)], [Budget at Completion
 [AuC Capitalized (Balance Sheet)] =
 CALCULATE(
     SUM(Fact_GLActuals[amount_nok]),
-    Fact_GLActuals[ias38_treatment] = "CAPITALIZE"
+    Dim_WBS[ias38_treatment] = "CAPITALIZE"
 )
 
 // Beskrivelse: Forsknings- og administrasjonskostnader driftsført direkte i resultat (IAS 38 § 54, WBS-100 og 600).
@@ -130,7 +130,7 @@ CALCULATE(
 [P&L Expensed (Research & PMO)] =
 CALCULATE(
     SUM(Fact_GLActuals[amount_nok]),
-    Fact_GLActuals[ias38_treatment] = "EXPENSE"
+    Dim_WBS[ias38_treatment] = "EXPENSE"
 )
 
 // Beskrivelse: Andel av faktiske kostnader som er aktivert i balansen som AuC.
@@ -261,10 +261,10 @@ SWITCH(
 [Early Warning Color Hex] =
 SWITCH(
     TRUE(),
-    [PO vs BAC Ratio %] > 1.0, "#D32F2F",   // Mørkerød
-    [Cost Performance Index (CPI)] < 0.80, "#E53935",   // Rød
-    [Cost Performance Index (CPI)] < 0.90, "#FB8C00",   // Oransje/Gul
-    "#43A047"                                           // Grønn
+    [PO vs BAC Ratio %] > 1.0, "#D32F2F",
+    [Cost Performance Index (CPI)] < 0.80, "#E53935",
+    [Cost Performance Index (CPI)] < 0.90, "#FB8C00",
+    "#43A047"
 )
 
 // Beskrivelse: Dynamisk RAG-statusikon for CPI (Grønn >= 1.0, Gul 0.90-1.0, Rød < 0.90).

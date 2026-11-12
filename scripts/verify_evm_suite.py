@@ -113,13 +113,30 @@ def run_quality_gates():
         "Budget Consumption Bar",
         "PO Commitment Exposure Bar",
         "AuC Capitalization Bar",
-        "Change Order Exposure Bar"
+        "Change Order Exposure Bar",
+        "Supplier AP Paid NOK",
+        "Internal Payroll Paid NOK",
+        "Total Cash Outflow NOK",
+        "Enova Grant Cash In NOK",
+        "Net Monthly Cash Flow NOK",
+        "Cumulative Net Cash Flow NOK",
+        "Faktiske Timer Koststed",
+        "Personalkostnad Koststed NOK",
+        "Andel Timer Koststed %",
+        "Koststed Timer Bar",
+        "Early Warning Status RAG",
+        "Early Warning Color RAG",
+        "Early Warning PO Exposure Bar"
     ]
     for m in required_rag_and_bars:
         assert f"measure '{m}'" in tmdl_content, f"Missing required DAX measure in _Measures.tmdl: {m}"
     assert "Dim_Date[Date] < ProjectDataDate" in tmdl_content, "Missing cutoff < ProjectDataDate filter in PV measure!"
     assert "VAR Empty " not in tmdl_content, "Reserved keyword VAR Empty found in _Measures.tmdl!"
-    print(f"[OK] All {len(required_rag_and_bars)} Dynamic RAG and In-Cell Conditional Bar measures verified in TMDL!")
+    assert "\n\tcolumn Value\n" in tmdl_content, "Missing top-level '\\tcolumn Value' in _Measures.tmdl!"
+    assert "\n\t\tcolumn Value" not in tmdl_content, "Invalid 2-tab '\\t\\tcolumn Value' inside a measure in _Measures.tmdl!"
+    assert "\n\tpartition _Measures = calculated\n" in tmdl_content, "Missing '\\tpartition _Measures = calculated' in _Measures.tmdl!"
+    assert "\n\t\tdescription:" not in tmdl_content, "Invalid TMDL property 'description:' found in _Measures.tmdl (use /// comments)!"
+    print(f"[OK] All {len(required_rag_and_bars)} Dynamic RAG, Cash Flow, Cost Center & Bar measures and TMDL trailer verified!")
 
     # Verify PBIR visual.json projections and conditional formatting objects
     import glob, json

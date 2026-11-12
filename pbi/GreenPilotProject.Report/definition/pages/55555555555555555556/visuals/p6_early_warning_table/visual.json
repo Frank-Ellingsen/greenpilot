@@ -1,0 +1,178 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p6_early_warning_table",
+  "position": {
+    "x": 40,
+    "y": 620,
+    "z": 2200,
+    "height": 430,
+    "width": 1840,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_MonthlyEarlyWarnings"
+                    }
+                  },
+                  "Property": "period"
+                }
+              },
+              "queryRef": "Fact_MonthlyEarlyWarnings.period",
+              "nativeQueryRef": "period",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Early Warning Status RAG"
+                }
+              },
+              "queryRef": "_Measures.Early Warning Status RAG",
+              "nativeQueryRef": "Early Warning Status RAG",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Early Warning PO Exposure Bar"
+                }
+              },
+              "queryRef": "_Measures.Early Warning PO Exposure Bar",
+              "nativeQueryRef": "Early Warning PO Exposure Bar",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_MonthlyEarlyWarnings"
+                    }
+                  },
+                  "Property": "cpi"
+                }
+              },
+              "queryRef": "Fact_MonthlyEarlyWarnings.cpi",
+              "nativeQueryRef": "cpi",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_MonthlyEarlyWarnings"
+                    }
+                  },
+                  "Property": "spi"
+                }
+              },
+              "queryRef": "Fact_MonthlyEarlyWarnings.spi",
+              "nativeQueryRef": "spi",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_MonthlyEarlyWarnings"
+                    }
+                  },
+                  "Property": "projected_eac_nok"
+                }
+              },
+              "queryRef": "Fact_MonthlyEarlyWarnings.projected_eac_nok",
+              "nativeQueryRef": "projected_eac_nok",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Fact_MonthlyEarlyWarnings"
+                    }
+                  },
+                  "Property": "controller_action_required"
+                }
+              },
+              "queryRef": "Fact_MonthlyEarlyWarnings.controller_action_required",
+              "nativeQueryRef": "controller_action_required",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "cellElements": [
+        {
+          "selector": {
+            "metadata": "_Measures.Early Warning Status RAG"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "Early Warning Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.Early Warning PO Exposure Bar"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "Early Warning Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
