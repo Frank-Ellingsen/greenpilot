@@ -362,24 +362,90 @@ def build_pages():
     p2_dir = prepare_page(p2_id, "Root Cause & Variance Driver Matrix")
     pages_meta.append(p2_id)
 
-    # Visual 1 (Top Left): Clustered Bar Chart (Cost Variance by WBS) with Dynamic RAG Bar Fill
+    # Visual 1 (Top Left): Native Decomposition Tree (Cost Variance by Cost Element & WBS)
     decomp_dict = {
-        "visualType": "clusteredBarChart",
+        "visualType": "decompositionTreeVisual",
         "query": {
             "queryState": {
-                "Category": {"projections": [make_projection_column("Dim_WBS", "wbs_name", active=True)]},
-                "Y": {"projections": [make_projection_measure("_Measures", "Cost Variance (CV)", active=True)]}
+                "Analyze": {
+                    "projections": [make_projection_measure("_Measures", "Cost Variance (CV)", active=True)]
+                },
+                "ExplainBy": {
+                    "projections": [
+                        make_projection_column("Dim_CostElement", "cost_element_name", active=True),
+                        make_projection_column("Dim_WBS", "wbs_name", active=True),
+                        make_projection_column("Dim_WBS", "ias38_phase", active=True),
+                        make_projection_column("Dim_WBS", "accounting_bucket", active=True),
+                        make_projection_column("Dim_Date", "Quarter", active=True)
+                    ]
+                }
+            },
+            "sortDefinition": {
+                "sort": [
+                    {
+                        "field": {
+                            "Measure": {
+                                "Expression": {"SourceRef": {"Entity": "_Measures"}},
+                                "Property": "Cost Variance (CV)"
+                            }
+                        },
+                        "direction": "Descending"
+                    }
+                ],
+                "isDefaultSort": True
             }
         },
+        "expansionStates": [
+            {
+                "roles": ["ExplainBy"],
+                "levels": [
+                    {
+                        "queryRefs": ["Dim_CostElement.cost_element_name"],
+                        "isCollapsed": True,
+                        "identityKeys": [
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Entity": "Dim_CostElement"}},
+                                    "Property": "cost_element_name"
+                                }
+                            }
+                        ],
+                        "isPinned": True
+                    },
+                    {
+                        "queryRefs": ["Dim_WBS.wbs_name"],
+                        "isCollapsed": True,
+                        "identityKeys": [
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Entity": "Dim_WBS"}},
+                                    "Property": "wbs_name"
+                                }
+                            }
+                        ],
+                        "isPinned": True
+                    }
+                ],
+                "root": {
+                    "children": [
+                        {
+                            "identityValues": [{"Literal": {"Value": "'Other project cost'"}}],
+                            "isToggled": True
+                        }
+                    ]
+                }
+            }
+        ],
         "objects": {
-            "dataPoint": [
+            "tree": [
                 {
                     "properties": {
-                        "fill": make_measure_color_expr("_Measures", "CV Color RAG")
+                        "effectiveBarsPerLevel": {"expr": {"Literal": {"Value": "14L"}}}
                     }
                 }
             ]
-        }
+        },
+        "drillFilterOtherVisuals": True
     }
     write_visual(p2_dir, "p2_decomp_tree", decomp_dict, 40, 20, 1080, 500, 1000, 1000)
 
@@ -754,6 +820,211 @@ def build_pages():
         }
     }
     write_visual(p6_dir, "p6_early_warning_table", ew_table_dict, 40, 620, 1840, 430, 2200, 7000)
+
+    # =========================================================================
+    # PAGE 7: AI Decomposition Tree & Driver Analysis
+    # =========================================================================
+    p7_id = "66666666666666666667"
+    p7_dir = prepare_page(p7_id, "AI Decomposition Tree & Driver Analysis")
+    pages_meta.append(p7_id)
+
+    # Visual 1 (Top Banner): AI Insights & Root-Cause Narrative Card
+    p7_narrative_dict = {
+        "visualType": "card",
+        "query": {
+            "queryState": {
+                "Values": {"projections": [make_projection_measure("_Measures", "Page05_AI_Insights_Narrative", active=True)]}
+            }
+        }
+    }
+    write_visual(p7_dir, "p7_ai_narrative", p7_narrative_dict, 40, 20, 1840, 130, 1000, 1000)
+
+    # Visual 2 (Left): Cost Variance (CV) Decomposition Tree (Cost Element -> WBS -> IAS 38 Phase -> Accounting Bucket -> Quarter)
+    p7_decomp_cv_dict = {
+        "visualType": "decompositionTreeVisual",
+        "query": {
+            "queryState": {
+                "Analyze": {
+                    "projections": [make_projection_measure("_Measures", "Cost Variance (CV)", active=True)]
+                },
+                "ExplainBy": {
+                    "projections": [
+                        make_projection_column("Dim_CostElement", "cost_element_name", active=True),
+                        make_projection_column("Dim_WBS", "wbs_name", active=True),
+                        make_projection_column("Dim_WBS", "ias38_phase", active=True),
+                        make_projection_column("Dim_WBS", "accounting_bucket", active=True),
+                        make_projection_column("Dim_Date", "Quarter", active=True)
+                    ]
+                }
+            },
+            "sortDefinition": {
+                "sort": [
+                    {
+                        "field": {
+                            "Measure": {
+                                "Expression": {"SourceRef": {"Entity": "_Measures"}},
+                                "Property": "Cost Variance (CV)"
+                            }
+                        },
+                        "direction": "Descending"
+                    }
+                ],
+                "isDefaultSort": True
+            }
+        },
+        "expansionStates": [
+            {
+                "roles": ["ExplainBy"],
+                "levels": [
+                    {
+                        "queryRefs": ["Dim_CostElement.cost_element_name"],
+                        "isCollapsed": True,
+                        "identityKeys": [
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Entity": "Dim_CostElement"}},
+                                    "Property": "cost_element_name"
+                                }
+                            }
+                        ],
+                        "isPinned": True
+                    },
+                    {
+                        "queryRefs": ["Dim_WBS.wbs_name"],
+                        "isCollapsed": True,
+                        "identityKeys": [
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Entity": "Dim_WBS"}},
+                                    "Property": "wbs_name"
+                                }
+                            }
+                        ],
+                        "isPinned": True
+                    }
+                ],
+                "root": {
+                    "children": [
+                        {
+                            "identityValues": [{"Literal": {"Value": "'Other project cost'"}}],
+                            "isToggled": True
+                        }
+                    ]
+                }
+            }
+        ],
+        "objects": {
+            "tree": [
+                {
+                    "properties": {
+                        "effectiveBarsPerLevel": {"expr": {"Literal": {"Value": "14L"}}}
+                    }
+                }
+            ]
+        },
+        "drillFilterOtherVisuals": True
+    }
+    write_visual(p7_dir, "p7_decomp_cv", p7_decomp_cv_dict, 40, 170, 910, 880, 1100, 2000)
+
+    # Visual 3 (Right): PO Open Commitment Decomposition Tree (Vendor -> Currency -> WBS -> Cost Element -> PO Status)
+    p7_decomp_po_dict = {
+        "visualType": "decompositionTreeVisual",
+        "query": {
+            "queryState": {
+                "Analyze": {
+                    "projections": [make_projection_measure("_Measures", "PO Open Commitment NOK", active=True)]
+                },
+                "ExplainBy": {
+                    "projections": [
+                        make_projection_column("Dim_Vendor", "vendor_name", active=True),
+                        make_projection_column("Fact_PurchaseOrders", "currency", active=True),
+                        make_projection_column("Dim_WBS", "wbs_name", active=True),
+                        make_projection_column("Dim_CostElement", "cost_element_name", active=True),
+                        make_projection_column("Fact_PurchaseOrders", "po_status", active=True)
+                    ]
+                }
+            },
+            "sortDefinition": {
+                "sort": [
+                    {
+                        "field": {
+                            "Measure": {
+                                "Expression": {"SourceRef": {"Entity": "_Measures"}},
+                                "Property": "PO Open Commitment NOK"
+                            }
+                        },
+                        "direction": "Descending"
+                    }
+                ],
+                "isDefaultSort": True
+            }
+        },
+        "expansionStates": [
+            {
+                "roles": ["ExplainBy"],
+                "levels": [
+                    {
+                        "queryRefs": ["Dim_Vendor.vendor_name"],
+                        "isCollapsed": True,
+                        "identityKeys": [
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Entity": "Dim_Vendor"}},
+                                    "Property": "vendor_name"
+                                }
+                            }
+                        ],
+                        "isPinned": True
+                    },
+                    {
+                        "queryRefs": ["Fact_PurchaseOrders.currency"],
+                        "isCollapsed": True,
+                        "identityKeys": [
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Entity": "Fact_PurchaseOrders"}},
+                                    "Property": "currency"
+                                }
+                            }
+                        ],
+                        "isPinned": True
+                    },
+                    {
+                        "queryRefs": ["Dim_WBS.wbs_name"],
+                        "isCollapsed": True,
+                        "identityKeys": [
+                            {
+                                "Column": {
+                                    "Expression": {"SourceRef": {"Entity": "Dim_WBS"}},
+                                    "Property": "wbs_name"
+                                }
+                            }
+                        ],
+                        "isPinned": True
+                    }
+                ],
+                "root": {
+                    "children": [
+                        {
+                            "identityValues": [{"Literal": {"Value": "'Synthetic Vendor 01'"}}],
+                            "isToggled": True
+                        }
+                    ]
+                }
+            }
+        ],
+        "objects": {
+            "tree": [
+                {
+                    "properties": {
+                        "effectiveBarsPerLevel": {"expr": {"Literal": {"Value": "14L"}}}
+                    }
+                }
+            ]
+        },
+        "drillFilterOtherVisuals": True
+    }
+    write_visual(p7_dir, "p7_decomp_po", p7_decomp_po_dict, 970, 170, 910, 880, 1200, 3000)
 
     # Update pages.json
     pages_json_path = os.path.join(PAGES_DIR, "pages.json")

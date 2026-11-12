@@ -764,30 +764,6 @@ table _Measures
 		displayFolder: 11 LIKVIDITET & KONTANTSTRØM
 		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445511
 
-	/// Elkem Fiskå Cost Center Code (CC-4100, CC-4200, CC-4300)
-	measure 'Koststed Kode (Fiskå)' =
-			SWITCH (
-			    SELECTEDVALUE ( Dim_Employee[department] ),
-			    "Operations", "CC-4100",
-			    "R&D", "CC-4200",
-			    "Finance", "CC-4300",
-			    "CC-4100..4300"
-			)
-		displayFolder: 12 KOSTSTEDER FISKÅ
-		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445520
-
-	/// Elkem Fiskå Cost Center Name & Location
-	measure 'Koststed Navn (Fiskå)' =
-			SWITCH (
-			    SELECTEDVALUE ( Dim_Employee[department] ),
-			    "Operations", "CC-4100: Pilotanlegg Drift & Mekanisk Verksted (Fiskå Bygg 12)",
-			    "R&D", "CC-4200: FoU Sentrallab & Kjemisk Analyse (Fiskå Bygg 04)",
-			    "Finance", "CC-4300: Prosessmetallurgi & Prosjektledelse (Fiskå Adm)",
-			    "Alle Koststeder — Elkem Fiskå"
-			)
-		displayFolder: 12 KOSTSTEDER FISKÅ
-		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445521
-
 	/// Logged internal hours by Elkem Fiskå cost center
 	measure 'Faktiske Timer Koststed' = SUM ( Fact_Timesheets[hours] )
 		formatString: #,0.0
@@ -884,20 +860,6 @@ table _Measures
 			)
 		displayFolder: 10 BETINGET STOLPELENGDE
 		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445518
-
-	/// Monthly Early Warning required controller action
-	measure 'Early Warning Controller Action' =
-			VAR M = SELECTEDVALUE ( Dim_Date[Month] )
-			RETURN
-			SWITCH (
-			    TRUE (),
-			    ISBLANK ( M ), "Krav om Stage-Gate Freeze og formell styrebehandlet OTB.",
-			    M <= 2, "Avstemming av åpne PO-er og de-scoping av lab-tester.",
-			    M <= 10, "Krav om Stage-Gate Freeze og formell styrebehandlet OTB.",
-			    BLANK ()
-			)
-		displayFolder: 09 DYNAMISK RAG FORMATERING
-		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445519
 
 	/// Kombinert helseindikator (CPI * SPI). Under 0.90 = akutt alarm.
 	measure 'Critical Ratio (CR)' = [Cost Performance Index (CPI)] * [Schedule Performance Index (SPI)]
@@ -1127,6 +1089,44 @@ table _Measures
 			)
 		displayFolder: 08 Early Warnings & RAG
 		lineageTag: da990001-0005-4000-8000-000000000005
+
+	/// Elkem Fiskå Cost Center Code (CC-4100, CC-4200, CC-4300)
+	measure 'Koststed Kode (Fiskå)' =
+			SWITCH (
+			    SELECTEDVALUE ( Dim_Employee[department] ),
+			    "Operations", "CC-4100",
+			    "R&D", "CC-4200",
+			    "Finance", "CC-4300",
+			    "CC-4100..4300"
+			)
+		displayFolder: 12 KOSTSTEDER FISKÅ
+		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445520
+
+	/// Elkem Fiskå Cost Center Name & Location
+	measure 'Koststed Navn (Fiskå)' =
+			SWITCH (
+			    SELECTEDVALUE ( Dim_Employee[department] ),
+			    "Operations", "CC-4100: Pilotanlegg Drift & Mekanisk Verksted (Fiskå Bygg 12)",
+			    "R&D", "CC-4200: FoU Sentrallab & Kjemisk Analyse (Fiskå Bygg 04)",
+			    "Finance", "CC-4300: Prosessmetallurgi & Prosjektledelse (Fiskå Adm)",
+			    "Alle Koststeder — Elkem Fiskå"
+			)
+		displayFolder: 12 KOSTSTEDER FISKÅ
+		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445521
+
+	/// Monthly Early Warning required controller action
+	measure 'Early Warning Controller Action' =
+			VAR M = SELECTEDVALUE ( Dim_Date[Month] )
+			RETURN
+			SWITCH (
+			    TRUE (),
+			    ISBLANK ( M ), "Krav om Stage-Gate Freeze og formell styrebehandlet OTB.",
+			    M <= 2, "Avstemming av åpne PO-er og de-scoping av lab-tester.",
+			    M <= 10, "Krav om Stage-Gate Freeze og formell styrebehandlet OTB.",
+			    BLANK ()
+			)
+		displayFolder: 09 DYNAMISK RAG FORMATERING
+		lineageTag: 9f173c8b-1e4a-4b92-8e1a-112233445519
 
 	/// Side 2 Narrativ: S-Kurve Vurdering
 	measure Page02_SCurve_Narrative =
