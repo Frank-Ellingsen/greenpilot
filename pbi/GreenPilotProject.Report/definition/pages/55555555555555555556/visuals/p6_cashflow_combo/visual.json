@@ -23,16 +23,16 @@
                       "Entity": "Dim_Date"
                     }
                   },
-                  "Property": "Date"
+                  "Property": "Period"
                 }
               },
-              "queryRef": "Dim_Date.Date",
-              "nativeQueryRef": "Date",
+              "queryRef": "Dim_Date.Period",
+              "nativeQueryRef": "Period",
               "active": true
             }
           ]
         },
-        "ColumnY": {
+        "Y": {
           "projections": [
             {
               "field": {
@@ -81,7 +81,7 @@
             }
           ]
         },
-        "LineY": {
+        "Y2": {
           "projections": [
             {
               "field": {

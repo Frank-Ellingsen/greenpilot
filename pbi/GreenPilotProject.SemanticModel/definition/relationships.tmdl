@@ -160,12 +160,3 @@ relationship Rel_Fact_ChangeOrders_Dim_WBS
 	fromColumn: Fact_ChangeOrders.wbs_id
 	toColumn: Dim_WBS.wbs_id
 
-relationship Rel_Dim_Employee_Dim_CostCenter
-	fromColumn: Dim_Employee.cost_center_id
-	toColumn: Dim_CostCenter.cost_center_id
-
-relationship Rel_Fact_CashFlowBridge_Dim_Date
-	fromColumn: Fact_CashFlowBridge.period
-	toColumn: Dim_Date.Date
-
-

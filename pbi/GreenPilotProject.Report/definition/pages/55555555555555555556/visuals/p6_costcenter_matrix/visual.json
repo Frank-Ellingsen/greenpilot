@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Dim_CostCenter"
+                      "Entity": "Dim_Employee"
                     }
                   },
-                  "Property": "cost_center_name"
+                  "Property": "department"
                 }
               },
-              "queryRef": "Dim_CostCenter.cost_center_name",
-              "nativeQueryRef": "cost_center_name",
+              "queryRef": "Dim_Employee.department",
+              "nativeQueryRef": "department",
               "active": true
             },
             {
@@ -35,20 +35,35 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Dim_CostCenter"
+                      "Entity": "Dim_Employee"
                     }
                   },
-                  "Property": "department"
+                  "Property": "role"
                 }
               },
-              "queryRef": "Dim_CostCenter.department",
-              "nativeQueryRef": "department",
+              "queryRef": "Dim_Employee.role",
+              "nativeQueryRef": "role",
               "active": true
             }
           ]
         },
         "Values": {
           "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Koststed Kode (Fisk\u00e5)"
+                }
+              },
+              "queryRef": "_Measures.Koststed Kode (Fisk\u00e5)",
+              "nativeQueryRef": "Koststed Kode (Fisk\u00e5)",
+              "active": true
+            },
             {
               "field": {
                 "Measure": {

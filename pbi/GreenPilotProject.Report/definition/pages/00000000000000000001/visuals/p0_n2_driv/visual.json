@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p0_n2_driv",
+  "position": {
+    "x": 970,
+    "y": 125,
+    "z": 650,
+    "height": 145,
+    "width": 910,
+    "tabOrder": 1500
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Narrative Part2 Driver"
+                }
+              },
+              "queryRef": "_Measures.Narrative Part2 Driver",
+              "nativeQueryRef": "Narrative Part2 Driver",
+              "active": true
+            }
+          ]
+        }
+      }
+    }
+  }
+}

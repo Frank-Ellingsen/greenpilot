@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Fact_MonthlyEarlyWarnings"
+                      "Entity": "Dim_Date"
                     }
                   },
-                  "Property": "period"
+                  "Property": "Period"
                 }
               },
-              "queryRef": "Fact_MonthlyEarlyWarnings.period",
-              "nativeQueryRef": "period",
+              "queryRef": "Dim_Date.Period",
+              "nativeQueryRef": "Period",
               "active": true
             },
             {
@@ -62,62 +62,77 @@
             },
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Fact_MonthlyEarlyWarnings"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "cpi"
+                  "Property": "Planned Value (PV)"
                 }
               },
-              "queryRef": "Fact_MonthlyEarlyWarnings.cpi",
-              "nativeQueryRef": "cpi",
+              "queryRef": "_Measures.Planned Value (PV)",
+              "nativeQueryRef": "Planned Value (PV)",
               "active": true
             },
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Fact_MonthlyEarlyWarnings"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "spi"
+                  "Property": "Actual Cost (AC)"
                 }
               },
-              "queryRef": "Fact_MonthlyEarlyWarnings.spi",
-              "nativeQueryRef": "spi",
+              "queryRef": "_Measures.Actual Cost (AC)",
+              "nativeQueryRef": "Actual Cost (AC)",
               "active": true
             },
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Fact_MonthlyEarlyWarnings"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "projected_eac_nok"
+                  "Property": "Cost Performance Index (CPI)"
                 }
               },
-              "queryRef": "Fact_MonthlyEarlyWarnings.projected_eac_nok",
-              "nativeQueryRef": "projected_eac_nok",
+              "queryRef": "_Measures.Cost Performance Index (CPI)",
+              "nativeQueryRef": "Cost Performance Index (CPI)",
               "active": true
             },
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Fact_MonthlyEarlyWarnings"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "controller_action_required"
+                  "Property": "Schedule Performance Index (SPI)"
                 }
               },
-              "queryRef": "Fact_MonthlyEarlyWarnings.controller_action_required",
-              "nativeQueryRef": "controller_action_required",
+              "queryRef": "_Measures.Schedule Performance Index (SPI)",
+              "nativeQueryRef": "Schedule Performance Index (SPI)",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Early Warning Controller Action"
+                }
+              },
+              "queryRef": "_Measures.Early Warning Controller Action",
+              "nativeQueryRef": "Early Warning Controller Action",
               "active": true
             }
           ]

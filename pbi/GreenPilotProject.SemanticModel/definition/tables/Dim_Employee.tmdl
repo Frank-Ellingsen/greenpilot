@@ -33,19 +33,11 @@ table Dim_Employee
 
 		annotation SummarizationSetBy = Automatic
 
-	column cost_center_id
-		dataType: string
-		lineageTag: 9e1a459a-b7b8-4799-b0a5-deeb001fcb39
-		summarizeBy: none
-		sourceColumn: cost_center_id
-
-		annotation SummarizationSetBy = Automatic
-
 	partition Dim_Employee = m
 		mode: import
 		source =
 				let
-				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Dim_Employee.csv"), [Delimiter = ";", QuoteStyle = QuoteStyle.None]),
+				  Source = Csv.Document(File.Contents("C:\Users\frank\OneDrive\Elkem\processed\star_schema\Dim_Employee.csv"), [Delimiter = ";", Columns = 4, QuoteStyle = QuoteStyle.None]),
 				  #"Promoted headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true])
 				in
 				  #"Promoted headers"

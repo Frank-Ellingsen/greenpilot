@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p0_n4_act",
+  "position": {
+    "x": 970,
+    "y": 285,
+    "z": 750,
+    "height": 145,
+    "width": 910,
+    "tabOrder": 2500
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Narrative Part4 Action"
+                }
+              },
+              "queryRef": "_Measures.Narrative Part4 Action",
+              "nativeQueryRef": "Narrative Part4 Action",
+              "active": true
+            }
+          ]
+        }
+      }
+    }
+  }
+}

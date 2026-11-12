@@ -1,11 +1,13 @@
 {
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.1.0/schema.json",
   "pageOrder": [
-    "ReportSection_ExecNarrative",
-    "ReportSection_ExecSummary",
-    "ReportSection_SCurve",
-    "ReportSection_IFRS_WBS",
-    "ReportSection_CashFlow_CostCenters",
-    "ReportSection_AI_Analytics"
+    "00000000000000000001",
+    "08f1eedb79c476b139b9",
+    "11111111111111111112",
+    "22222222222222222223",
+    "33333333333333333334",
+    "44444444444444444445",
+    "55555555555555555556"
   ],
-  "activePageName": "ReportSection_ExecNarrative"
+  "activePageName": "08f1eedb79c476b139b9"
 }

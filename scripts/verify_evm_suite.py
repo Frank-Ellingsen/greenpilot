@@ -136,22 +136,38 @@ def run_quality_gates():
     assert "\n\t\tcolumn Value" not in tmdl_content, "Invalid 2-tab '\\t\\tcolumn Value' inside a measure in _Measures.tmdl!"
     assert "\n\tpartition _Measures = calculated\n" in tmdl_content, "Missing '\\tpartition _Measures = calculated' in _Measures.tmdl!"
     assert "\n\t\tdescription:" not in tmdl_content, "Invalid TMDL property 'description:' found in _Measures.tmdl (use /// comments)!"
+    _, after_partition = tmdl_content.split("\n\tpartition _Measures = calculated\n", 1)
+    assert "\n\tmeasure " not in after_partition, "Found DAX measures appended after 'partition _Measures = calculated' in _Measures.tmdl!"
+    for uncached in ["Fact_CashFlowBridge", "Dim_CostCenter", "Fact_MonthlyEarlyWarnings"]:
+        assert uncached not in tmdl_content, f"Reference to uncached table {uncached} found in _Measures.tmdl!"
+    assert os.path.exists(r"pbi\GreenPilotProject.SemanticModel\.pbi\cache.abf"), "Missing cache.abf in SemanticModel!"
     print(f"[OK] All {len(required_rag_and_bars)} Dynamic RAG, Cash Flow, Cost Center & Bar measures and TMDL trailer verified!")
 
     # Verify PBIR visual.json projections and conditional formatting objects
     import glob, json
+    with open(r"pbi\GreenPilotProject.Report\definition\pages\pages.json", encoding="utf-8") as f:
+        pages_meta = json.load(f)
+    assert "$schema" in pages_meta, "Missing $schema in pages.json!"
+    page_folders = sorted([d for d in os.listdir(r"pbi\GreenPilotProject.Report\definition\pages") if os.path.isdir(os.path.join(r"pbi\GreenPilotProject.Report\definition\pages", d))])
+    assert sorted(pages_meta["pageOrder"]) == page_folders, f"pages.json pageOrder {pages_meta['pageOrder']} != folders {page_folders}"
     visual_files = sorted(glob.glob(r"pbi\GreenPilotProject.Report\definition\pages\*\visuals\*\visual.json"))
     cond_formatted_visuals = []
     for vf in visual_files:
         with open(vf, encoding="utf-8") as f:
             vdata = json.load(f)
-        for role, rdata in vdata.get("visual", {}).get("query", {}).get("queryState", {}).items():
+        assert "$schema" in vdata, f"Missing $schema in {vf}"
+        qstate = vdata.get("visual", {}).get("query", {}).get("queryState", {})
+        assert "ColumnY" not in qstate and "LineY" not in qstate, f"Invalid combo chart roles ColumnY/LineY in {vf} (use Y/Y2)!"
+        for role, rdata in qstate.items():
             for proj in rdata.get("projections", []):
                 assert proj.get("active", True) is True, f"Projection {proj.get('queryRef')} in {vf} is explicitly False!"
+                qref = proj.get("queryRef", "")
+                for uncached in ["Fact_CashFlowBridge", "Dim_CostCenter", "Fact_MonthlyEarlyWarnings", "Fact_FinancialEVM_Unified_Flat"]:
+                    assert uncached not in qref, f"Visual {vf} references uncached table {uncached} in {qref}!"
         if vdata.get("visual", {}).get("objects"):
             cond_formatted_visuals.append(os.path.basename(os.path.dirname(vf)))
     assert len(cond_formatted_visuals) >= 12, f"Expected >=12 conditionally formatted visuals, found {len(cond_formatted_visuals)}"
-    print(f"[OK] All {len(visual_files)} PBIR visuals have active=True projections and {len(cond_formatted_visuals)} visuals have conditional formatting objects!")
+    print(f"[OK] All {len(visual_files)} PBIR visuals across {len(page_folders)} pages have valid schemas, cached projections, and {len(cond_formatted_visuals)} conditionally formatted visuals!")
 
     # 7. Cross-Platform Consistency Check (Power BI vs Streamlit vs index.html)
     print("\n--- Cross-Platform Consistency Check (PBI vs Streamlit vs index.html) ---")
