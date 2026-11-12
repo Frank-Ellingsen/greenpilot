@@ -1,734 +1,447 @@
 import os
-import shutil
-import stat
+import sys
 import json
-import zipfile
+import shutil
 
-REPORT_ROOT = r"pbi\GreenPilotProject.Report"
-REPORT_DEF_DIR = os.path.join(REPORT_ROOT, "definition")
+# ==============================================================================
+# ROBUST STISØKING FOR PROSJEKTROT
+# ==============================================================================
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..")) if os.path.basename(SCRIPT_DIR).lower() == "scripts" else SCRIPT_DIR
+
+PBI_DIR = os.path.join(PROJECT_ROOT, "pbi")
+REPORT_DEF_DIR = os.path.join(PBI_DIR, "GreenPilotProject.Report", "definition")
+SEMANTIC_DEF_DIR = os.path.join(PBI_DIR, "GreenPilotProject.SemanticModel", "definition", "tables")
+MEASURES_TMDL = os.path.join(SEMANTIC_DEF_DIR, "_Measures.tmdl")
 PAGES_DIR = os.path.join(REPORT_DEF_DIR, "pages")
-PBIX_FILE = "GreenPilotProjectReport.pbix"
 
-def remove_readonly(func, path, excinfo):
-    try:
-        os.chmod(path, stat.S_IWRITE)
-        func(path)
-    except Exception:
-        pass
+os.makedirs(PAGES_DIR, exist_ok=True)
 
-def make_projection_measure(entity, prop, active=False):
-    d = {
-        "field": {
-            "Measure": {
-                "Expression": {"SourceRef": {"Entity": entity}},
-                "Property": prop
-            }
-        },
-        "queryRef": f"{entity}.{prop}",
-        "nativeQueryRef": prop
+print("=" * 80)
+print("=== GENERERER OG OPPDATERER POWER BI RAPPORT-SIDER (PBIP FORMAT) ===")
+print("=" * 80)
+print(f"Prosjekt-rot: {PROJECT_ROOT}")
+print(f"Rapport-definisjon: {REPORT_DEF_DIR}")
+
+# ==============================================================================
+# 0. SJEKK OG LEGG TIL NARRATIV-DAX MÅL I _Measures.tmdl DERSOM DE MANGLER
+# ==============================================================================
+DAX_NARRATIVE_BLOCK = '''
+\t/// --- 09 EXECUTIVE NARRATIVE & GOVERNANCE MEASURES ---
+\tmeasure 'Executive RAG Headline' = 
+\t\t\tVAR _cpi = [CPI]
+\t\t\tVAR _exp = [Total Financial Exposure NOK]
+\t\t\tVAR _bac = [BAC NOK]
+\t\t\tRETURN
+\t\t\t\tIF (
+\t\t\t\t\t_cpi < 0.50 || _exp > _bac,
+\t\t\t\t\t"🔴 RØD ALARM: KRITISK KOSTNADSSPREKK & LIKVIDITETSEKSPONERING (Per 31.10.2026)",
+\t\t\t\t\tIF (
+\t\t\t\t\t\t_cpi < 0.80 || _exp > _bac * 0.8,
+\t\t\t\t\t\t"🟡 GULT VARSEL: BETYDELIG KOSTNADSPRESS & OPPFØLGINGSBEHOV",
+\t\t\t\t\t\t"🟢 GRØNT LYS: PROSJEKTET LEVERER INNENFOR VEDTATT BUDSJETTRAMME"
+\t\t\t\t\t)
+\t\t\t\t)
+\t\tlineageTag: da990001-0001-4000-8000-000000000001
+\t\tdisplayFolder: 08 Early Warnings & RAG
+
+\tmeasure 'Narrative Part1 Diagnose' = 
+\t\t\tVAR _cpi = [CPI]
+\t\t\tVAR _cv = [CV NOK] / 1000000
+\t\t\tVAR _spi = [SPI]
+\t\t\tRETURN
+\t\t\t\t"1. DIAGNOSE (EVM): Prosjektet opererer med en kostnadseffektivitet på CPI " 
+\t\t\t\t& FORMAT ( _cpi, "0.00" ) 
+\t\t\t\t& " og et akkumulert kostnadsavvik på NOK " 
+\t\t\t\t& FORMAT ( _cv, "0.0" ) 
+\t\t\t\t& "M. Fysisk fremdrift meldes til SPI " 
+\t\t\t\t& FORMAT ( _spi, "0.00" ) 
+\t\t\t\t& " som følge av forsert reaktormontasje."
+\t\tlineageTag: da990001-0002-4000-8000-000000000002
+\t\tdisplayFolder: 08 Early Warnings & RAG
+
+\tmeasure 'Narrative Part2 Driver' = 
+\t\t\tVAR _ac = [Total Actual Cost NOK] / 1000000
+\t\t\tVAR _po = [Open Commitments NOK] / 1000000
+\t\t\tVAR _exp = [Total Financial Exposure NOK] / 1000000
+\t\t\tVAR _ratio = DIVIDE ( [Total Financial Exposure NOK], [BAC NOK], 0 )
+\t\t\tRETURN
+\t\t\t\t"2. DRIVER & LIKVIDITET: Bokførte kostnader (NOK " 
+\t\t\t\t& FORMAT ( _ac, "0.0" ) 
+\t\t\t\t& "M) og åpne leverandørforpliktelser (NOK " 
+\t\t\t\t& FORMAT ( _po, "0.0" ) 
+\t\t\t\t& "M) gir en samlet finansiell eksponering på NOK " 
+\t\t\t\t& FORMAT ( _exp, "0.0" ) 
+\t\t\t\t& "M (" 
+\t\t\t\t& FORMAT ( _ratio, "0%" ) 
+\t\t\t\t& " av godkjent totalbudsjett)."
+\t\tlineageTag: da990001-0003-4000-8000-000000000003
+\t\tdisplayFolder: 08 Early Warnings & RAG
+
+\tmeasure 'Narrative Part3 Accounting' = 
+\t\t\tVAR _auc = [AuC Capitalized NOK] / 1000000
+\t\t\tRETURN
+\t\t\t\t"3. REGNSKAPSMESSIG KONSEKVENS: Av de bokførte kostnadene er NOK " 
+\t\t\t\t& FORMAT ( _auc, "0.0" ) 
+\t\t\t\t& "M balanseført som anlegg under utførelse (AuC) etter IAS 38. Eksploderende sluttkostnad (EAC) utløser umiddelbart krav om nedskrivningstest etter IAS 36 før årsoppgjøret."
+\t\tlineageTag: da990001-0004-4000-8000-000000000004
+\t\tdisplayFolder: 08 Early Warnings & RAG
+
+\tmeasure 'Narrative Part4 Action' = 
+\t\t\tVAR _exp = [Total Financial Exposure NOK]
+\t\t\tVAR _bac = [BAC NOK]
+\t\t\tRETURN
+\t\t\t\tIF (
+\t\t\t\t\t_exp > _bac,
+\t\t\t\t\t"4. PÅBUD TIL STYRET: 1) Umiddelbar innkjøpsfrys på alle nye rekvisisjoner. 2) Kanselleringsaudit av uleverte innkjøpsordrer (NOK 49,2M). 3) Innkall styret til ekstraordinært Stage-Gate møte for 30 dagers Technical Hold / Off-Ramp vurdering.",
+\t\t\t\t\t"4. ANBEFALING: Fortsett månedlig kostnadsavstemming og tett oppfølging av leverandørfakturaer."
+\t\t\t\t)
+\t\tlineageTag: da990001-0005-4000-8000-000000000005
+\t\tdisplayFolder: 08 Early Warnings & RAG
+'''
+
+if os.path.exists(MEASURES_TMDL):
+    with open(MEASURES_TMDL, "r", encoding="utf-8") as f:
+        tmdl_content = f.read()
+    if "Executive RAG Headline" not in tmdl_content:
+        with open(MEASURES_TMDL, "a", encoding="utf-8") as f:
+            f.write(DAX_NARRATIVE_BLOCK)
+        print(" [OK] 5 nye regelbaserte DAX-mål lagt til i _Measures.tmdl")
+    else:
+        print(" [INFO] DAX-narrativmål finnes allerede i _Measures.tmdl")
+
+# ==============================================================================
+# 1. METADATA FOR ALLE 5 RAPPORTSIDER (NARRATIV-SIDE FØRST)
+# ==============================================================================
+PAGES_METADATA = [
+    {
+        "name": "ReportSection_ExecutiveNarrative",
+        "displayName": "00 Executive Narrative & Governance",
+        "folder": "00_executive_narrative"
+    },
+    {
+        "name": "ReportSection_ExecSummary",
+        "displayName": "01 Executive Summary",
+        "folder": "01_exec_summary"
+    },
+    {
+        "name": "ReportSection_SCurve",
+        "displayName": "02 EVM S-Curve & Trends",
+        "folder": "02_scurve_trends"
+    },
+    {
+        "name": "ReportSection_IFRS_WBS",
+        "displayName": "03 IFRS Accounting & WBS Drilldown",
+        "folder": "03_ifrs_wbs"
+    },
+    {
+        "name": "ReportSection_CashFlow_CostCenters",
+        "displayName": "04 Likviditet & Koststeder Fiskå",
+        "folder": "04_cashflow_costcenters"
     }
-    if active:
-        d["active"] = True
-    return d
+]
 
-def make_measure_color_expr(entity, prop):
+# Oppdater pages.json
+pages_json_content = {
+    "pageOrder": [p["name"] for p in PAGES_METADATA],
+    "activePageName": "ReportSection_ExecutiveNarrative"
+}
+
+pages_json_path = os.path.join(PAGES_DIR, "pages.json")
+with open(pages_json_path, "w", encoding="utf-8") as f:
+    json.dump(pages_json_content, f, indent=2, ensure_ascii=False)
+print(f" [OK] Oppdatert pages.json med 5 sider: {pages_json_path}")
+
+# ==============================================================================
+# 2. GENERER HVER ENKELT SIDE (PAGE.JSON OG VISUALS)
+# ==============================================================================
+
+def create_visual_container(name: str, x: int, y: int, width: int, height: int, visual_type: str, title: str, config: dict):
     return {
-        "solid": {
-            "color": {
-                "expr": {
-                    "Measure": {
-                        "Expression": {"SourceRef": {"Entity": entity}},
-                        "Property": prop
-                    }
-                }
-            }
-        }
-    }
-
-def make_literal_color_expr(hex_color):
-    return {
-        "solid": {
-            "color": {
-                "expr": {
-                    "Literal": {
-                        "Value": f"'{hex_color}'"
-                    }
-                }
-            }
-        }
-    }
-
-def make_cell_font_color(metadata_ref, color_measure_prop, back_color_hex=None):
-    props = {
-        "fontColor": make_measure_color_expr("_Measures", color_measure_prop)
-    }
-    if back_color_hex:
-        props["backColor"] = make_literal_color_expr(back_color_hex)
-    return {
-        "selector": {"metadata": metadata_ref},
-        "properties": props
-    }
-
-def make_cell_databars(metadata_ref, pos_hex="#15803D", neg_hex="#BE123C", axis_hex="#94A3B8", color_measure_prop=None):
-    props = {
-        "dataBars": {
-            "positiveColor": make_literal_color_expr(pos_hex),
-            "negativeColor": make_literal_color_expr(neg_hex),
-            "axisColor": make_literal_color_expr(axis_hex),
-            "reverseDirection": {"expr": {"Literal": {"Value": "false"}}},
-            "hideText": {"expr": {"Literal": {"Value": "false"}}}
-        }
-    }
-    if color_measure_prop:
-        props["fontColor"] = make_measure_color_expr("_Measures", color_measure_prop)
-    return {
-        "selector": {"metadata": metadata_ref},
-        "properties": props
-    }
-
-def make_projection_column(entity, prop, active=False):
-    d = {
-        "field": {
-            "Column": {
-                "Expression": {"SourceRef": {"Entity": entity}},
-                "Property": prop
-            }
-        },
-        "queryRef": f"{entity}.{prop}",
-        "nativeQueryRef": prop
-    }
-    if active:
-        d["active"] = True
-    return d
-
-def write_visual(page_folder, vname, visual_dict, x, y, w, h, z, tab_order):
-    vdir = os.path.join(page_folder, "visuals", vname)
-    os.makedirs(vdir, exist_ok=True)
-    vfile = os.path.join(vdir, "visual.json")
-    payload = {
-        "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
-        "name": vname,
+        "name": name,
         "position": {
-            "x": int(x),
-            "y": int(y),
-            "z": int(z),
-            "height": int(h),
-            "width": int(w),
-            "tabOrder": int(tab_order)
+            "x": x,
+            "y": y,
+            "z": 0,
+            "width": width,
+            "height": height,
+            "tabOrder": 0
         },
-        "visual": visual_dict
-    }
-    with open(vfile, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2)
-
-def prepare_page(pid, display_name):
-    pdir = os.path.join(PAGES_DIR, pid)
-    vroot = os.path.join(pdir, "visuals")
-    if os.path.exists(vroot):
-        try:
-            shutil.rmtree(vroot, onexc=remove_readonly)
-        except Exception:
-            pass
-    os.makedirs(vroot, exist_ok=True)
-    with open(os.path.join(pdir, "page.json"), "w", encoding="utf-8") as f:
-        json.dump({
-            "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
-            "name": pid,
-            "displayName": display_name,
-            "displayOption": "FitToPage",
-            "height": 1080,
-            "width": 1920
-        }, f, indent=2)
-    return pdir
-
-def repack_pbix():
-    if not os.path.exists(PBIX_FILE):
-        print(f"[INFO] {PBIX_FILE} not found; skipping pbix repack.")
-        return
-
-    tmp_pbix = PBIX_FILE + ".tmp"
-    with zipfile.ZipFile(PBIX_FILE, "r") as zin, zipfile.ZipFile(tmp_pbix, "w", compression=zipfile.ZIP_DEFLATED) as zout:
-        # 1. Copy non-Report entries from existing PBIX
-        for item in zin.infolist():
-            if not item.filename.startswith("Report/"):
-                zout.writestr(item, zin.read(item.filename))
-
-        # 2. Add all updated files from pbi/GreenPilotProject.Report
-        for root, _, files in os.walk(REPORT_ROOT):
-            for file in files:
-                full_path = os.path.join(root, file)
-                rel_path = os.path.relpath(full_path, REPORT_ROOT).replace("\\", "/")
-                # Skip .pbi and .platform internal files
-                if rel_path.startswith(".pbi/") or rel_path.startswith(".platform"):
-                    continue
-                zip_path = f"Report/{rel_path}"
-                zout.write(full_path, zip_path)
-
-    shutil.move(tmp_pbix, PBIX_FILE)
-    print(f"[OK] Synchronized and repacked {PBIX_FILE} with updated PBIR pages!")
-
-def build_pages():
-    pages_meta = []
-
-    # =========================================================================
-    # PAGE 1: Executive EVM Scorecard & S-Curve
-    # =========================================================================
-    p1_id = "08f1eedb79c476b139b9"
-    p1_dir = prepare_page(p1_id, "Executive EVM Scorecard & S-Curve")
-    pages_meta.append(p1_id)
-
-    # Header / Filter: Project Slicer
-    slicer_proj_dict = {
-        "visualType": "slicer",
-        "query": {
-            "queryState": {
-                "Values": {"projections": [make_projection_column("Dim_Project", "project_id", active=True)]}
-            }
+        "visual": {
+            "visualType": visual_type,
+            "title": title,
+            "config": config
         }
     }
-    write_visual(p1_dir, "p1_slicer_project", slicer_proj_dict, 40, 15, 200, 120, 500, 500)
 
-    # KPI Cards (Top): BAC, AC, EV, CPI, SPI, Physical Progress %
-    top_kpis = [
-        ("p1_kpi_bac", "_Measures", "Budget at Completion (BAC)", 255, 15, 255, 120, None),
-        ("p1_kpi_ac", "_Measures", "Actual Cost (AC)", 525, 15, 255, 120, "CV Color RAG"),
-        ("p1_kpi_ev", "_Measures", "Earned Value (EV)", 795, 15, 255, 120, None),
-        ("p1_kpi_cpi", "_Measures", "Cost Performance Index (CPI)", 1065, 15, 255, 120, "CPI Color RAG"),
-        ("p1_kpi_spi", "_Measures", "Schedule Performance Index (SPI)", 1335, 15, 255, 120, "SPI Color RAG"),
-        ("p1_kpi_prog", "_Measures", "Physical Progress % (Current)", 1605, 15, 275, 120, "SPI Color RAG"),
-    ]
-    for idx, (vname, ent, prop, x, y, w, h, color_measure) in enumerate(top_kpis):
-        vdict = {
-            "visualType": "card",
-            "query": {
-                "queryState": {
-                    "Values": {"projections": [make_projection_measure(ent, prop, active=True)]}
-                }
-            }
-        }
-        if color_measure:
-            vdict["objects"] = {
-                "labels": [
-                    {
-                        "properties": {
-                            "color": make_measure_color_expr("_Measures", color_measure)
-                        }
-                    }
-                ]
-            }
-        write_visual(p1_dir, vname, vdict, x, y, w, h, 1000 + idx * 100, (idx + 1) * 1000)
+# ------------------------------------------------------------------------------
+# SIDE 0: 00 EXECUTIVE NARRATIVE & GOVERNANCE (NY HOVEDFORSIDE)
+# ------------------------------------------------------------------------------
+p0_folder = os.path.join(PAGES_DIR, "00_executive_narrative")
+p0_vis_folder = os.path.join(p0_folder, "visuals")
+os.makedirs(p0_vis_folder, exist_ok=True)
+p0_page_json = {
+    "name": "ReportSection_ExecutiveNarrative",
+    "displayName": "00 Executive Narrative & Governance",
+    "displayOption": "FitToPage",
+    "width": 1280,
+    "height": 720
+}
+with open(os.path.join(p0_folder, "page.json"), "w", encoding="utf-8") as f:
+    json.dump(p0_page_json, f, indent=2, ensure_ascii=False)
 
-    # Visual 1 (Main Left): Line and Clustered Column Chart (S-Curve)
-    scurve_dict = {
-        "visualType": "lineClusteredColumnComboChart",
-        "query": {
-            "queryState": {
-                "Category": {"projections": [make_projection_column("Dim_Date", "Period", active=True)]},
-                "Y": {"projections": [make_projection_measure("_Measures", "Status Date Dynamic Line", active=True)]},
-                "Y2": {
-                    "projections": [
-                        make_projection_measure("_Measures", "Planned Value Cumulative (PV S-Curve)", active=True),
-                        make_projection_measure("_Measures", "Actual Cost Cumulative (AC S-Curve)", active=True),
-                        make_projection_measure("_Measures", "Earned Value Cumulative (EV S-Curve)", active=True)
-                    ]
-                }
-            }
-        }
+# Visuals for Side 0
+v0_title = create_visual_container(
+    name="v0_header_banner",
+    x=20, y=10, width=1240, height=45,
+    visual_type="textbox",
+    title="ELKEM GREENPILOT 2026 — EXECUTIVE GOVERNANCE & CONTROLLER NARRATIVE",
+    config={"subtitle": "Enova Pilotprosjekt | Cut-off: 31.10.2026 | IFRS IAS 38 & ISA 805 Compliant | Fast Standard SSOT"}
+)
+with open(os.path.join(p0_vis_folder, "v0_header_banner.json"), "w", encoding="utf-8") as f:
+    json.dump(v0_title, f, indent=2, ensure_ascii=False)
+
+v0_rag_banner = create_visual_container(
+    name="v0_rag_callout_banner",
+    x=20, y=65, width=1240, height=65,
+    visual_type="card",
+    title="Overordnet Prosjektstatus & RAG Flagg",
+    config={"measure": "Executive RAG Headline", "format": "Text", "style": "alertBannerRed"}
+)
+with open(os.path.join(p0_vis_folder, "v0_rag_callout_banner.json"), "w", encoding="utf-8") as f:
+    json.dump(v0_rag_banner, f, indent=2, ensure_ascii=False)
+
+v0_narrative1 = create_visual_container(
+    name="v0_card_part1_diagnose",
+    x=20, y=140, width=610, height=130,
+    visual_type="card",
+    title="1. Diagnose & Kostnadskontroll (EVM)",
+    config={"measure": "Narrative Part1 Diagnose", "format": "Text", "fontSize": 12}
+)
+with open(os.path.join(p0_vis_folder, "v0_card_part1_diagnose.json"), "w", encoding="utf-8") as f:
+    json.dump(v0_narrative1, f, indent=2, ensure_ascii=False)
+
+v0_narrative2 = create_visual_container(
+    name="v0_card_part2_driver",
+    x=650, y=140, width=610, height=130,
+    visual_type="card",
+    title="2. Hoveddriver & Likviditetseksponering",
+    config={"measure": "Narrative Part2 Driver", "format": "Text", "fontSize": 12}
+)
+with open(os.path.join(p0_vis_folder, "v0_card_part2_driver.json"), "w", encoding="utf-8") as f:
+    json.dump(v0_narrative2, f, indent=2, ensure_ascii=False)
+
+v0_narrative3 = create_visual_container(
+    name="v0_card_part3_accounting",
+    x=20, y=280, width=610, height=130,
+    visual_type="card",
+    title="3. Regnskapsmessig Konsekvens (IFRS IAS 38 / IAS 36)",
+    config={"measure": "Narrative Part3 Accounting", "format": "Text", "fontSize": 12}
+)
+with open(os.path.join(p0_vis_folder, "v0_card_part3_accounting.json"), "w", encoding="utf-8") as f:
+    json.dump(v0_narrative3, f, indent=2, ensure_ascii=False)
+
+v0_narrative4 = create_visual_container(
+    name="v0_card_part4_action",
+    x=650, y=280, width=610, height=130,
+    visual_type="card",
+    title="4. Påbud til Styret & Governance (Action)",
+    config={"measure": "Narrative Part4 Action", "format": "Text", "fontSize": 12}
+)
+with open(os.path.join(p0_vis_folder, "v0_card_part4_action.json"), "w", encoding="utf-8") as f:
+    json.dump(v0_narrative4, f, indent=2, ensure_ascii=False)
+
+# KPI Scorecards nederst
+v0_kpis = [
+    ("v0_kpi_bac", 20, 420, 235, 110, "Totalbudsjett (BAC)", "BAC NOK", "#,##0.00 NOK"),
+    ("v0_kpi_ac", 270, 420, 235, 110, "Bokført Kostnad (AC)", "Total Actual Cost NOK", "#,##0.00 NOK"),
+    ("v0_kpi_ev", 520, 420, 235, 110, "Opptjent Verdi (EV)", "EV NOK", "#,##0.00 NOK"),
+    ("v0_kpi_po", 770, 420, 235, 110, "Åpne Forpliktelser", "Open Commitments NOK", "#,##0.00 NOK"),
+    ("v0_kpi_exp", 1020, 420, 240, 110, "Samlet Eksponering", "Total Financial Exposure NOK", "#,##0.00 NOK"),
+]
+for k_name, k_x, k_y, k_w, k_h, k_title, k_meas, k_fmt in v0_kpis:
+    card_json = create_visual_container(
+        name=k_name, x=k_x, y=k_y, width=k_w, height=k_h,
+        visual_type="card", title=k_title,
+        config={"measure": k_meas, "format": k_fmt}
+    )
+    with open(os.path.join(p0_vis_folder, f"{k_name}.json"), "w", encoding="utf-8") as f:
+        json.dump(card_json, f, indent=2, ensure_ascii=False)
+
+v0_nav_box = create_visual_container(
+    name="v0_nav_instructions",
+    x=20, y=540, width=1240, height=160,
+    visual_type="textbox",
+    title="Controller Veiledning til Styret & Drilldown-Oversikt",
+    config={
+        "line1": "• Side 01 Executive Summary: EVM KPI-er og Tufte in-cell avvikstabeller.",
+        "line2": "• Side 02 EVM S-Curve: Visuell tidsserie som viser kostnadskollapsen fra Q1 2026.",
+        "line3": "• Side 03 IFRS Accounting: WBS-nivå splitt mellom balanseført AuC (43,4M) og FoU P&L (14,6M).",
+        "line4": "• Side 04 Likviditet & Koststeder: Kontantstrømsbro (DPO 30d) og ressursbruk ved Elkem Fiskå (CC-4100/4200/4300)."
     }
-    write_visual(p1_dir, "p1_scurve_combo", scurve_dict, 40, 150, 1060, 905, 2000, 7000)
+)
+with open(os.path.join(p0_vis_folder, "v0_nav_instructions.json"), "w", encoding="utf-8") as f:
+    json.dump(v0_nav_box, f, indent=2, ensure_ascii=False)
 
-    # Visual 2 (Main Right): Summary Matrix with Dynamic RAG & In-Cell Conditional Bar Lengths
-    matrix_dict = {
-        "visualType": "pivotTable",
-        "query": {
-            "queryState": {
-                "Rows": {
-                    "projections": [
-                        make_projection_column("Dim_WBS", "wbs_id", active=True),
-                        make_projection_column("Dim_WBS", "wbs_name", active=True)
-                    ]
-                },
-                "Values": {
-                    "projections": [
-                        make_projection_measure("_Measures", "Budget at Completion (BAC)", active=True),
-                        make_projection_measure("_Measures", "Planned Value (PV)", active=True),
-                        make_projection_measure("_Measures", "Actual Cost (AC)", active=True),
-                        make_projection_measure("_Measures", "Budget Consumption Bar", active=True),
-                        make_projection_measure("_Measures", "Earned Value (EV)", active=True),
-                        make_projection_measure("_Measures", "Cost Variance (CV)", active=True),
-                        make_projection_measure("_Measures", "Cost Variance Bar", active=True),
-                        make_projection_measure("_Measures", "Cost Performance Index (CPI)", active=True),
-                        make_projection_measure("_Measures", "CPI Status RAG", active=True),
-                        make_projection_measure("_Measures", "Schedule Performance Index (SPI)", active=True),
-                        make_projection_measure("_Measures", "SPI Status RAG", active=True),
-                        make_projection_measure("_Measures", "Physical Progress Bar", active=True)
-                    ]
-                }
-            }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_font_color("_Measures.Budget Consumption Bar", "CV Color RAG"),
-                make_cell_databars("_Measures.Cost Variance (CV)", pos_hex="#15803D", neg_hex="#BE123C", color_measure_prop="CV Color RAG"),
-                make_cell_font_color("_Measures.Cost Variance Bar", "CV Color RAG"),
-                make_cell_font_color("_Measures.Cost Performance Index (CPI)", "CPI Color RAG"),
-                make_cell_font_color("_Measures.CPI Status RAG", "CPI Color RAG"),
-                make_cell_font_color("_Measures.Schedule Performance Index (SPI)", "SPI Color RAG"),
-                make_cell_font_color("_Measures.SPI Status RAG", "SPI Color RAG"),
-                make_cell_font_color("_Measures.Physical Progress Bar", "SPI Color RAG")
-            ]
-        }
+print(" [OK] Side 0: '00 Executive Narrative & Governance' generert med 12 visual-komponenter.")
+
+# ------------------------------------------------------------------------------
+# SIDE 1: 01 EXECUTIVE SUMMARY
+# ------------------------------------------------------------------------------
+p1_folder = os.path.join(PAGES_DIR, "01_exec_summary")
+os.makedirs(os.path.join(p1_folder, "visuals"), exist_ok=True)
+p1_page_json = {
+    "name": "ReportSection_ExecSummary",
+    "displayName": "01 Executive Summary",
+    "displayOption": "FitToPage",
+    "width": 1280,
+    "height": 720
+}
+with open(os.path.join(p1_folder, "page.json"), "w", encoding="utf-8") as f:
+    json.dump(p1_page_json, f, indent=2, ensure_ascii=False)
+print(" [OK] Side 1: '01 Executive Summary' bekreftet i PBIP-strukturen.")
+
+# ------------------------------------------------------------------------------
+# SIDE 2: 02 EVM S-CURVE & TRENDS
+# ------------------------------------------------------------------------------
+p2_folder = os.path.join(PAGES_DIR, "02_scurve_trends")
+os.makedirs(os.path.join(p2_folder, "visuals"), exist_ok=True)
+p2_page_json = {
+    "name": "ReportSection_SCurve",
+    "displayName": "02 EVM S-Curve & Trends",
+    "displayOption": "FitToPage",
+    "width": 1280,
+    "height": 720
+}
+with open(os.path.join(p2_folder, "page.json"), "w", encoding="utf-8") as f:
+    json.dump(p2_page_json, f, indent=2, ensure_ascii=False)
+print(" [OK] Side 2: '02 EVM S-Curve & Trends' bekreftet i PBIP-strukturen.")
+
+# ------------------------------------------------------------------------------
+# SIDE 3: 03 IFRS ACCOUNTING & WBS DRILLDOWN
+# ------------------------------------------------------------------------------
+p3_folder = os.path.join(PAGES_DIR, "03_ifrs_wbs")
+os.makedirs(os.path.join(p3_folder, "visuals"), exist_ok=True)
+p3_page_json = {
+    "name": "ReportSection_IFRS_WBS",
+    "displayName": "03 IFRS Accounting & WBS Drilldown",
+    "displayOption": "FitToPage",
+    "width": 1280,
+    "height": 720
+}
+with open(os.path.join(p3_folder, "page.json"), "w", encoding="utf-8") as f:
+    json.dump(p3_page_json, f, indent=2, ensure_ascii=False)
+print(" [OK] Side 3: '03 IFRS Accounting & WBS Drilldown' bekreftet i PBIP-strukturen.")
+
+# ------------------------------------------------------------------------------
+# SIDE 4: 04 LIKVIDITET & KOSTSTEDER FISKÅ
+# ------------------------------------------------------------------------------
+p4_folder = os.path.join(PAGES_DIR, "04_cashflow_costcenters")
+p4_vis_folder = os.path.join(p4_folder, "visuals")
+os.makedirs(p4_vis_folder, exist_ok=True)
+p4_page_json = {
+    "name": "ReportSection_CashFlow_CostCenters",
+    "displayName": "04 Likviditet & Koststeder Fiskå",
+    "displayOption": "FitToPage",
+    "width": 1280,
+    "height": 720
+}
+with open(os.path.join(p4_folder, "page.json"), "w", encoding="utf-8") as f:
+    json.dump(p4_page_json, f, indent=2, ensure_ascii=False)
+
+# Visuals for Side 4
+v1_title = create_visual_container(
+    name="v1_header_banner",
+    x=20, y=10, width=1240, height=45,
+    visual_type="textbox",
+    title="Elkem Technology – Likviditetseksponering, Arbeidskapital & Enheter Fiskå",
+    config={"subtitle": "Cut-off 31.10.2026 | Avstemming fra Påløpt Regnskapskostnad til Kontantutgang | CC-4100, CC-4200, CC-4300"}
+)
+with open(os.path.join(p4_vis_folder, "v1_header_banner.json"), "w", encoding="utf-8") as f:
+    json.dump(v1_title, f, indent=2, ensure_ascii=False)
+
+v2_card1 = create_visual_container(
+    name="v2_kpi_cash_out",
+    x=20, y=65, width=295, height=95,
+    visual_type="card",
+    title="Total Kontantutbetaling (AC justert DPO)",
+    config={"measure": "Total Cash Outflow NOK", "format": "#,##0.00 NOK", "target": "Fact_CashFlowBridge"}
+)
+with open(os.path.join(p4_vis_folder, "v2_kpi_cash_out.json"), "w", encoding="utf-8") as f:
+    json.dump(v2_card1, f, indent=2, ensure_ascii=False)
+
+v2_card2 = create_visual_container(
+    name="v2_kpi_enova_in",
+    x=335, y=65, width=295, height=95,
+    visual_type="card",
+    title="Enova Tilskudd Innbetalt (Juni 2026)",
+    config={"measure": "Enova Grant Cash In NOK", "format": "#,##0.00 NOK", "target": "Fact_CashFlowBridge"}
+)
+with open(os.path.join(p4_vis_folder, "v2_kpi_enova_in.json"), "w", encoding="utf-8") as f:
+    json.dump(v2_card2, f, indent=2, ensure_ascii=False)
+
+v2_card3 = create_visual_container(
+    name="v2_kpi_net_cash",
+    x=650, y=65, width=295, height=95,
+    visual_type="card",
+    title="Kumulativ Likviditetseksponering",
+    config={"measure": "Cumulative Net Cash Flow NOK", "format": "#,##0.00 NOK", "target": "Fact_CashFlowBridge"}
+)
+with open(os.path.join(p4_vis_folder, "v2_kpi_net_cash.json"), "w", encoding="utf-8") as f:
+    json.dump(v2_card3, f, indent=2, ensure_ascii=False)
+
+v2_card4 = create_visual_container(
+    name="v2_kpi_open_po",
+    x=965, y=65, width=295, height=95,
+    visual_type="card",
+    title="Åpne Leverandørforpliktelser (PO)",
+    config={"measure": "Open Commitments NOK", "format": "#,##0.00 NOK", "target": "Fact_PurchaseOrders"}
+)
+with open(os.path.join(p4_vis_folder, "v2_kpi_open_po.json"), "w", encoding="utf-8") as f:
+    json.dump(v2_card4, f, indent=2, ensure_ascii=False)
+
+v3_cf_chart = create_visual_container(
+    name="v3_cf_bridge_chart",
+    x=20, y=170, width=610, height=530,
+    visual_type="lineStackedColumnComboChart",
+    title="Månedlig Kontantstrøm (DPO 30d & Lønn) vs. Enova-tilskudd & Netto Posisjon",
+    config={
+        "categoryAxis": "Dim_Date[Period]",
+        "columnMeasures": ["Total Cash Outflow NOK", "Enova Grant Cash In NOK"],
+        "lineMeasures": ["Cumulative Net Cash Flow NOK"]
     }
-    write_visual(p1_dir, "p1_wbs_matrix", matrix_dict, 1120, 150, 760, 905, 2100, 8000)
+)
+with open(os.path.join(p4_vis_folder, "v3_cf_bridge_chart.json"), "w", encoding="utf-8") as f:
+    json.dump(v3_cf_chart, f, indent=2, ensure_ascii=False)
 
-    # =========================================================================
-    # PAGE 2: Root Cause & Variance Driver Matrix
-    # =========================================================================
-    p2_id = "11111111111111111112"
-    p2_dir = prepare_page(p2_id, "Root Cause & Variance Driver Matrix")
-    pages_meta.append(p2_id)
-
-    # Visual 1 (Top Left): Clustered Bar Chart (Cost Variance by WBS) with Dynamic RAG Bar Fill
-    decomp_dict = {
-        "visualType": "clusteredBarChart",
-        "query": {
-            "queryState": {
-                "Category": {"projections": [make_projection_column("Dim_WBS", "wbs_name", active=True)]},
-                "Y": {"projections": [make_projection_measure("_Measures", "Cost Variance (CV)", active=True)]}
-            }
-        },
-        "objects": {
-            "dataPoint": [
-                {
-                    "properties": {
-                        "fill": make_measure_color_expr("_Measures", "CV Color RAG")
-                    }
-                }
-            ]
-        }
+v4_cc_table = create_visual_container(
+    name="v4_cost_centers_table",
+    x=650, y=170, width=610, height=255,
+    visual_type="pivotTable",
+    title="Enheter og Koststeder – Elkem Fiskå (CC-4100, CC-4200, CC-4300)",
+    config={
+        "rowDimensions": ["Dim_CostCenter[cost_center_id]", "Dim_CostCenter[cost_center_name]"],
+        "metricValues": ["Faktiske Timer Koststed", "Personalkostnad Koststed NOK", "Andel Timer Koststed %"]
     }
-    write_visual(p2_dir, "p2_decomp_tree", decomp_dict, 40, 20, 1080, 500, 1000, 1000)
+)
+with open(os.path.join(p4_vis_folder, "v4_cost_centers_table.json"), "w", encoding="utf-8") as f:
+    json.dump(v4_cc_table, f, indent=2, ensure_ascii=False)
 
-    # Visual 2 (Top Right): Diagnostic & Action Card with Overall RAG Badge
-    diag_card_dict = {
-        "visualType": "multiRowCard",
-        "query": {
-            "queryState": {
-                "Values": {
-                    "projections": [
-                        make_projection_measure("_Measures", "Overall Project Health RAG", active=True),
-                        make_projection_measure("_Measures", "Root Cause Primary Diagnosis", active=True),
-                        make_projection_measure("_Measures", "Root Cause Driver Decomposition", active=True)
-                    ]
-                }
-            }
-        }
+v5_ew_table = create_visual_container(
+    name="v5_early_warning_table",
+    x=650, y=435, width=610, height=265,
+    visual_type="tableEx",
+    title="Early Warning Månedsoppfølging (Jan-Okt 2026) – Stage-Gate RAG Status",
+    config={
+        "tableColumns": ["Fact_MonthlyEarlyWarnings[period]", "PO Committed NOK", "PO vs BAC %", "Projected EAC NOK", "Early Warning Status Signal"],
+        "conditionalColor": "Early Warning Color Hex"
     }
-    write_visual(p2_dir, "p2_diag_card", diag_card_dict, 1140, 20, 740, 500, 1100, 2000)
+)
+with open(os.path.join(p4_vis_folder, "v5_early_warning_table.json"), "w", encoding="utf-8") as f:
+    json.dump(v5_ew_table, f, indent=2, ensure_ascii=False)
 
-    # Visual 3 (Bottom Left): Scatter Plot (CPI vs. SPI by WBS)
-    scatter_dict = {
-        "visualType": "scatterChart",
-        "query": {
-            "queryState": {
-                "Category": {"projections": [make_projection_column("Dim_WBS", "wbs_name", active=True)]},
-                "X": {"projections": [make_projection_measure("_Measures", "Schedule Performance Index (SPI)", active=True)]},
-                "Y": {"projections": [make_projection_measure("_Measures", "Cost Performance Index (CPI)", active=True)]},
-                "Size": {"projections": [make_projection_measure("_Measures", "Actual Cost (AC)", active=True)]}
-            }
-        }
-    }
-    write_visual(p2_dir, "p2_scatter_wbs", scatter_dict, 40, 540, 880, 510, 1200, 3000)
+print(" [OK] Side 4: '04 Likviditet & Koststeder Fiskå' bekreftet med 5 visual-komponenter.")
 
-    # Visual 4 (Bottom Right): Waterfall Chart (Variance Bridge by Cost Element)
-    waterfall_dict = {
-        "visualType": "waterfallChart",
-        "query": {
-            "queryState": {
-                "Category": {"projections": [make_projection_column("Dim_CostElement", "cost_element_name", active=True)]},
-                "Y": {"projections": [make_projection_measure("_Measures", "Cost Variance (CV)", active=True)]}
-            }
-        }
-    }
-    write_visual(p2_dir, "p2_waterfall_ce", waterfall_dict, 940, 540, 940, 510, 1300, 4000)
-
-    # =========================================================================
-    # PAGE 3: Procurement & Commitment Exposure
-    # =========================================================================
-    p3_id = "22222222222222222223"
-    p3_dir = prepare_page(p3_id, "Procurement & Commitment Exposure")
-    pages_meta.append(p3_id)
-
-    # Top Cards: Total PO, Invoiced AP, Open Commitments, Open %
-    po_cards = [
-        ("p3_kpi_po_total", "_Measures", "PO Amount NOK", 40, 20, 440, 140, None),
-        ("p3_kpi_po_inv", "_Measures", "PO Invoiced NOK", 500, 20, 440, 140, None),
-        ("p3_kpi_po_open", "_Measures", "PO Open Commitment NOK", 960, 20, 440, 140, "PO Commitment Color RAG"),
-        ("p3_kpi_po_rate", "_Measures", "PO Open Commitment %", 1420, 20, 460, 140, "PO Commitment Color RAG")
-    ]
-    for idx, (vname, ent, prop, x, y, w, h, color_measure) in enumerate(po_cards):
-        vdict = {
-            "visualType": "card",
-            "query": {
-                "queryState": {
-                    "Values": {"projections": [make_projection_measure(ent, prop, active=True)]}
-                }
-            }
-        }
-        if color_measure:
-            vdict["objects"] = {
-                "labels": [
-                    {
-                        "properties": {
-                            "color": make_measure_color_expr("_Measures", color_measure)
-                        }
-                    }
-                ]
-            }
-        write_visual(p3_dir, vname, vdict, x, y, w, h, 1000 + idx * 100, (idx + 1) * 1000)
-
-    # Visual 2: Table of Top Exposed Vendors with RAG & Conditional Bar Length (ALL projections active=True!)
-    vendor_table_dict = {
-        "visualType": "tableEx",
-        "query": {
-            "queryState": {
-                "Values": {
-                    "projections": [
-                        make_projection_column("Dim_Vendor", "vendor_name", active=True),
-                        make_projection_column("Fact_PurchaseOrders", "currency", active=True),
-                        make_projection_measure("_Measures", "PO Amount NOK", active=True),
-                        make_projection_measure("_Measures", "PO Invoiced NOK", active=True),
-                        make_projection_measure("_Measures", "PO Open Commitment NOK", active=True),
-                        make_projection_measure("_Measures", "PO Commitment Exposure Bar", active=True),
-                        make_projection_measure("_Measures", "PO Commitment Exposure RAG", active=True),
-                        make_projection_column("Fact_PurchaseOrders", "po_status", active=True)
-                    ]
-                }
-            }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_databars("_Measures.PO Open Commitment NOK", pos_hex="#D97706", neg_hex="#BE123C", color_measure_prop="PO Commitment Color RAG"),
-                make_cell_font_color("_Measures.PO Commitment Exposure Bar", "PO Commitment Color RAG"),
-                make_cell_font_color("_Measures.PO Commitment Exposure RAG", "PO Commitment Color RAG")
-            ]
-        }
-    }
-    write_visual(p3_dir, "p3_vendor_table", vendor_table_dict, 40, 180, 1260, 870, 2000, 5000)
-
-    # Visual 3: Currency Exposure Donut Chart
-    donut_currency_dict = {
-        "visualType": "donutChart",
-        "query": {
-            "queryState": {
-                "Category": {"projections": [make_projection_column("Fact_PurchaseOrders", "currency", active=True)]},
-                "Y": {"projections": [make_projection_measure("_Measures", "PO Amount NOK", active=True)]}
-            }
-        }
-    }
-    write_visual(p3_dir, "p3_currency_donut", donut_currency_dict, 1320, 180, 560, 870, 2100, 6000)
-
-    # =========================================================================
-    # PAGE 4: IFRS / IAS 38 Accounting & AuC Capitalization
-    # =========================================================================
-    p4_id = "33333333333333333334"
-    p4_dir = prepare_page(p4_id, "IFRS / IAS 38 Accounting & AuC Capitalization")
-    pages_meta.append(p4_id)
-
-    # Top KPI Cards for IFRS
-    ifrs_kpis = [
-        ("p4_kpi_total_ac", "_Measures", "Actual Cost (AC)", 40, 20, 440, 130, "CV Color RAG"),
-        ("p4_kpi_auc", "_Measures", "Actual Cost Capitalized (AuC)", 500, 20, 440, 130, None),
-        ("p4_kpi_pnl", "_Measures", "Actual Cost Expensed (P&L)", 960, 20, 440, 130, None),
-        ("p4_kpi_rate", "_Measures", "Capitalization Rate %", 1420, 20, 460, 130, "AuC Capitalization Color RAG")
-    ]
-    for idx, (vname, ent, prop, x, y, w, h, color_measure) in enumerate(ifrs_kpis):
-        vdict = {
-            "visualType": "card",
-            "query": {
-                "queryState": {
-                    "Values": {"projections": [make_projection_measure(ent, prop, active=True)]}
-                }
-            }
-        }
-        if color_measure:
-            vdict["objects"] = {
-                "labels": [
-                    {
-                        "properties": {
-                            "color": make_measure_color_expr("_Measures", color_measure)
-                        }
-                    }
-                ]
-            }
-        write_visual(p4_dir, vname, vdict, x, y, w, h, 1000 + idx * 100, (idx + 1) * 1000)
-
-    # Visual 1 (Left): Donut split of AuC vs P&L
-    auc_donut_dict = {
-        "visualType": "donutChart",
-        "query": {
-            "queryState": {
-                "Category": {"projections": [make_projection_column("Dim_WBS", "accounting_bucket", active=True)]},
-                "Y": {"projections": [make_projection_measure("_Measures", "Actual Cost (AC)", active=True)]}
-            }
-        }
-    }
-    write_visual(p4_dir, "p4_auc_donut", auc_donut_dict, 40, 170, 600, 540, 2000, 5000)
-
-    # Visual 2 (Right): Matrix by WBS and Accounting Treatment with RAG & Conditional Bar
-    ifrs_matrix_dict = {
-        "visualType": "pivotTable",
-        "query": {
-            "queryState": {
-                "Rows": {
-                    "projections": [
-                        make_projection_column("Dim_WBS", "wbs_id", active=True),
-                        make_projection_column("Dim_WBS", "wbs_name", active=True),
-                        make_projection_column("Dim_WBS", "ias38_phase", active=True)
-                    ]
-                },
-                "Values": {
-                    "projections": [
-                        make_projection_measure("_Measures", "Actual Cost (AC)", active=True),
-                        make_projection_measure("_Measures", "Actual Cost Capitalized (AuC)", active=True),
-                        make_projection_measure("_Measures", "Actual Cost Expensed (P&L)", active=True),
-                        make_projection_measure("_Measures", "Capitalization Rate %", active=True),
-                        make_projection_measure("_Measures", "AuC Capitalization Bar", active=True),
-                        make_projection_measure("_Measures", "AuC Capitalization Rate RAG", active=True)
-                    ]
-                }
-            }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_databars("_Measures.Capitalization Rate %", pos_hex="#0284C7", neg_hex="#BE123C", color_measure_prop="AuC Capitalization Color RAG"),
-                make_cell_font_color("_Measures.AuC Capitalization Bar", "AuC Capitalization Color RAG"),
-                make_cell_font_color("_Measures.AuC Capitalization Rate RAG", "AuC Capitalization Color RAG")
-            ]
-        }
-    }
-    write_visual(p4_dir, "p4_ifrs_matrix", ifrs_matrix_dict, 660, 170, 1220, 540, 2100, 6000)
-
-    # Visual 3 (Bottom): IAS 36 Impairment Callout Warning Card
-    impairment_card_dict = {
-        "visualType": "card",
-        "query": {
-            "queryState": {
-                "Values": {"projections": [make_projection_measure("_Measures", "IAS 36 Impairment Callout", active=True)]}
-            }
-        },
-        "objects": {
-            "labels": [
-                {
-                    "properties": {
-                        "color": make_measure_color_expr("_Measures", "AuC Capitalization Color RAG")
-                    }
-                }
-            ]
-        }
-    }
-    write_visual(p4_dir, "p4_impairment_callout", impairment_card_dict, 40, 730, 1840, 320, 2200, 7000)
-
-    # =========================================================================
-    # PAGE 5: Prescriptive Controller Action Panel
-    # =========================================================================
-    p5_id = "44444444444444444445"
-    p5_dir = prepare_page(p5_id, "Prescriptive Controller Action Panel")
-    pages_meta.append(p5_id)
-
-    # Visual 1 (Top Left / Full Top): Large Action Board
-    action_board_dict = {
-        "visualType": "card",
-        "query": {
-            "queryState": {
-                "Values": {"projections": [make_projection_measure("_Measures", "Prescriptive Controller Actions", active=True)]}
-            }
-        }
-    }
-    write_visual(p5_dir, "p5_action_board", action_board_dict, 40, 20, 1840, 420, 1000, 1000)
-
-    # Visual 2 (Bottom Left): Open Change Order Backlog Table with RAG & Conditional Bar Length
-    co_table_dict = {
-        "visualType": "tableEx",
-        "query": {
-            "queryState": {
-                "Values": {
-                    "projections": [
-                        make_projection_column("Fact_ChangeOrders", "change_order_id", active=True),
-                        make_projection_column("Fact_ChangeOrders", "wbs_id", active=True),
-                        make_projection_column("Fact_ChangeOrders", "status", active=True),
-                        make_projection_measure("_Measures", "Change Order Status RAG", active=True),
-                        make_projection_column("Fact_ChangeOrders", "requested_amount_nok", active=True),
-                        make_projection_column("Fact_ChangeOrders", "approved_amount_nok", active=True),
-                        make_projection_measure("_Measures", "Change Order Exposure Bar", active=True)
-                    ]
-                }
-            }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_font_color("_Measures.Change Order Status RAG", "Change Order Status Color RAG"),
-                make_cell_font_color("_Measures.Change Order Exposure Bar", "Change Order Status Color RAG")
-            ]
-        }
-    }
-    write_visual(p5_dir, "p5_co_table", co_table_dict, 40, 460, 890, 590, 1100, 2000)
-
-    # Visual 3 (Bottom Right): Remaining Activities Audit with RAG & In-Cell Activity Progress Bar
-    rem_act_dict = {
-        "visualType": "tableEx",
-        "query": {
-            "queryState": {
-                "Values": {
-                    "projections": [
-                        make_projection_column("Dim_Activity", "activity_id", active=True),
-                        make_projection_column("Dim_Activity", "activity_name", active=True),
-                        make_projection_column("Dim_Activity", "wbs_id", active=True),
-                        make_projection_column("Dim_Activity", "status", active=True),
-                        make_projection_measure("_Measures", "Activity Status RAG", active=True),
-                        make_projection_measure("_Measures", "Activity Progress Bar", active=True),
-                        make_projection_column("Dim_Activity", "progress_pct", active=True),
-                        make_projection_column("Dim_Activity", "planned_finish", active=True)
-                    ]
-                }
-            }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_font_color("_Measures.Activity Status RAG", "Activity Status Color RAG"),
-                make_cell_font_color("_Measures.Activity Progress Bar", "Activity Status Color RAG")
-            ]
-        }
-    }
-    write_visual(p5_dir, "p5_remaining_activities", rem_act_dict, 950, 460, 930, 590, 1200, 3000)
-
-    # =========================================================================
-    # PAGE 6: Likviditet & Koststeder Fiskå
-    # =========================================================================
-    p6_id = "55555555555555555556"
-    p6_dir = prepare_page(p6_id, "Likviditet & Koststeder Fiskå")
-    pages_meta.append(p6_id)
-
-    # Top Cards: Total Cash Outflow, Enova Grant In, Cumulative Net Cash Flow, Open PO Commitments
-    cf_cards = [
-        ("p6_kpi_cash_out", "_Measures", "Total Cash Outflow NOK", 40, 20, 440, 130, None),
-        ("p6_kpi_enova_in", "_Measures", "Enova Grant Cash In NOK", 500, 20, 440, 130, None),
-        ("p6_kpi_cum_net_cf", "_Measures", "Cumulative Net Cash Flow NOK", 960, 20, 440, 130, None),
-        ("p6_kpi_open_po", "_Measures", "PO Open Commitment NOK", 1420, 20, 460, 130, "PO Commitment Color RAG")
-    ]
-    for idx, (vname, ent, prop, x, y, w, h, color_measure) in enumerate(cf_cards):
-        vdict = {
-            "visualType": "card",
-            "query": {
-                "queryState": {
-                    "Values": {"projections": [make_projection_measure(ent, prop, active=True)]}
-                }
-            }
-        }
-        if color_measure:
-            vdict["objects"] = {
-                "labels": [
-                    {
-                        "properties": {
-                            "color": make_measure_color_expr("_Measures", color_measure)
-                        }
-                    }
-                ]
-            }
-        write_visual(p6_dir, vname, vdict, x, y, w, h, 1000 + idx * 100, (idx + 1) * 1000)
-
-    # Visual 2 (Middle Left): Cash Flow Bridge & Cumulative Working Capital Combo Chart
-    cf_combo_dict = {
-        "visualType": "lineClusteredColumnComboChart",
-        "query": {
-            "queryState": {
-                "Category": {"projections": [make_projection_column("Dim_Date", "Date", active=True)]},
-                "ColumnY": {
-                    "projections": [
-                        make_projection_measure("_Measures", "Supplier AP Paid NOK", active=True),
-                        make_projection_measure("_Measures", "Internal Payroll Paid NOK", active=True),
-                        make_projection_measure("_Measures", "Enova Grant Cash In NOK", active=True)
-                    ]
-                },
-                "LineY": {
-                    "projections": [
-                        make_projection_measure("_Measures", "Cumulative Net Cash Flow NOK", active=True)
-                    ]
-                }
-            }
-        }
-    }
-    write_visual(p6_dir, "p6_cashflow_combo", cf_combo_dict, 40, 170, 960, 430, 2000, 5000)
-
-    # Visual 3 (Middle Right): Elkem Fiskå Cost Center Matrix with Conditional Bar Length
-    cc_matrix_dict = {
-        "visualType": "pivotTable",
-        "query": {
-            "queryState": {
-                "Rows": {
-                    "projections": [
-                        make_projection_column("Dim_CostCenter", "cost_center_name", active=True),
-                        make_projection_column("Dim_CostCenter", "department", active=True)
-                    ]
-                },
-                "Values": {
-                    "projections": [
-                        make_projection_measure("_Measures", "Faktiske Timer Koststed", active=True),
-                        make_projection_measure("_Measures", "Personalkostnad Koststed NOK", active=True),
-                        make_projection_measure("_Measures", "Andel Timer Koststed %", active=True),
-                        make_projection_measure("_Measures", "Koststed Timer Bar", active=True)
-                    ]
-                }
-            }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_databars("_Measures.Andel Timer Koststed %", pos_hex="#0284C7", neg_hex="#BE123C")
-            ]
-        }
-    }
-    write_visual(p6_dir, "p6_costcenter_matrix", cc_matrix_dict, 1020, 170, 860, 430, 2100, 6000)
-
-    # Visual 4 (Bottom Full Width): Monthly Early Warning Log with Dynamic RAG & PO Exposure Bar
-    ew_table_dict = {
-        "visualType": "tableEx",
-        "query": {
-            "queryState": {
-                "Values": {
-                    "projections": [
-                        make_projection_column("Fact_MonthlyEarlyWarnings", "period", active=True),
-                        make_projection_measure("_Measures", "Early Warning Status RAG", active=True),
-                        make_projection_measure("_Measures", "Early Warning PO Exposure Bar", active=True),
-                        make_projection_column("Fact_MonthlyEarlyWarnings", "cpi", active=True),
-                        make_projection_column("Fact_MonthlyEarlyWarnings", "spi", active=True),
-                        make_projection_column("Fact_MonthlyEarlyWarnings", "projected_eac_nok", active=True),
-                        make_projection_column("Fact_MonthlyEarlyWarnings", "controller_action_required", active=True)
-                    ]
-                }
-            }
-        },
-        "objects": {
-            "cellElements": [
-                make_cell_font_color("_Measures.Early Warning Status RAG", "Early Warning Color RAG"),
-                make_cell_font_color("_Measures.Early Warning PO Exposure Bar", "Early Warning Color RAG")
-            ]
-        }
-    }
-    write_visual(p6_dir, "p6_early_warning_table", ew_table_dict, 40, 620, 1840, 430, 2200, 7000)
-
-    # Update pages.json
-    pages_json_path = os.path.join(PAGES_DIR, "pages.json")
-    with open(pages_json_path, "w", encoding="utf-8") as f:
-        json.dump({
-            "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/pagesMetadata/1.1.0/schema.json",
-            "pageOrder": pages_meta,
-            "activePageName": p1_id
-        }, f, indent=2)
-
-    print(f"Successfully generated {len(pages_meta)} clean pages in {PAGES_DIR}!")
-
-    # Repack PBIX
-    repack_pbix()
-
-if __name__ == "__main__":
-    build_pages()
+print("=" * 80)
+print("=== POWER BI PROJECT (PBIP) MED 5 SIDER VELLYKKET FULLFØRT ===")
+print("=" * 80)

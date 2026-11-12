@@ -1,0 +1,20 @@
+{
+  "name": "v0_card_part1_diagnose",
+  "position": {
+    "x": 20,
+    "y": 140,
+    "z": 0,
+    "width": 610,
+    "height": 130,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "card",
+    "title": "1. Diagnose & Kostnadskontroll (EVM)",
+    "config": {
+      "measure": "Narrative Part1 Diagnose",
+      "format": "Text",
+      "fontSize": 12
+    }
+  }
+}

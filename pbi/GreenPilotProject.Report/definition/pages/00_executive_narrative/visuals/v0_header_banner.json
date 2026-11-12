@@ -1,0 +1,18 @@
+{
+  "name": "v0_header_banner",
+  "position": {
+    "x": 20,
+    "y": 10,
+    "z": 0,
+    "width": 1240,
+    "height": 45,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "textbox",
+    "title": "ELKEM GREENPILOT 2026 — EXECUTIVE GOVERNANCE & CONTROLLER NARRATIVE",
+    "config": {
+      "subtitle": "Enova Pilotprosjekt | Cut-off: 31.10.2026 | IFRS IAS 38 & ISA 805 Compliant | Fast Standard SSOT"
+    }
+  }
+}

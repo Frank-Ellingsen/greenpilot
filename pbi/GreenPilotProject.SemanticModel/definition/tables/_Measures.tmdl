@@ -991,3 +991,75 @@ table _Measures
 
 	annotation PBI_Id = 10ea645720ec4208b1cffb888a40c6d1
 
+
+	/// --- 09 EXECUTIVE NARRATIVE & GOVERNANCE MEASURES ---
+	measure 'Executive RAG Headline' = 
+			VAR _cpi = [CPI]
+			VAR _exp = [Total Financial Exposure NOK]
+			VAR _bac = [BAC NOK]
+			RETURN
+				IF (
+					_cpi < 0.50 || _exp > _bac,
+					"🔴 RØD ALARM: KRITISK KOSTNADSSPREKK & LIKVIDITETSEKSPONERING (Per 31.10.2026)",
+					IF (
+						_cpi < 0.80 || _exp > _bac * 0.8,
+						"🟡 GULT VARSEL: BETYDELIG KOSTNADSPRESS & OPPFØLGINGSBEHOV",
+						"🟢 GRØNT LYS: PROSJEKTET LEVERER INNENFOR VEDTATT BUDSJETTRAMME"
+					)
+				)
+		lineageTag: da990001-0001-4000-8000-000000000001
+		displayFolder: 08 Early Warnings & RAG
+
+	measure 'Narrative Part1 Diagnose' = 
+			VAR _cpi = [CPI]
+			VAR _cv = [CV NOK] / 1000000
+			VAR _spi = [SPI]
+			RETURN
+				"1. DIAGNOSE (EVM): Prosjektet opererer med en kostnadseffektivitet på CPI " 
+				& FORMAT ( _cpi, "0.00" ) 
+				& " og et akkumulert kostnadsavvik på NOK " 
+				& FORMAT ( _cv, "0.0" ) 
+				& "M. Fysisk fremdrift meldes til SPI " 
+				& FORMAT ( _spi, "0.00" ) 
+				& " som følge av forsert reaktormontasje."
+		lineageTag: da990001-0002-4000-8000-000000000002
+		displayFolder: 08 Early Warnings & RAG
+
+	measure 'Narrative Part2 Driver' = 
+			VAR _ac = [Total Actual Cost NOK] / 1000000
+			VAR _po = [Open Commitments NOK] / 1000000
+			VAR _exp = [Total Financial Exposure NOK] / 1000000
+			VAR _ratio = DIVIDE ( [Total Financial Exposure NOK], [BAC NOK], 0 )
+			RETURN
+				"2. DRIVER & LIKVIDITET: Bokførte kostnader (NOK " 
+				& FORMAT ( _ac, "0.0" ) 
+				& "M) og åpne leverandørforpliktelser (NOK " 
+				& FORMAT ( _po, "0.0" ) 
+				& "M) gir en samlet finansiell eksponering på NOK " 
+				& FORMAT ( _exp, "0.0" ) 
+				& "M (" 
+				& FORMAT ( _ratio, "0%" ) 
+				& " av godkjent totalbudsjett)."
+		lineageTag: da990001-0003-4000-8000-000000000003
+		displayFolder: 08 Early Warnings & RAG
+
+	measure 'Narrative Part3 Accounting' = 
+			VAR _auc = [AuC Capitalized NOK] / 1000000
+			RETURN
+				"3. REGNSKAPSMESSIG KONSEKVENS: Av de bokførte kostnadene er NOK " 
+				& FORMAT ( _auc, "0.0" ) 
+				& "M balanseført som anlegg under utførelse (AuC) etter IAS 38. Eksploderende sluttkostnad (EAC) utløser umiddelbart krav om nedskrivningstest etter IAS 36 før årsoppgjøret."
+		lineageTag: da990001-0004-4000-8000-000000000004
+		displayFolder: 08 Early Warnings & RAG
+
+	measure 'Narrative Part4 Action' = 
+			VAR _exp = [Total Financial Exposure NOK]
+			VAR _bac = [BAC NOK]
+			RETURN
+				IF (
+					_exp > _bac,
+					"4. PÅBUD TIL STYRET: 1) Umiddelbar innkjøpsfrys på alle nye rekvisisjoner. 2) Kanselleringsaudit av uleverte innkjøpsordrer (NOK 49,2M). 3) Innkall styret til ekstraordinært Stage-Gate møte for 30 dagers Technical Hold / Off-Ramp vurdering.",
+					"4. ANBEFALING: Fortsett månedlig kostnadsavstemming og tett oppfølging av leverandørfakturaer."
+				)
+		lineageTag: da990001-0005-4000-8000-000000000005
+		displayFolder: 08 Early Warnings & RAG

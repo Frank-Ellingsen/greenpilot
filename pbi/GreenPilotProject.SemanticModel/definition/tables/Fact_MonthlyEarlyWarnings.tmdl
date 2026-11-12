@@ -154,3 +154,4 @@ table Fact_MonthlyEarlyWarnings
 				  #"Changed column type"
 
 	annotation PBI_ResultType = Table
+

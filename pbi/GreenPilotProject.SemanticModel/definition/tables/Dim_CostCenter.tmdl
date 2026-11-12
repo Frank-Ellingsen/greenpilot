@@ -44,3 +44,4 @@ table Dim_CostCenter
 				  #"Changed column type"
 
 	annotation PBI_ResultType = Table
+

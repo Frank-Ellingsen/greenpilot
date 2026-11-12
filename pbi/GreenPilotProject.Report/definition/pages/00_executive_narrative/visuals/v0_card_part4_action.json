@@ -1,0 +1,20 @@
+{
+  "name": "v0_card_part4_action",
+  "position": {
+    "x": 650,
+    "y": 280,
+    "z": 0,
+    "width": 610,
+    "height": 130,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "card",
+    "title": "4. Påbud til Styret & Governance (Action)",
+    "config": {
+      "measure": "Narrative Part4 Action",
+      "format": "Text",
+      "fontSize": 12
+    }
+  }
+}

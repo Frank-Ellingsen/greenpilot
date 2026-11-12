@@ -1,0 +1,25 @@
+{
+  "name": "v3_cf_bridge_chart",
+  "position": {
+    "x": 20,
+    "y": 170,
+    "z": 0,
+    "width": 610,
+    "height": 530,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "lineStackedColumnComboChart",
+    "title": "Månedlig Kontantstrøm (DPO 30d & Lønn) vs. Enova-tilskudd & Netto Posisjon",
+    "config": {
+      "categoryAxis": "Dim_Date[Period]",
+      "columnMeasures": [
+        "Total Cash Outflow NOK",
+        "Enova Grant Cash In NOK"
+      ],
+      "lineMeasures": [
+        "Cumulative Net Cash Flow NOK"
+      ]
+    }
+  }
+}
