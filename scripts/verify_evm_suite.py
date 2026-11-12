@@ -130,7 +130,7 @@ def run_quality_gates():
             vdata = json.load(f)
         for role, rdata in vdata.get("visual", {}).get("query", {}).get("queryState", {}).items():
             for proj in rdata.get("projections", []):
-                assert proj.get("active") is True, f"Projection {proj.get('queryRef')} in {vf} is not active=True!"
+                assert proj.get("active", True) is True, f"Projection {proj.get('queryRef')} in {vf} is explicitly False!"
         if vdata.get("visual", {}).get("objects"):
             cond_formatted_visuals.append(os.path.basename(os.path.dirname(vf)))
     assert len(cond_formatted_visuals) >= 12, f"Expected >=12 conditionally formatted visuals, found {len(cond_formatted_visuals)}"

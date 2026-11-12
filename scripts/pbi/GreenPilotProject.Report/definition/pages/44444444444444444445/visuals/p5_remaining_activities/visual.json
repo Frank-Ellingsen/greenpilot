@@ -1,0 +1,193 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p5_remaining_activities",
+  "position": {
+    "x": 950,
+    "y": 460,
+    "z": 1200,
+    "height": 590,
+    "width": 930,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_Activity"
+                    }
+                  },
+                  "Property": "activity_id"
+                }
+              },
+              "queryRef": "Dim_Activity.activity_id",
+              "nativeQueryRef": "activity_id",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_Activity"
+                    }
+                  },
+                  "Property": "activity_name"
+                }
+              },
+              "queryRef": "Dim_Activity.activity_name",
+              "nativeQueryRef": "activity_name",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_Activity"
+                    }
+                  },
+                  "Property": "wbs_id"
+                }
+              },
+              "queryRef": "Dim_Activity.wbs_id",
+              "nativeQueryRef": "wbs_id",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_Activity"
+                    }
+                  },
+                  "Property": "status"
+                }
+              },
+              "queryRef": "Dim_Activity.status",
+              "nativeQueryRef": "status",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Activity Status RAG"
+                }
+              },
+              "queryRef": "_Measures.Activity Status RAG",
+              "nativeQueryRef": "Activity Status RAG",
+              "active": true
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Activity Progress Bar"
+                }
+              },
+              "queryRef": "_Measures.Activity Progress Bar",
+              "nativeQueryRef": "Activity Progress Bar",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_Activity"
+                    }
+                  },
+                  "Property": "progress_pct"
+                }
+              },
+              "queryRef": "Dim_Activity.progress_pct",
+              "nativeQueryRef": "progress_pct",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_Activity"
+                    }
+                  },
+                  "Property": "planned_finish"
+                }
+              },
+              "queryRef": "Dim_Activity.planned_finish",
+              "nativeQueryRef": "planned_finish",
+              "active": true
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "cellElements": [
+        {
+          "selector": {
+            "metadata": "_Measures.Activity Status RAG"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "Activity Status Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "selector": {
+            "metadata": "_Measures.Activity Progress Bar"
+          },
+          "properties": {
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "Activity Status Color RAG"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

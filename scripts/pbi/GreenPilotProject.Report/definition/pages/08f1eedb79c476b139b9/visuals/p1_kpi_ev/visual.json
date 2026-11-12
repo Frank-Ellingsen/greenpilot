@@ -1,0 +1,38 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "p1_kpi_ev",
+  "position": {
+    "x": 795,
+    "y": 15,
+    "z": 1200,
+    "height": 120,
+    "width": 255,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Earned Value (EV)"
+                }
+              },
+              "queryRef": "_Measures.Earned Value (EV)",
+              "nativeQueryRef": "Earned Value (EV)",
+              "active": true
+            }
+          ]
+        }
+      }
+    }
+  }
+}
