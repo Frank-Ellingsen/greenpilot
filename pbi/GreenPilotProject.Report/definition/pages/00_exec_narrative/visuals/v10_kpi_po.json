@@ -1,0 +1,20 @@
+{
+  "name": "v10_kpi_po",
+  "position": {
+    "x": 770,
+    "y": 345,
+    "z": 0,
+    "width": 235,
+    "height": 90,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "card",
+    "title": "\u00c5pne PO Forpliktelser",
+    "config": {
+      "measure": "Open Commitments NOK",
+      "format": "#,##0.00 NOK",
+      "target": "_Measures"
+    }
+  }
+}

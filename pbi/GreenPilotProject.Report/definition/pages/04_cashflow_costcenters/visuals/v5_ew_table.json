@@ -1,0 +1,25 @@
+{
+  "name": "v5_ew_table",
+  "position": {
+    "x": 650,
+    "y": 415,
+    "z": 0,
+    "width": 610,
+    "height": 285,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "title": "Early Warning M\u00e5nedsoppf\u00f8lging \u2013 Stage-Gate RAG Status",
+    "config": {
+      "tableColumns": [
+        "Fact_MonthlyEarlyWarnings[period]",
+        "PO Committed NOK",
+        "PO vs BAC %",
+        "Projected EAC NOK",
+        "Early Warning Status Signal"
+      ],
+      "conditionalColor": "Early Warning Color Hex"
+    }
+  }
+}

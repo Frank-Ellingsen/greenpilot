@@ -1,0 +1,19 @@
+{
+  "name": "v6_n4_act",
+  "position": {
+    "x": 650,
+    "y": 235,
+    "z": 0,
+    "width": 610,
+    "height": 100,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "card",
+    "title": "4. P\u00e5bud til Styret (Stage-Gate Beslutning)",
+    "config": {
+      "measure": "Narrative Part4 Action",
+      "target": "_Measures"
+    }
+  }
+}

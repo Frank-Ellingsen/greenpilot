@@ -1,0 +1,24 @@
+{
+  "name": "v4_qna_box",
+  "position": {
+    "x": 720,
+    "y": 130,
+    "z": 0,
+    "width": 540,
+    "height": 275,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "qna",
+    "title": "Sp\u00f8rsm\u00e5l og Svar (Q&A / AI Prepp)",
+    "config": {
+      "placeholder": "Still sp\u00f8rsm\u00e5l om kostnader, leverand\u00f8rer eller timer (f.eks. 'Hva er faktisk kost for reaktor?')",
+      "suggestedQuestions": [
+        "Hva er Total Financial Exposure vs BAC?",
+        "Vis m\u00e5nedlig CPI trend i 2026",
+        "Hvilken leverand\u00f8r har st\u00f8rst \u00e5pne PO-forpliktelser?",
+        "Hvor mange timer har CC-4300 brukt?"
+      ]
+    }
+  }
+}

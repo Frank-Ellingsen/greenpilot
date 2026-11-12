@@ -1,0 +1,19 @@
+{
+  "name": "v2_ifrs_narrative",
+  "position": {
+    "x": 20,
+    "y": 55,
+    "z": 0,
+    "width": 1240,
+    "height": 65,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "card",
+    "title": "IFRS Regnskapskonklusjon (Regelbasert)",
+    "config": {
+      "measure": "Page03_IFRS_Narrative",
+      "target": "_Measures"
+    }
+  }
+}

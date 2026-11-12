@@ -1,0 +1,29 @@
+{
+  "name": "v4_index_trends",
+  "position": {
+    "x": 880,
+    "y": 130,
+    "z": 0,
+    "width": 380,
+    "height": 275,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "title": "Indekstrend: CPI (Kostnad) vs. SPI (Fremdrift)",
+    "config": {
+      "xAxis": "Dim_Date[Period]",
+      "yAxis": [
+        "CPI",
+        "SPI"
+      ],
+      "analytics": {
+        "refline": {
+          "value": 1.0,
+          "label": "Baseline 1.0",
+          "color": "#737373"
+        }
+      }
+    }
+  }
+}

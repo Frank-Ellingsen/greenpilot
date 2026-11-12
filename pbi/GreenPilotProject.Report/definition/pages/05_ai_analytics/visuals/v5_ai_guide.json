@@ -1,0 +1,18 @@
+{
+  "name": "v5_ai_guide",
+  "position": {
+    "x": 720,
+    "y": 415,
+    "z": 0,
+    "width": 540,
+    "height": 285,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "textbox",
+    "title": "Om Power BI AI Prepp & Spr\u00e5klig Skjema",
+    "config": {
+      "text": "AI PREPP & Q&A SETUP VEILEDNING:\n1. Knappen 'Forbered Q&A' / 'AI Prepp' i moduleringsfanen brukes til \u00e5 l\u00e6re opp modellen med bedriftsspesifikke synonymer.\n2. Synonymer er definert for sentrale begreper: 'AC' -> Total Actual Cost, 'PO' -> Open Commitments, 'Fisk\u00e5' -> Dim_CostCenter.\n3. Linguistic schema sikrer at ledelsen kan stille sp\u00f8rsm\u00e5l p\u00e5 naturlig spr\u00e5k uten \u00e5 kjenne tabellstrukturen.\n4. Anomaly detection og ETS forecast i linjediagrammene gir prediktiv fremskriving av forpliktelsene."
+    }
+  }
+}

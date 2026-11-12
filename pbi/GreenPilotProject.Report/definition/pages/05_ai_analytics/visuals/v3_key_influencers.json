@@ -1,0 +1,26 @@
+{
+  "name": "v3_key_influencers",
+  "position": {
+    "x": 20,
+    "y": 130,
+    "z": 0,
+    "width": 680,
+    "height": 570,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "keyInfluencers",
+    "title": "Key Influencers: Hva for\u00e5rsaker R\u00d8D ALARM i prosjektet?",
+    "config": {
+      "targetMetric": "Early Warning Status Signal",
+      "targetValue": "\ud83d\udd34 R\u00d8D (PO > 100% BAC)",
+      "explainBy": [
+        "Dim_WBS[wbs_name]",
+        "Fact_PurchaseOrders[currency]",
+        "Fact_PurchaseOrders[amount_nok]",
+        "Dim_CostCenter[cost_center_name]",
+        "Dim_Vendor[vendor_name]"
+      ]
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "v4_cc_table",
+  "position": {
+    "x": 650,
+    "y": 130,
+    "z": 0,
+    "width": 610,
+    "height": 275,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "title": "Enheter & Koststeder \u2013 Elkem Fisk\u00e5 (CC-4100, CC-4200, CC-4300)",
+    "config": {
+      "rowDimensions": [
+        "Dim_CostCenter[cost_center_id]",
+        "Dim_CostCenter[cost_center_name]"
+      ],
+      "metricValues": [
+        "Faktiske Timer Koststed",
+        "Personalkostnad Koststed NOK",
+        "Andel Timer Koststed %"
+      ]
+    }
+  }
+}

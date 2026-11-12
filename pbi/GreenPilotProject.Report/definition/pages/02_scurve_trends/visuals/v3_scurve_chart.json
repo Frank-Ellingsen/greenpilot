@@ -1,0 +1,43 @@
+{
+  "name": "v3_scurve_chart",
+  "position": {
+    "x": 20,
+    "y": 130,
+    "z": 0,
+    "width": 840,
+    "height": 570,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "title": "EVM S-Kurve: Planlagt (PV) vs P\u00e5l\u00f8pt (AC) vs Opptjent (EV) \u2013 M\u00e5nedlig Avviksdeteksjon",
+    "config": {
+      "xAxis": "Dim_Date[Date]",
+      "xAxisType": "Continuous",
+      "yAxis": [
+        "Cumulative PV NOK",
+        "Cumulative AC NOK",
+        "Cumulative EV NOK"
+      ],
+      "analytics": {
+        "trendline": {
+          "show": true,
+          "style": "dashed",
+          "color": "#737373"
+        },
+        "forecast": {
+          "show": true,
+          "length": 6,
+          "confidence": 0.95,
+          "seasonality": 12
+        },
+        "anomalyDetection": {
+          "show": true,
+          "sensitivity": 80,
+          "markerStyle": "circle"
+        },
+        "conditionalDataPointColor": "EVM_Marker_Color"
+      }
+    }
+  }
+}

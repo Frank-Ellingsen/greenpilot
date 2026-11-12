@@ -1,10 +1,11 @@
 {
   "pageOrder": [
-    "ReportSection_ExecutiveNarrative",
+    "ReportSection_ExecNarrative",
     "ReportSection_ExecSummary",
     "ReportSection_SCurve",
     "ReportSection_IFRS_WBS",
-    "ReportSection_CashFlow_CostCenters"
+    "ReportSection_CashFlow_CostCenters",
+    "ReportSection_AI_Analytics"
   ],
-  "activePageName": "ReportSection_ExecutiveNarrative"
+  "activePageName": "ReportSection_ExecNarrative"
 }

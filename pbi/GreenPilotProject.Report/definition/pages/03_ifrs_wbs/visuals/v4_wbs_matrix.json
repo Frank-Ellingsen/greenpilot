@@ -1,0 +1,27 @@
+{
+  "name": "v4_wbs_matrix",
+  "position": {
+    "x": 820,
+    "y": 130,
+    "z": 0,
+    "width": 440,
+    "height": 280,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "title": "WBS Regnskapsallokering (AuC vs FoU)",
+    "config": {
+      "rowDimensions": [
+        "Dim_WBS[wbs_id]",
+        "Dim_WBS[wbs_name]"
+      ],
+      "metricValues": [
+        "BAC NOK",
+        "Total Actual Cost NOK",
+        "AuC Capitalized NOK",
+        "P&L Expensed NOK"
+      ]
+    }
+  }
+}

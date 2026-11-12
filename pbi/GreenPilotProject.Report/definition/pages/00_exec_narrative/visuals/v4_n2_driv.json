@@ -1,0 +1,19 @@
+{
+  "name": "v4_n2_driv",
+  "position": {
+    "x": 650,
+    "y": 125,
+    "z": 0,
+    "width": 610,
+    "height": 100,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "card",
+    "title": "2. Hoveddriver & Forpliktelsesbilde",
+    "config": {
+      "measure": "Narrative Part2 Driver",
+      "target": "_Measures"
+    }
+  }
+}
