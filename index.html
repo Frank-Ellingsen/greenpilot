@@ -1,36 +1,18 @@
 <!DOCTYPE html>
-<html lang="no" class="h-full bg-slate-50">
+<html lang="no">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Elkem GreenPilot 2026 — AI Project Controller & Financial Cockpit</title>
-  <!-- Tailwind CSS CDN -->
+  <title>Elkem GreenPilot 2026 — Executive EVM & Controller Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Plotly.js CDN -->
   <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            elkem: {
-              navy: '#1F4E79',
-              dark: '#143452',
-              blue: '#2F5496',
-              light: '#D9E1F2',
-              red: '#C00000',
-              amber: '#E69F00',
-              green: '#009E73',
-              gray: '#595959'
-            }
-          }
-        }
-      }
-    }
-  </script>
   <style>
-    .active-tab {
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .tab-btn.active {
       border-bottom: 3px solid #1F4E79;
       color: #1F4E79;
       font-weight: 700;
@@ -38,472 +20,556 @@
   </style>
 </head>
 
-<body class="h-full flex flex-col font-sans text-slate-800">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- Top Header -->
-  <header class="bg-elkem-navy text-white shadow-md">
-    <div
-      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+  <!-- Top Header Banner -->
+  <header
+    class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white py-5 px-6 shadow-md border-b border-slate-700">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
-        <div class="flex items-center space-x-3">
-          <span class="text-2xl font-black tracking-wider uppercase">ELKEM</span>
-          <span class="bg-elkem-blue text-xs uppercase px-2.5 py-1 rounded font-semibold tracking-wide">Fiskå FoU /
-            Pilot</span>
+        <div class="flex items-center gap-3">
+          <span class="bg-red-600 text-white text-xs font-black px-2.5 py-1 rounded uppercase tracking-wider">Rød Alarm
+            (Gate 3)</span>
+          <h1 class="text-2xl font-bold tracking-tight">ELKEM GREENPILOT 2026 — STYRETS KONTROLLPORTAL</h1>
         </div>
-        <h1 class="text-xl sm:text-2xl font-bold tracking-tight mt-1">GreenPilot 2026 — AI Controller & Styringspanel
-        </h1>
+        <p class="text-xs text-slate-300 mt-1">Single Source of Truth (SSOT) Datapipeline | FAST Standard & IFRS
+          Compliant | Cut-off: 31.10.2026</p>
       </div>
-      <div class="mt-3 sm:mt-0 text-right">
-        <span
-          class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
-          🔴 STATUS: KRITISK EKSPONERING
-        </span>
-        <p class="text-xs text-slate-300 mt-1">Data Date: 31.10.2026 | IFRS & ISA 805 Compliant</p>
+      <div class="flex items-center gap-4 text-xs bg-slate-800/80 p-2.5 rounded-lg border border-slate-700">
+        <div><span class="text-slate-400 block">BAC Budsjett</span><span class="font-bold text-sm">20,0 MNOK</span>
+        </div>
+        <div class="border-l border-slate-700 pl-3"><span class="text-slate-400 block">Påløpt AC</span><span
+            class="font-bold text-sm text-red-400">58,0 MNOK</span></div>
+        <div class="border-l border-slate-700 pl-3"><span class="text-slate-400 block">Total Eksponering</span><span
+            class="font-bold text-sm text-amber-400">107,2 MNOK</span></div>
+        <div class="border-l border-slate-700 pl-3"><span class="text-slate-400 block">CPI / SPI</span><span
+            class="font-bold text-sm text-red-400">0,33 / 1,16</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs (Full Visual Vocabulary Suite) -->
+  <nav class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-6 overflow-x-auto text-xs font-medium py-1">
+      <button onclick="switchTab('tab-exec')" id="btn-tab-exec"
+        class="tab-btn active py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">00 Governance</button>
+      <button onclick="switchTab('tab-deviation')" id="btn-tab-deviation"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">01 Avvik (Bars)</button>
+      <button onclick="switchTab('tab-triangle')" id="btn-tab-triangle"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">02 Jerntriangel</button>
+      <button onclick="switchTab('tab-gantt')" id="btn-tab-gantt"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">03 Tidsplan (Gantt)</button>
+      <button onclick="switchTab('tab-corr')" id="btn-tab-corr"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">04 Korrelasjon</button>
+      <button onclick="switchTab('tab-ranking')" id="btn-tab-ranking"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">05 Rangering</button>
+      <button onclick="switchTab('tab-dist')" id="btn-tab-dist"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">06 Fordeling</button>
+      <button onclick="switchTab('tab-ptw')" id="btn-tab-ptw"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">07 Del til Helhet</button>
+      <button onclick="switchTab('tab-sankey')" id="btn-tab-sankey"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">08 Kapitalflyt (Sankey)</button>
+      <button onclick="switchTab('tab-fan')" id="btn-tab-fan"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">09 Usikkerhet (Vifte)</button>
+      <button onclick="switchTab('tab-wbs')" id="btn-tab-wbs"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">10 Isberg (Waterfall)</button>
+      <button onclick="switchTab('tab-cash')" id="btn-tab-cash"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">11 Likviditet</button>
+      <button onclick="switchTab('tab-sim')" id="btn-tab-sim"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">12 Simulator</button>
+      <button onclick="switchTab('tab-ai')" id="btn-tab-ai"
+        class="tab-btn py-3 px-1 text-slate-600 hover:text-slate-900 whitespace-nowrap">13 AI Copilot</button>
+    </div>
+  </nav>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow space-y-6">
+
+    <!-- TAB 00: EXECUTIVE GOVERNANCE -->
+    <div id="tab-exec" class="tab-content space-y-6">
+      <div class="bg-red-50 border-l-4 border-red-600 p-5 rounded-r-lg shadow-sm">
+        <h3 class="text-base font-bold text-red-900">1. DIAGNOSE (EVM) & STYRINGSSVIKT PER 31.10.2026</h3>
+        <p class="text-xs text-red-800 mt-1 leading-relaxed">
+          Prosjektet opererer med kostnadseffektivitet <strong>CPI 0,33</strong> og et akkumulert kostnadsavvik på
+          <strong>NOK -38,8M</strong>. Fremdriften meldes likevel til <strong>SPI 1,16</strong> (+5 uker foran
+          opprinnelig plan) som følge av forsert montasje.
+          Bokførte kostnader (NOK 58,0M) og åpne leverandørforpliktelser (NOK 49,2M) gir en samlet finansiell
+          eksponering på <strong>NOK 107,2M (536% av BAC)</strong>.
+          Av dette er <strong>NOK 43,4M</strong> balanseført som anlegg under utførelse (AuC) under IAS 38, noe som
+          utløser krav om nedskrivningstest etter IAS 36.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><span
+            class="text-xs text-slate-500 block">BAC Budsjett</span><span class="text-xl font-bold text-slate-800">20,0
+            MNOK</span></div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><span
+            class="text-xs text-slate-500 block">Påløpt Kostnad (AC)</span><span
+            class="text-xl font-bold text-red-600">58,0 MNOK</span></div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><span
+            class="text-xs text-slate-500 block">Opptjent Verdi (EV)</span><span
+            class="text-xl font-bold text-blue-600">19,2 MNOK</span></div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><span
+            class="text-xs text-slate-500 block">Åpne PO-er</span><span class="text-xl font-bold text-amber-600">49,2
+            MNOK</span></div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm"><span
+            class="text-xs text-slate-500 block">Total Eksponering</span><span
+            class="text-xl font-bold text-purple-700">107,2 MNOK</span></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h4 class="font-bold text-slate-800 text-sm mb-2">Styringsgap: Eksponering vs. Budsjett</h4>
+          <div id="chart-exec-bar" style="height: 320px;"></div>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div>
+            <h4 class="font-bold text-slate-800 text-sm mb-2">Styrets Beslutningsalternativer ved Gate 3</h4>
+            <div class="space-y-3 text-xs text-slate-600">
+              <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <span class="font-bold text-blue-900 block text-sm">Alternativ A: 30 Dagers Technical Hold
+                  (Anbefalt)</span>
+                Innkjøps- og ansettelsesfrys. Kanselleringsaudit av 49,2 MNOK uleverte PO-er (sparer ca. 18,2 MNOK).
+                Capper eksponeringen på 89,0 MNOK mot 4–6 ukers utsettelse til januar 2027.
+              </div>
+              <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <span class="font-bold text-red-900 block text-sm">Alternativ B: Formell Prosjektstans (Off-Ramp)</span>
+                Terminere prosjektet ved Stage-Gate 3. Umiddelbar tapsføring av 43,4 MNOK i balanseført AuC rett over
+                konsernresultatet etter IAS 36.
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <nav
-      class="bg-elkem-dark px-4 sm:px-8 flex space-x-1 sm:space-x-4 overflow-x-auto text-sm font-medium text-slate-300">
-      <button onclick="switchTab('tab-status')" id="nav-tab-status"
-        class="py-3 px-3 hover:text-white border-b-2 border-transparent active-tab">00 Status & Vedtak</button>
-      <button onclick="switchTab('tab-scurve')" id="nav-tab-scurve"
-        class="py-3 px-3 hover:text-white border-b-2 border-transparent">01 EVM S-Kurve</button>
-      <button onclick="switchTab('tab-triangle')" id="nav-tab-triangle"
-        class="py-3 px-3 hover:text-white border-b-2 border-transparent">02 Jerntriangel</button>
-      <button onclick="switchTab('tab-gantt')" id="nav-tab-gantt"
-        class="py-3 px-3 hover:text-white border-b-2 border-transparent">03 Tidsplan (Gantt)</button>
-      <button onclick="switchTab('tab-wbs')" id="nav-tab-wbs"
-        class="py-3 px-3 hover:text-white border-b-2 border-transparent">04 Forpliktelser & WBS</button>
-      <button onclick="switchTab('tab-cash')" id="nav-tab-cash"
-        class="py-3 px-3 hover:text-white border-b-2 border-transparent">05 Likviditet & Fiskå</button>
-      <button onclick="switchTab('tab-sim')" id="nav-tab-sim"
-        class="py-3 px-3 hover:text-white border-b-2 border-transparent">06 Scenario Simulator</button>
-      <button onclick="switchTab('tab-ai')" id="nav-tab-ai"
-        class="py-3 px-3 hover:text-white border-b-2 border-transparent">07 AI Controller Copilot</button>
-    </nav>
-  </header>
-
-  <!-- Main Content Area -->
-  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-
-    <!-- TAB 00: STATUS & VEDTAK -->
-    <section id="tab-status" class="space-y-6">
-      <div class="bg-rose-50 border-l-4 border-rose-600 p-5 rounded-r-lg shadow-sm">
-        <div class="flex items-center space-x-2">
-          <span class="text-xl">🔴</span>
-          <h2 class="text-lg font-bold text-rose-900">RØD ALARM: KRITISK KOSTNADSSPREKK & LIKVIDITETSEKSPONERING (Per
-            31.10.2026)</h2>
-        </div>
-        <div class="mt-3 space-y-2 text-sm text-slate-800 leading-relaxed">
-          <p><strong>1. DIAGNOSE (EVM):</strong> Prosjektet opererer med en kostnadseffektivitet på <strong>CPI
-              0.33</strong> og et akkumulert kostnadsavvik på <strong>NOK -38.8M</strong>. Fysisk fremdrift meldes til
-            <strong>SPI 1.16</strong> som følge av forsert reaktormontasje.</p>
-          <p><strong>2. DRIVER & LIKVIDITET:</strong> Bokførte kostnader (NOK 58.0M) og åpne leverandørforpliktelser
-            (NOK 49.2M) gir en samlet finansiell eksponering på <strong>NOK 107.2M (536% av BAC)</strong>.</p>
-          <p><strong>3. REGNSKAPSMESSIG KONSEKVENS:</strong> Av dette er <strong>NOK 43.4M</strong> balanseført som
-            anlegg under utførelse (AuC) under IAS 38. Dette utløser obligatorisk krav om nedskrivningstest etter IAS 36
-            før årsoppgjøret grunnet eksploderende EAC.</p>
-          <p><strong>4. PÅBUD TIL STYRET:</strong> 1) Umiddelbar innkjøpsfrys på alle nye rekvisisjoner. 2)
-            Kanselleringsaudit av uleverte PO-er (NOK 49,2M). 3) Innkall styret til ekstraordinært Stage-Gate møte for
-            30 dagers Technical Hold / Off-Ramp vurdering.</p>
+    <!-- TAB 01: DEVIATION DIVERGING BARS -->
+    <div id="tab-deviation" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">01 Avviksanalyse: Diverging Bars (Deviation)</h3>
+        <p class="text-xs text-slate-500 mt-1">Viser kostnadsavvik (CV) til venstre mot tidsplanavvik (SV) til høyre.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+          <div>
+            <h4 class="text-xs font-bold text-slate-700">Kostnadsavvik per WBS (CV = EV - AC)</h4>
+            <div id="chart-cv-bars" style="height: 320px;"></div>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-700">Tidsplanavvik per WBS (SV = EV - PV)</h4>
+            <div id="chart-sv-bars" style="height: 320px;"></div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- Metric Cards -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-          <p class="text-xs font-semibold text-slate-500 uppercase">Budsjett (BAC)</p>
-          <p class="text-2xl font-black text-slate-800 mt-1">20.0 MNOK</p>
-          <span class="text-xs text-slate-400">Vedtatt grunnlag</span>
-        </div>
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-          <p class="text-xs font-semibold text-slate-500 uppercase">Påløpt Kost (AC)</p>
-          <p class="text-2xl font-black text-rose-600 mt-1">58.0 MNOK</p>
-          <span class="text-xs text-rose-600 font-semibold">+190% over budsjett</span>
-        </div>
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-          <p class="text-xs font-semibold text-slate-500 uppercase">Opptjent Verdi (EV)</p>
-          <p class="text-2xl font-black text-elkem-blue mt-1">19.2 MNOK</p>
-          <span class="text-xs text-slate-500">SPI 1.16 (Forsert)</span>
-        </div>
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-          <p class="text-xs font-semibold text-slate-500 uppercase">Åpne PO-er</p>
-          <p class="text-2xl font-black text-amber-600 mt-1">49.2 MNOK</p>
-          <span class="text-xs text-slate-500">Ufakturerte ordrer</span>
-        </div>
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-          <p class="text-xs font-semibold text-slate-500 uppercase">Total Eksponering</p>
-          <p class="text-2xl font-black text-red-800 mt-1">107.2 MNOK</p>
-          <span class="text-xs text-red-700 font-bold">536% av budsjett</span>
+    <!-- TAB 02: DYNAMIC IRON TRIANGLE -->
+    <div id="tab-triangle" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">02 Jerntriangel: Avveininger & Rebalanseringsvektor</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+          <div>
+            <h4 class="text-xs font-bold text-slate-700">A: Sanntids Operasjonspunkt (Spenninger)</h4>
+            <div id="chart-triangle-polar" style="height: 340px;"></div>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-700">B: Beslutningsfront ved Oppbremsing (Slow Down)</h4>
+            <div id="chart-triangle-frontier" style="height: 340px;"></div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- Comparison & Alternatives -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
-          <h3 class="text-md font-bold text-slate-800 mb-3">Styringsgap: Eksponering vs. Budsjett</h3>
-          <div id="chart-gap" style="height: 320px;"></div>
+    <!-- TAB 03: GOVERNANCE GANTT -->
+    <div id="tab-gantt" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">03 Tidsplan & Governance Gantt (Stage-Gates & 30d Hold)</h3>
+        <p class="text-xs text-slate-500 mt-1">Aggregerte tidslinjer for 6 WBS-pakker og 30 dagers Technical Hold buffer
+          i november 2026.</p>
+        <div id="chart-gantt" style="height: 360px;" class="mt-4"></div>
+      </div>
+    </div>
+
+    <!-- TAB 04: CORRELATION BUBBLE & SCATTER -->
+    <div id="tab-corr" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">04 Korrelasjon: Fast-Track Fellen & Dødsspiralen</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+          <div>
+            <h4 class="text-xs font-bold text-slate-700">A: WBS Boblediagram (Eksponering)</h4>
+            <div id="chart-bubble" style="height: 340px;"></div>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-700">B: Månedlig Connected Trajectory (Jan-Okt)</h4>
+            <div id="chart-connected" style="height: 340px;"></div>
+          </div>
         </div>
-        <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
-          <h3 class="text-md font-bold text-slate-800 mb-3">Styrets To Beslutningsalternativer</h3>
-          <div class="space-y-4 text-sm text-slate-700">
-            <div class="p-3 bg-blue-50 border-l-4 border-elkem-blue rounded-r">
-              <h4 class="font-bold text-elkem-blue">Alternativ A: 30 Dagers Technical Hold (Anbefalt)</h4>
-              <p class="mt-1">Full innkjøps- og ansettelsesfrys. Kanselleringsaudit av 49,2 MNOK uleverte PO-er
-                (estimert besparelse: 15–25 MNOK). Formell dialog med Enova om revidert tidslinje for Gate 4.</p>
-            </div>
-            <div class="p-3 bg-red-50 border-l-4 border-rose-600 rounded-r">
-              <h4 class="font-bold text-rose-700">Alternativ B: Formell Prosjektstans (Off-Ramp)</h4>
-              <p class="mt-1">Terminere prosjektet ved Gate 3. Umiddelbar tapsføring av balanseført AuC på <strong>43,4
-                  MNOK</strong> over konsernresultatet etter IAS 36. Tilbakebetalingsrisiko for utbetalt Enova-tilskudd
-                (3,0 MNOK).</p>
+      </div>
+    </div>
+
+    <!-- TAB 05: RANKING LOLLIPOP -->
+    <div id="tab-ranking" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">05 Rangering & Leverandøreksponering (Lollipop)</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+          <div>
+            <h4 class="text-xs font-bold text-slate-700">A: Topp 8 Leverandører etter Åpen PO (Kanselleringsmål)</h4>
+            <div id="chart-vendor-rank" style="height: 340px;"></div>
+          </div>
+          <div class="p-4 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-3">
+            <h4 class="font-bold text-slate-800 text-sm">Forhandlingsmandat for Technical Hold</h4>
+            <p><strong>Mål 1 (V006 - Tyskland):</strong> 4,36 MNOK åpen PO på reaktorkomponenter. Umiddelbar
+              produksjonsstans.</p>
+            <p><strong>Mål 2 (V020 - Norge):</strong> 4,16 MNOK åpen PO på elektro. Utsettelse til januar 2027.</p>
+            <p><strong>Mål 3 (V007 - USA):</strong> 3,78 MNOK i USD. Sikring mot kronesvekkelse.</p>
+            <div class="p-3 bg-emerald-50 border border-emerald-200 rounded text-emerald-800 font-bold">
+              Spart likviditet ved topp 3 leverandører: 12,30 MNOK (25% av hele forpliktelsesisberget).
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- TAB 01: EVM S-CURVE -->
-    <section id="tab-scurve" class="hidden space-y-6">
-      <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
-        <div class="border-b border-slate-150 pb-3 mb-4">
-          <h3 class="text-lg font-bold text-slate-800">EVM S-Kurve: Planlagt Verdi, Faktisk Kostnad og Opptjent Verdi
-          </h3>
-          <p class="text-xs text-slate-500">Månedlig kumulativ utvikling (2026). Legg merke til vendepunktet i mars da
-            PO-ene sprengte budsjettet.</p>
-        </div>
-        <div id="chart-scurve" style="height: 440px;"></div>
-      </div>
-    </section>
-
-    <!-- TAB 02: JERNTRIANGEL -->
-    <section id="tab-triangle" class="hidden space-y-6">
-      <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
-        <div class="border-b border-slate-150 pb-3 mb-4">
-          <h3 class="text-lg font-bold text-slate-800">Jerntriangel: Strukturelle Avveininger (Tid, Kostnad, Omfang)
-          </h3>
-          <p class="text-xs text-slate-500">Hvorfor prosjektet må bremse ned for å redusere kostnadseksponeringen fra
-            107,2 MNOK.</p>
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- TAB 06: DISTRIBUTION BOXPLOT -->
+    <div id="tab-dist" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">06 Fordeling & Revisjonsrisiko (Distribution)</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
           <div>
-            <h4 class="text-sm font-bold text-slate-700 mb-2 text-center">Spenningsforhold i Jerntriangelet</h4>
-            <div id="chart-polar-triangle" style="height: 380px;"></div>
+            <h4 class="text-xs font-bold text-slate-700">A: Ukentlig Timefordeling per Koststed (1 537 Linjer)</h4>
+            <div id="chart-dist-box" style="height: 340px;"></div>
           </div>
           <div>
-            <h4 class="text-sm font-bold text-slate-700 mb-2 text-center">Eksponeringsreduksjon ved Oppbremsing (Slow
-              Down)</h4>
-            <div id="chart-tradeoff-bars" style="height: 380px;"></div>
+            <h4 class="text-xs font-bold text-slate-700">B: Bimodal Innkjøpsstørrelse (150 PO-er)</h4>
+            <div id="chart-dist-hist" style="height: 340px;"></div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- TAB 03: GANTT TIDSPLAN -->
-    <section id="tab-gantt" class="hidden space-y-6">
-      <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
-        <div class="border-b border-slate-150 pb-3 mb-4 flex justify-between items-center">
+    <!-- TAB 07: PART TO WHOLE -->
+    <div id="tab-ptw" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">07 Del til Helhet & IFRS Balanse (Part-to-Whole)</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
           <div>
-            <h3 class="text-lg font-bold text-slate-800">Executive Governance Gantt & Beslutningskart</h3>
-            <p class="text-xs text-slate-500">Aggregert tidslinje for arbeidspakkene (WBS-100 til WBS-600) og
-              forskyvning ved 30d Technical Hold.</p>
-          </div>
-          <span class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded font-bold">SPI: 1.16 (+5 uker)</span>
-        </div>
-        <div id="chart-gantt" style="height: 460px;"></div>
-        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-600 bg-slate-50 p-4 rounded">
-          <div>
-            <span class="font-bold text-slate-800">Tidsplanens paradoks:</span> 96 av 102 aktiviteter er fullført per
-            31.10.2026. Forseringen krevde enorme overtidstimer og hastebestillinger i WBS-300.
+            <h4 class="text-xs font-bold text-slate-700">A: Treemap over Total Eksponering (107,2 MNOK)</h4>
+            <div id="chart-ptw-tree" style="height: 340px;"></div>
           </div>
           <div>
-            <span class="font-bold text-emerald-800">Effekten av 30d Technical Hold:</span> Flytter Gate 4 fra 15. des
-            til 30. jan 2027, men gir tid til å kansellere 18.2 MNOK i uleverte innkjøpsordrer.
+            <h4 class="text-xs font-bold text-slate-700">B: 100% Stacked Bar (AuC vs. P&L Forskyvning)</h4>
+            <div id="chart-ptw-stacked" style="height: 340px;"></div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- TAB 04: WBS FORPLIKTELSER -->
-    <section id="tab-wbs" class="hidden space-y-6">
-      <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
-        <h3 class="text-lg font-bold text-slate-800 mb-2">Forpliktelsesisberget: Fra 20.0 MNOK Budsjett til 107.2 MNOK
-          Eksponering</h3>
-        <div id="chart-waterfall" style="height: 380px;"></div>
+    <!-- TAB 08: SANKEY FLOW -->
+    <div id="tab-sankey" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">08 Kapital- & Forpliktelsesflyt (Flow / Sankey)</h3>
+        <p class="text-xs text-slate-500 mt-1">Sporing fra arbeidspakker gjennom ERP-systemet til balanseført AuC og
+          kansellerbar likviditet.</p>
+        <div id="chart-sankey" style="height: 440px;" class="mt-4"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- TAB 05: LIKVIDITET & FISKÅ -->
-    <section id="tab-cash" class="hidden space-y-6">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
-          <h3 class="text-md font-bold text-slate-800 mb-2">Månedlig Kontantutgang (DPO 30d) vs. Enova Innbetaling</h3>
-          <div id="chart-cashflow" style="height: 340px;"></div>
-        </div>
-        <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
-          <h3 class="text-md font-bold text-slate-800 mb-2">Timeforbruk Elkem Fiskå (@ 530 kr/t)</h3>
-          <div id="chart-costcenters" style="height: 340px;"></div>
-        </div>
+    <!-- TAB 09: UNCERTAINTY FAN CHART -->
+    <div id="tab-fan" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">09 Usikkerhet & EAC Utfallsrom (Uncertainty / Fan Chart)</h3>
+        <p class="text-xs text-slate-500 mt-1">Styrets valg ved Gate 3 mellom P10 (89 MNOK ved Hold), P50 (107,2 MNOK
+          Status Quo) og P90 (132,5 MNOK Eskalering).</p>
+        <div id="chart-fan" style="height: 420px;" class="mt-4"></div>
       </div>
-    </section>
+    </div>
 
-    <!-- TAB 06: SCENARIO SIMULATOR -->
-    <section id="tab-sim" class="hidden space-y-6">
-      <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
-        <h3 class="text-lg font-bold text-slate-800 mb-3">Deterministisk Hva-om Scenario Simulator</h3>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-          <div class="space-y-5 bg-slate-50 p-5 rounded-lg border border-slate-200">
-            <div>
-              <div class="flex justify-between text-sm font-semibold text-slate-700">
-                <span>PO-Kansellering (%):</span>
-                <span id="po-val" class="text-elkem-blue font-bold">30%</span>
-              </div>
-              <input type="range" id="slider-po" min="0" max="100" value="30" step="5" class="w-full mt-2"
-                oninput="updateSim()">
-            </div>
-            <div>
-              <div class="flex justify-between text-sm font-semibold text-slate-700">
-                <span>IAS 36 Nedskrivning på AuC (%):</span>
-                <span id="imp-val" class="text-rose-600 font-bold">50%</span>
-              </div>
-              <input type="range" id="slider-imp" min="0" max="100" value="50" step="10" class="w-full mt-2"
-                oninput="updateSim()">
-            </div>
+    <!-- TAB 10: WATERFALL ISBERG -->
+    <div id="tab-wbs" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">10 Forpliktelsesisberg & WBS Kostnadsbro</h3>
+        <div id="chart-waterfall" style="height: 380px;" class="mt-4"></div>
+      </div>
+    </div>
+
+    <!-- TAB 11: LIKVIDITET -->
+    <div id="tab-cash" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">11 Likviditet, Forfallsstruktur & Fiskå Enheter</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+          <div>
+            <h4 class="text-xs font-bold text-slate-700">A: Utbetalinger vs. Enova Innbetaling</h4>
+            <div id="chart-cashflow" style="height: 320px;"></div>
           </div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-700">B: Fiskå Koststeder (@ 530 kr/t)</h4>
+            <div id="chart-costcenters" style="height: 320px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 12: SCENARIO SIMULATOR -->
+    <div id="tab-sim" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">12 Hva-om Scenario Simulator</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
           <div class="space-y-4">
-            <div class="grid grid-cols-2 gap-3">
-              <div class="bg-blue-50 p-3 rounded border border-blue-200">
-                <span class="text-xs text-blue-700 font-bold">Simulert Eksponering</span>
-                <p id="res-exposure" class="text-xl font-black text-blue-900 mt-1">92.4 MNOK</p>
-                <span id="res-saved" class="text-xs text-emerald-700 font-bold">-14.8M spart</span>
-              </div>
-              <div class="bg-rose-50 p-3 rounded border border-rose-200">
-                <span class="text-xs text-rose-700 font-bold">IAS 36 Nedskrivningstap</span>
-                <p id="res-impairment" class="text-xl font-black text-rose-900 mt-1">-21.7 MNOK</p>
-                <span class="text-xs text-slate-500">P&L resultateffekt</span>
-              </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Kansellering av åpne PO-er: <span
+                  id="val-pocut">37</span>%</label>
+              <input type="range" id="slider-pocut" min="0" max="60" value="37" step="5" class="w-full"
+                oninput="updateSim()">
             </div>
-            <div id="chart-sim" style="height: 240px;"></div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">IAS 36 Nedskrivning på balanseført AuC: <span
+                  id="val-impair">25</span>%</label>
+              <input type="range" id="slider-impair" min="0" max="100" value="25" step="5" class="w-full"
+                oninput="updateSim()">
+            </div>
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-2">
+              <div><span class="text-slate-500">Spart Likviditet:</span> <strong id="sim-saved"
+                  class="text-emerald-700">+18.22 MNOK</strong></div>
+              <div><span class="text-slate-500">Ny Total Eksponering:</span> <strong id="sim-newexp"
+                  class="text-slate-800">88.98 MNOK</strong></div>
+              <div><span class="text-slate-500">IAS 36 Tapsføring (Drift):</span> <strong id="sim-loss"
+                  class="text-rose-700">-10.84 MNOK</strong></div>
+            </div>
+          </div>
+          <div>
+            <div id="chart-sim" style="height: 320px;"></div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- TAB 07: AI CONTROLLER COPILOT -->
-    <section id="tab-ai" class="hidden space-y-6">
-      <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
-        <div class="border-b border-slate-150 pb-3 mb-4">
-          <h3 class="text-lg font-bold text-slate-800">Elkem AI Controller Copilot (RAG Kunnskapsbase)</h3>
-          <p class="text-xs text-slate-500">Still spørsmål om IFRS (IAS 38/36), Enova-revisjon (ISA 805) eller
-            prosjektavvik:</p>
+    <!-- TAB 13: AI COPILOT -->
+    <div id="tab-ai" class="tab-content hidden space-y-6">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="text-base font-bold text-slate-800">13 Elkem AI Controller Copilot (Vektor-DB & RAG)</h3>
+        <p class="text-xs text-slate-500 mt-1">Semantisk søkemotor mot IFRS, ISA 805, Enova-avtaler og styrenotat.</p>
+        <div class="flex gap-2 mt-4">
+          <input type="text" id="ai-query" placeholder="Still et spørsmål (f.eks. Hvorfor må AuC testes etter IAS 36?)"
+            class="flex-grow p-2.5 border border-slate-300 rounded-lg text-xs">
+          <button onclick="runQuery()"
+            class="bg-blue-900 text-white px-4 py-2.5 rounded-lg text-xs font-bold hover:bg-blue-800">Søk</button>
         </div>
-        <div class="flex flex-wrap gap-2 mb-4">
-          <button onclick="askCopilot('Hvorfor kollapset kostnadskontrollen i Q1?')"
-            class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-2 rounded-lg border border-slate-200">🔍
-            Rotårsak Q1</button>
-          <button onclick="askCopilot('Hvilken nedskrivningsrisiko foreligger under IAS 36?')"
-            class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-2 rounded-lg border border-slate-200">⚖️
-            IAS 36 Nedskrivning</button>
-          <button onclick="askCopilot('Formuler utkast til formelt styrevedtak')"
-            class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-2 rounded-lg border border-slate-200">📋
-            Styrevedtak Gate 3</button>
+        <div class="flex gap-2 mt-2">
+          <button onclick="setQuery('Hvorfor må AuC testes for verdifall etter IAS 36?')"
+            class="text-[11px] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded">IAS 36 Verdifall</button>
+          <button onclick="setQuery('Hva er kriteriene for balanseføring etter IAS 38?')"
+            class="text-[11px] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded">IAS 38 Balanseføring</button>
+          <button onclick="setQuery('Hva er reglene for timesats 530 kr og ISA 805?')"
+            class="text-[11px] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded">Timesats 530 kr / ISA 805</button>
         </div>
-        <div class="flex space-x-2">
-          <input type="text" id="ai-input" placeholder="Still et spørsmål til prosjektmodellen..."
-            class="flex-1 border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-elkem-blue">
-          <button onclick="submitCopilot()"
-            class="bg-elkem-navy hover:bg-elkem-dark text-white px-5 py-2 rounded-lg text-sm font-semibold">Spør
-            AI</button>
-        </div>
-        <div id="ai-response-box"
-          class="mt-5 p-4 bg-slate-50 border border-slate-200 rounded-lg hidden text-sm leading-relaxed text-slate-800">
-          <div id="ai-answer"></div>
-        </div>
+        <div id="ai-response"
+          class="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200 text-xs hidden leading-relaxed"></div>
       </div>
-    </section>
+    </div>
 
   </main>
 
-  <!-- Footer -->
-  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">
-    Elkem ASA — GreenPilot 2026 Single Source of Truth Analytics Platform | FAST Standard Compliant
+  <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+    Elkem ASA — GreenPilot 2026 Controller Portal | Single Source of Truth Datapipeline | FAST Standard & IFRS Compliant
   </footer>
 
-  <!-- Script: Data, Charts & UI Logic -->
   <script>
     function switchTab(tabId) {
-      const tabs = ['tab-status', 'tab-scurve', 'tab-triangle', 'tab-gantt', 'tab-wbs', 'tab-cash', 'tab-sim', 'tab-ai'];
-      tabs.forEach(t => {
-        document.getElementById(t).classList.add('hidden');
-        document.getElementById('nav-' + t).classList.remove('active-tab');
-      });
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.remove('hidden');
-      document.getElementById('nav-' + tabId).classList.add('active-tab');
+      document.getElementById('btn-' + tabId).classList.add('active');
       window.dispatchEvent(new Event('resize'));
     }
 
-    // 1. Chart Gap
-    Plotly.newPlot('chart-gap', [{
-      x: ['Budsjett (BAC)', 'Opptjent (EV)', 'Påløpt (AC)', 'Total Eksponering'],
-      y: [20.0, 19.2, 58.0, 107.2],
-      type: 'bar',
-      text: ['20.0M', '19.2M', '58.0M', '107.2M'],
-      textposition: 'outside',
-      marker: { color: ['#595959', '#2F5496', '#C00000', '#800000'] }
-    }], {
-      margin: { l: 30, r: 20, t: 20, b: 30 },
-      plot_bgcolor: 'white',
-      yaxis: { title: 'MNOK' }
-    }, { responsive: true });
-
-    // 2. Chart S-Curve
-    Plotly.newPlot('chart-scurve', [
-      { x: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'], y: [1.53, 3.34, 4.79, 6.42, 8.21, 10.13, 11.78, 13.30, 15.01, 16.62], mode: 'lines+markers', name: 'Planlagt (PV)', line: { color: '#595959', dash: 'dash' } },
-      { x: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'], y: [0.98, 2.55, 5.10, 7.06, 9.22, 11.57, 13.33, 15.29, 17.45, 19.22], mode: 'lines+markers', name: 'Opptjent (EV)', line: { color: '#2F5496', width: 2.5 } },
-      { x: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'], y: [4.65, 7.03, 10.44, 15.34, 21.46, 29.35, 35.80, 42.78, 50.43, 57.97], mode: 'lines+markers', name: 'Faktisk (AC)', line: { color: '#C00000', width: 3.5 } }
-    ], {
-      margin: { l: 40, r: 30, t: 30, b: 30 },
-      legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: 1.1 },
-      yaxis: { title: 'Akkumulert MNOK' }
-    }, { responsive: true });
-
-    // 3. Chart Polar Triangle
-    Plotly.newPlot('chart-polar-triangle', [
-      { type: 'scatterpolar', r: [100, 100, 100, 100], theta: ['KOSTNAD', 'TID', 'OMFANG', 'KOSTNAD'], fill: 'toself', fillcolor: 'rgba(180, 180, 180, 0.15)', line: { color: '#888', dash: 'dash' }, name: 'Plan (100%)' },
-      { type: 'scatterpolar', r: [289.8, 115.6, 96.1, 289.8], theta: ['KOSTNAD', 'TID', 'OMFANG', 'KOSTNAD'], fill: 'toself', fillcolor: 'rgba(192, 0, 0, 0.25)', line: { color: '#C00000', width: 2.5 }, name: 'Faktisk' }
-    ], {
-      polar: { radialaxis: { visible: true, range: [0, 320], ticksuffix: '%' } },
-      margin: { l: 30, r: 30, t: 20, b: 30 }
-    }, { responsive: true });
-
-    // 4. Chart Tradeoff Bars
-    Plotly.newPlot('chart-tradeoff-bars', [
-      { y: ['Status Quo', '+15d Kutt', '+30d Hold', '+60d Redesign'], x: [107.2, 98.7, 89.0, 79.7], orientation: 'h', type: 'bar', name: 'Gjenværende MNOK', marker: { color: '#2F5496' } },
-      { y: ['Status Quo', '+15d Kutt', '+30d Hold', '+60d Redesign'], x: [0.0, 8.5, 18.2, 27.5], orientation: 'h', type: 'bar', name: 'Spart MNOK', marker: { color: '#009E73' } }
-    ], {
-      barmode: 'stack',
-      margin: { l: 80, r: 20, t: 20, b: 30 }
-    }, { responsive: true });
-
-    // 5. Chart Governance Gantt
-    Plotly.newPlot('chart-gantt', [
-      {
+    document.addEventListener('DOMContentLoaded', function () {
+      // 00 Exec Bar
+      Plotly.newPlot('chart-exec-bar', [{
+        x: ["Budsjett (BAC)", "Opptjent (EV)", "Påløpt (AC)", "Total Eksponering"],
+        y: [20.0, 19.2, 58.0, 107.2],
         type: 'bar',
-        orientation: 'h',
-        y: [
-          'WBS-100 PMO', 'WBS-200 Prosess', 'WBS-300 Reaktor (Kritisk)', 'WBS-400 Infra', 'WBS-500 Elektro', 'WBS-600 Test',
-          '30d Technical Hold (Tiltak)'
-        ],
-        base: [
-          new Date('2026-01-05').getTime(), new Date('2026-01-08').getTime(), new Date('2026-01-11').getTime(),
-          new Date('2026-01-14').getTime(), new Date('2026-01-17').getTime(), new Date('2026-01-20').getTime(),
-          new Date('2026-11-01').getTime()
-        ],
-        x: [
-          (new Date('2026-11-03') - new Date('2026-01-05')),
-          (new Date('2026-11-14') - new Date('2026-01-08')),
-          (new Date('2026-11-17') - new Date('2026-01-11')),
-          (new Date('2026-11-06') - new Date('2026-01-14')),
-          (new Date('2026-11-23') - new Date('2026-01-17')),
-          (new Date('2026-11-11') - new Date('2026-01-20')),
-          (new Date('2026-11-30') - new Date('2026-11-01'))
-        ],
-        marker: {
-          color: ['#2F5496', '#E69F00', '#C00000', '#2F5496', '#E69F00', '#595959', '#009E73']
+        marker: { color: ["#595959", "#2F5496", "#C00000", "#800000"] },
+        text: ["20.0M", "19.2M", "58.0M", "107.2M"],
+        textposition: 'outside'
+      }], { yaxis: { title: 'MNOK' }, plot_bgcolor: 'white', margin: { l: 40, r: 20, t: 20, b: 30 } }, { responsive: true });
+
+      // 01 CV & SV Bars
+      const wbsNames = ['WBS-100 PMO', 'WBS-200 Prosess', 'WBS-300 Reaktor', 'WBS-400 Infra', 'WBS-500 Elektro', 'WBS-600 Test'];
+      Plotly.newPlot('chart-cv-bars', [{
+        y: wbsNames, x: [-4.85, -6.78, -15.51, -5.82, -3.88, -1.92], type: 'bar', orientation: 'h',
+        marker: { color: '#C00000' }, text: ['-4.85M', '-6.78M', '-15.51M', '-5.82M', '-3.88M', '-1.92M'], textposition: 'inside'
+      }], { xaxis: { title: 'MNOK' }, plot_bgcolor: 'white', margin: { l: 90, r: 20, t: 10, b: 30 } }, { responsive: true });
+
+      Plotly.newPlot('chart-sv-bars', [{
+        y: wbsNames, x: [0.25, 0.41, 1.14, 0.26, 0.37, 0.16], type: 'bar', orientation: 'h',
+        marker: { color: '#009E73' }, text: ['+0.25M', '+0.41M', '+1.14M', '+0.26M', '+0.37M', '+0.16M'], textposition: 'inside'
+      }], { xaxis: { title: 'MNOK' }, plot_bgcolor: 'white', margin: { l: 90, r: 20, t: 10, b: 30 } }, { responsive: true });
+
+      // 02 Triangle Polar
+      const triCats = ['KOST (107.2M Exp)', 'TID (SPI 1.16 / +5u)', 'OMFANG (96% EV / 43.4M AuC)'];
+      Plotly.newPlot('chart-triangle-polar', [
+        { type: 'scatterpolar', r: [100, 100, 100, 100], theta: [...triCats, triCats[0]], fill: 'toself', fillcolor: 'rgba(180, 180, 180, 0.15)', line: { color: '#888888', dash: 'dash', width: 2 }, name: 'Baseline Plan' },
+        { type: 'scatterpolar', r: [289.8, 115.6, 96.1, 289.8], theta: [...triCats, triCats[0]], fill: 'toself', fillcolor: 'rgba(192, 0, 0, 0.25)', line: { color: '#C00000', width: 3 }, name: 'Faktisk Tilstand' }
+      ], { polar: { radialaxis: { visible: true, range: [0, 320], ticksuffix: '%' } }, legend: { orientation: 'h', y: -0.15 }, margin: { l: 20, r: 20, t: 10, b: 30 } }, { responsive: true });
+
+      Plotly.newPlot('chart-triangle-frontier', [
+        { y: ['1. Status Quo', '2. Lavrisiko PO-kutt (+15d)', '3. Technical Hold (+30d)', '4. Omfangsreduksjon (+60d)'], x: [107.2, 98.7, 89.0, 79.7], type: 'bar', orientation: 'h', name: 'Gjenværende Eksponering', marker: { color: '#2F5496' } },
+        { y: ['1. Status Quo', '2. Lavrisiko PO-kutt (+15d)', '3. Technical Hold (+30d)', '4. Omfangsreduksjon (+60d)'], x: [0.0, 8.5, 18.2, 27.5], type: 'bar', orientation: 'h', name: 'Spart Likviditet', marker: { color: '#009E73' } }
+      ], { barmode: 'stack', plot_bgcolor: 'white', legend: { orientation: 'h', y: -0.15 }, margin: { l: 140, r: 20, t: 10, b: 30 } }, { responsive: true });
+
+      // 03 Gantt
+      Plotly.newPlot('chart-gantt', [
+        { x: ['2026-11-03', '2026-11-14', '2026-11-17', '2026-11-06', '2026-11-23', '2026-11-11'], base: ['2026-01-05', '2026-01-08', '2026-01-11', '2026-01-14', '2026-01-17', '2026-01-20'], y: wbsNames, type: 'bar', orientation: 'h', marker: { color: ['#2F5496', '#2F5496', '#C00000', '#2F5496', '#E69F00', '#E69F00'] }, name: 'WBS Fremdrift' }
+      ], { plot_bgcolor: 'white', margin: { l: 120, r: 20, t: 10, b: 30 } }, { responsive: true });
+
+      // 04 Bubble & Connected
+      Plotly.newPlot('chart-bubble', [{
+        x: [1.12, 1.14, 1.17, 1.10, 1.24, 1.20], y: [0.33, 0.33, 0.33, 0.33, 0.33, 0.33],
+        mode: 'markers+text',
+        marker: { size: [25, 35, 60, 30, 26, 18], color: ['#2F5496', '#C00000', '#C00000', '#C00000', '#C00000', '#2F5496'] },
+        text: wbsNames, textposition: 'top center'
+      }], { xaxis: { title: 'SPI' }, yaxis: { title: 'CPI' }, plot_bgcolor: 'white', margin: { l: 40, r: 20, t: 20, b: 40 } }, { responsive: true });
+
+      Plotly.newPlot('chart-connected', [{
+        x: [0.64, 0.76, 1.06, 1.08, 1.12, 1.14, 1.13, 1.14, 1.15, 1.16],
+        y: [0.21, 0.36, 0.49, 0.45, 0.43, 0.40, 0.37, 0.35, 0.34, 0.33],
+        mode: 'lines+markers+text', line: { color: '#C00000', width: 2.5 },
+        text: ['Jan', 'Feb', 'Mar (Knekkpunkt)', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'],
+        textposition: 'top right'
+      }], { xaxis: { title: 'Akkumulert SPI' }, yaxis: { title: 'Akkumulert CPI' }, plot_bgcolor: 'white', margin: { l: 40, r: 20, t: 20, b: 40 } }, { responsive: true });
+
+      // 05 Vendor Rank
+      Plotly.newPlot('chart-vendor-rank', [{
+        y: ['V010 (DE)', 'V003 (US)', 'V017 (SE)', 'V002 (DE)', 'V016 (NO)', 'V007 (US)', 'V020 (NO)', 'V006 (DE)'],
+        x: [2.14, 2.88, 2.96, 3.28, 3.48, 3.78, 4.16, 4.36],
+        type: 'bar', orientation: 'h', marker: { color: '#C00000' }
+      }], { xaxis: { title: 'Åpen PO (MNOK)' }, plot_bgcolor: 'white', margin: { l: 90, r: 20, t: 10, b: 30 } }, { responsive: true });
+
+      // 06 Dist Box & Hist
+      Plotly.newPlot('chart-dist-box', [
+        { y: [8, 8, 8, 7.5, 8, 12, 14, 16], type: 'box', name: 'CC-4100 Verksted', marker: { color: '#E69F00' } },
+        { y: [7.5, 7.5, 8, 8, 7.5, 7.5, 10, 11], type: 'box', name: 'CC-4200 Lab', marker: { color: '#2F5496' } },
+        { y: [8, 8, 8.5, 8, 12, 14, 15, 16], type: 'box', name: 'CC-4300 PMO', marker: { color: '#C00000' } }
+      ], { yaxis: { title: 'Timer/uke' }, plot_bgcolor: 'white', margin: { l: 40, r: 20, t: 20, b: 30 } }, { responsive: true });
+
+      Plotly.newPlot('chart-dist-hist', [{
+        x: [0.1, 0.1, 0.1, 0.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8, 1.9, 2.0],
+        type: 'histogram', marker: { color: '#2F5496' }
+      }], { xaxis: { title: 'PO Beløp (MNOK)' }, plot_bgcolor: 'white', margin: { l: 40, r: 20, t: 20, b: 30 } }, { responsive: true });
+
+      // 07 Part to Whole Tree & Stacked
+      Plotly.newPlot('chart-ptw-tree', [{
+        type: 'treemap',
+        labels: ['GreenPilot', 'WBS-100 PMO', 'WBS-200 Prosess', 'WBS-300 Reaktor', 'WBS-400 Infra', 'WBS-500 Elektro', 'WBS-600 Test'],
+        parents: ['', 'GreenPilot', 'GreenPilot', 'GreenPilot', 'GreenPilot', 'GreenPilot', 'GreenPilot'],
+        values: [107.2, 11.37, 17.00, 51.64, 13.91, 9.40, 3.88],
+        marker: { colors: ['#595959', '#2F5496', '#C00000', '#C00000', '#C00000', '#C00000', '#2F5496'] }
+      }], { margin: { l: 10, r: 10, t: 10, b: 10 } }, { responsive: true });
+
+      Plotly.newPlot('chart-ptw-stacked', [
+        { x: ['BAC (20M)', 'AC (58M)', 'EXP (107M)'], y: [70, 74.8, 85.8], type: 'bar', name: 'Balanseført AuC', marker: { color: '#2F5496' } },
+        { x: ['BAC (20M)', 'AC (58M)', 'EXP (107M)'], y: [30, 25.2, 14.2], type: 'bar', name: 'Driftsført FoU', marker: { color: '#595959' } }
+      ], { barmode: 'stack', yaxis: { ticksuffix: '%' }, plot_bgcolor: 'white', margin: { l: 40, r: 20, t: 10, b: 30 } }, { responsive: true });
+
+      // 08 Sankey
+      Plotly.newPlot('chart-sankey', [{
+        type: 'sankey',
+        node: {
+          pad: 15, thickness: 20, line: { color: 'black', width: 0.5 },
+          label: ["WBS-100 PMO", "WBS-200 Prosess", "WBS-300 Reaktor", "WBS-400 Infra", "WBS-500 Elektro", "WBS-600 Test", "Bokført AC (58.0M)", "Åpne PO-er (49.2M)", "Balanseført AuC (43.4M)", "Resultatført FoU (14.6M)", "Kansellerbar PO (18.2M)", "Låst PO (31.0M)"],
+          color: ["#2F5496", "#2F5496", "#C00000", "#2F5496", "#2F5496", "#2F5496", "#C00000", "#E69F00", "#C00000", "#595959", "#009E73", "#800000"]
+        },
+        link: {
+          source: [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 6, 7, 7],
+          target: [6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 8, 9, 10, 11],
+          value: [7.25, 10.15, 23.19, 8.70, 5.80, 2.88, 4.12, 6.85, 28.45, 5.21, 3.60, 1.00, 43.38, 14.59, 18.20, 31.03]
         }
-      }
-    ], {
-      xaxis: { type: 'date', title: 'Tidslinje (2026)' },
-      margin: { l: 150, r: 30, t: 20, b: 30 },
-      shapes: [{
-        type: 'line',
-        x0: '2026-10-31', x1: '2026-10-31',
-        y0: -0.5, y1: 6.5,
-        line: { color: '#C00000', width: 2, dash: 'dash' }
-      }]
-    }, { responsive: true });
+      }], { margin: { l: 20, r: 20, t: 10, b: 20 } }, { responsive: true });
 
-    // 6. Chart Waterfall
-    Plotly.newPlot('chart-waterfall', [{
-      type: 'waterfall',
-      orientation: 'v',
-      measure: ['relative', 'relative', 'relative', 'relative', 'total'],
-      x: ['BAC Budsjett', 'WBS-300 Sprekk', 'Øvrige WBS Avvik', 'Åpne PO-er', 'Total Eksponering'],
-      y: [20.0, 15.19, 22.78, 49.23, 107.2],
-      text: ['20.0M', '+15.2M', '+22.8M', '+49.2M', '107.2M'],
-      textposition: 'outside',
-      connector: { line: { color: '#888' } },
-      increasing: { marker: { color: '#C00000' } },
-      totals: { marker: { color: '#800000' } }
-    }], {
-      margin: { l: 40, r: 30, t: 30, b: 30 },
-      yaxis: { title: 'MNOK' }
-    }, { responsive: true });
+      // 09 Fan Chart
+      Plotly.newPlot('chart-fan', [
+        { x: ['Okt', 'Nov', 'Des', 'Jan 27', 'Feb 27', 'Feb 27', 'Jan 27', 'Des', 'Nov', 'Okt'], y: [57.97, 75.0, 94.0, 114.0, 132.5, 89.0, 78.0, 68.0, 60.5, 57.97], fill: 'toself', fillcolor: 'rgba(192,0,0,0.18)', line: { color: 'transparent' }, name: 'P10-P90 Utfallsrom' },
+        { x: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'], y: [4.65, 7.03, 10.44, 15.34, 21.46, 29.35, 35.80, 42.78, 50.43, 57.97], mode: 'lines+markers', line: { color: '#2F5496', width: 3 }, name: 'Historisk AC' },
+        { x: ['Okt', 'Nov', 'Des', 'Jan 27', 'Feb 27'], y: [57.97, 60.5, 68.0, 78.0, 89.0], line: { color: '#009E73', width: 3 }, name: 'P10: 30d Hold (89M)' },
+        { x: ['Okt', 'Nov', 'Des', 'Jan 27', 'Feb 27'], y: [57.97, 66.0, 78.5, 93.0, 107.2], line: { color: '#C00000', dash: 'dash', width: 2.5 }, name: 'P50: Status Quo (107,2M)' },
+        { x: ['Okt', 'Nov', 'Des', 'Jan 27', 'Feb 27'], y: [57.97, 75.0, 94.0, 114.0, 132.5], line: { color: '#800000', dash: 'dot', width: 2 }, name: 'P90: Eskalering (132,5M)' }
+      ], { yaxis: { title: 'MNOK' }, plot_bgcolor: 'white', legend: { orientation: 'h', y: -0.2 }, margin: { l: 40, r: 20, t: 20, b: 40 } }, { responsive: true });
 
-    // 7. Chart Cashflow & CostCenters
-    Plotly.newPlot('chart-cashflow', [
-      { x: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'], y: [0.45, 2.79, 5.27, 4.98, 5.89, 7.45, 8.10, 6.75, 7.45, 7.85], type: 'bar', name: 'Utbetaling (DPO 30d)', marker: { color: '#2F5496' } },
-      { x: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'], y: [0, 0, 0, 0, 0, 3.0, 0, 0, 0, 0], type: 'bar', name: 'Enova Tilskudd', marker: { color: '#009E73' } }
-    ], { margin: { l: 30, r: 20, t: 20, b: 30 }, yaxis: { title: 'MNOK' } }, { responsive: true });
+      // 10 Waterfall
+      Plotly.newPlot('chart-waterfall', [{
+        type: 'waterfall', orientation: 'v',
+        x: ["BAC", "WBS-100", "WBS-200", "WBS-300", "WBS-400", "WBS-500/600", "Bokført AC", "Uleverte PO", "Total Eksponering"],
+        y: [20.0, 4.75, 6.65, 15.19, 5.70, 5.68, 57.97, 49.23, 107.20],
+        measure: ["relative", "relative", "relative", "relative", "relative", "relative", "total", "relative", "total"],
+        increasing: { marker: { color: "#C00000" } },
+        totals: { marker: { color: "#1F4E79" } }
+      }], { yaxis: { title: 'MNOK' }, plot_bgcolor: 'white', margin: { l: 40, r: 20, t: 20, b: 30 } }, { responsive: true });
 
-    Plotly.newPlot('chart-costcenters', [{
-      type: 'bar', orientation: 'h',
-      y: ['CC-4300 PMO (Krise)', 'CC-4200 Lab (Normal)', 'CC-4100 Drift (Overtid)'],
-      x: [3394, 2999, 3379.5],
-      text: ['3,394t (1.80M)', '2,999t (1.59M)', '3,379.5t (1.79M)'],
-      textposition: 'inside',
-      marker: { color: ['#C00000', '#2F5496', '#E69F00'] }
-    }], { margin: { l: 140, r: 20, t: 20, b: 30 }, xaxis: { title: 'Faktiske Timer (@ 530 kr/t)' } }, { responsive: true });
+      // 11 Cash
+      Plotly.newPlot('chart-cashflow', [
+        { x: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'], y: [0.45, 2.79, 5.27, 4.98, 5.89, 7.45, 8.10, 6.75, 7.45, 7.85], type: 'bar', name: 'Utbetalt (MNOK)', marker: { color: '#C00000' } },
+        { x: ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt'], y: [0, 0, 0, 0, 0, 3.0, 0, 0, 0, 0], type: 'bar', name: 'Enova Tilskudd', marker: { color: '#009E73' } }
+      ], { yaxis: { title: 'MNOK' }, plot_bgcolor: 'white', margin: { l: 40, r: 20, t: 10, b: 30 } }, { responsive: true });
 
-    // Simulator Logic
+      Plotly.newPlot('chart-costcenters', [{
+        y: ['CC-4100 Verksted', 'CC-4200 Lab', 'CC-4300 PMO'], x: [3379.5, 2999.0, 3394.0], type: 'bar', orientation: 'h',
+        marker: { color: ['#E69F00', '#2F5496', '#C00000'] }
+      }], { xaxis: { title: 'Faktiske Timer' }, plot_bgcolor: 'white', margin: { l: 110, r: 20, t: 10, b: 30 } }, { responsive: true });
+
+      updateSim();
+    });
+
     function updateSim() {
-      const poPct = document.getElementById('slider-po').value;
-      const impPct = document.getElementById('slider-imp').value;
-      document.getElementById('po-val').innerText = poPct + '%';
-      document.getElementById('imp-val').innerText = impPct + '%';
+      const poCut = parseFloat(document.getElementById('slider-pocut').value);
+      const impairPct = parseFloat(document.getElementById('slider-impair').value);
+      document.getElementById('val-pocut').innerText = poCut;
+      document.getElementById('val-impair').innerText = impairPct;
 
-      const openPo = 49.233751;
-      const totalExp = 107.201792;
-      const auc = 43.375028;
+      const baseExp = 107.20;
+      const openPo = 49.23;
+      const baseAuc = 43.38;
 
-      const saved = openPo * (poPct / 100);
-      const newExp = totalExp - saved;
-      const impLoss = auc * (impPct / 100);
+      const saved = openPo * (poCut / 100);
+      const newExp = baseExp - saved;
+      const impairLoss = baseAuc * (impairPct / 100);
 
-      document.getElementById('res-exposure').innerText = newExp.toFixed(1) + ' MNOK';
-      document.getElementById('res-saved').innerText = '-' + saved.toFixed(1) + 'M spart';
-      document.getElementById('res-impairment').innerText = '-' + impLoss.toFixed(1) + ' MNOK';
+      document.getElementById('sim-saved').innerText = '+' + saved.toFixed(2) + ' MNOK';
+      document.getElementById('sim-newexp').innerText = newExp.toFixed(2) + ' MNOK';
+      document.getElementById('sim-loss').innerText = '-' + impairLoss.toFixed(2) + ' MNOK';
 
       Plotly.newPlot('chart-sim', [{
-        x: ['Nåværende', 'Etter Kutt', 'Balanse AuC', 'IAS 36 Tap'],
-        y: [totalExp, newExp, auc, impLoss],
+        x: ['Nåværende Eksponering', 'Simulert Eksponering', 'Balanseført AuC', 'IAS 36 Tap'],
+        y: [baseExp, newExp, baseAuc, impairLoss],
         type: 'bar',
-        marker: { color: ['#800000', '#2F5496', '#595959', '#C00000'] }
-      }], { margin: { l: 30, r: 20, t: 10, b: 20 } }, { responsive: true });
-    }
-    updateSim();
-
-    // Copilot Logic
-    function askCopilot(query) {
-      document.getElementById('ai-input').value = query;
-      submitCopilot();
+        marker: { color: ['#800000', '#2F5496', '#595959', '#C00000'] },
+        text: [baseExp.toFixed(1) + 'M', newExp.toFixed(1) + 'M', baseAuc.toFixed(1) + 'M', impairLoss.toFixed(1) + 'M'],
+        textposition: 'outside'
+      }], { yaxis: { title: 'MNOK' }, plot_bgcolor: 'white', margin: { l: 40, r: 20, t: 20, b: 30 } }, { responsive: true });
     }
 
-    function submitCopilot() {
-      const q = document.getElementById('ai-input').value.toLowerCase();
-      const box = document.getElementById('ai-response-box');
-      const ans = document.getElementById('ai-answer');
-      box.classList.remove('hidden');
+    function setQuery(q) {
+      document.getElementById('ai-query').value = q;
+      runQuery();
+    }
 
-      if (q.includes('q1') || q.includes('rotårsak') || q.includes('kollapset')) {
-        ans.innerHTML = '<strong>Rotårsaksanalyse:</strong><br>1) <em>Tidlig forsering uten budsjettdekning:</em> Reaktormontasje ble forsert (SPI 1.16) ved bruk av hasteordre i USD/EUR.<br>2) <em>Mangel på forpliktelseskontroll:</em> ERP fulgte bare fakturaer (AC), ikke PO-forpliktelser. Allerede i mars 2026 passerte åpne PO-er 29.8 MNOK (149% av BAC).<br>3) <em>Overtidslekkasje Fiskå:</em> CC-4300 (PMO) og CC-4100 (Drift) akkumulerte over 6 700 timer på krisehåndtering.';
-      } else if (q.includes('ias 36') || q.includes('nedskrivning')) {
-        ans.innerHTML = '<strong>IFRS Regnskapsvurdering (IAS 38 vs. IAS 36):</strong><br>Av bokførte kostnader på 58,0 MNOK er <strong>43,38 MNOK</strong> balanseført som AuC etter IAS 38. Sluttkostnad (EAC) på 107 MNOK utløser en <strong>obligatorisk nedskrivningstest etter IAS 36</strong>. Ved fullføring vurderes nedskrivningsbehovet til ca. 13,4 MNOK, mens en full stans (Off-Ramp) medfører at samtlige 43,4 MNOK må tapsføres umiddelbart.';
-      } else if (q.includes('vedtak') || q.includes('styrevedtak')) {
-        ans.innerHTML = '<strong>Forslag til Styrevedtak (Stage-Gate 3 Review):</strong><br>1. Styret tar den finansielle statusen til etterretning.<br>2. Det innføres umiddelbar innkjøps- og ansettelsesfrys fra 31. oktober 2026.<br>3. Administrasjonen iverksetter 30 dagers Technical Hold for kanselleringsaudit av 49,2 MNOK uleverte forpliktelser.<br>4. Administrasjonen innleder dialog med Enova SF om tilpasning av fremdriftsplan og milepæler.';
+    function runQuery() {
+      const q = document.getElementById('ai-query').value.toLowerCase();
+      const res = document.getElementById('ai-response');
+      res.classList.remove('hidden');
+
+      if (q.includes('ias 36') || q.includes('verdifall') || q.includes('tap')) {
+        res.innerHTML = `<strong>IAS 36 Impairment of Assets (SSOT):</strong><br>
+        En budsjettsprekk på 536 % (EAC 107,2M mot BAC 20,0M) utløser en lovpålagt nedskrivningstest (IAS 36.12f).
+        Prosjektet har balanseført <strong>43,38 MNOK i AuC</strong>. Hvis prosjektet termineres ved Gate 3, må hele dette beløpet tapsføres umiddelbart i Elkems konsernregnskap.`;
+      } else if (q.includes('ias 38') || q.includes('balanseføring')) {
+        res.innerHTML = `<strong>IAS 38 Immaterielle Eiendeler (SSOT):</strong><br>
+        Utviklingsutgifter i WBS-200, 300, 400 og 500 oppfyller de 6 kapitaliseringskriteriene under IAS 38.57 og er aktivert. WBS-100 PMO og WBS-600 Testkjøring er korrekt resultatført (P&L) som administrasjon og forskning.`;
+      } else if (q.includes('530') || q.includes('enova') || q.includes('isa 805') || q.includes('timesats')) {
+        res.innerHTML = `<strong>ISA 805 & Enova Retningslinjer (SSOT):</strong><br>
+        Intern personalkostnad er oppad begrenset til en fast timesats på <strong>530 kr per time</strong> og maks 1 850 timer per år per person. Revisor skal attestere timelistene etter ISA 805. Overtid utover 530 kr/t dekkes 100 % av Elkem.`;
       } else {
-        ans.innerHTML = 'Basert på prosjektkildene: Påløpt kostnad er <strong>58.0 MNOK</strong>, og åpne forpliktelser utgjør <strong>49.2 MNOK</strong>, som gir en samlet eksponering på <strong>107.2 MNOK</strong> (536% av budsjett). Spørsmålet ditt berører kjerneproblematikken ved det ekstraordinære styremøtet.';
+        res.innerHTML = `<strong>Prosjektstatus (SSOT per 31.10.2026):</strong><br>
+        Prosjektet har påløpt 57,97 MNOK mot en ramme på 20,00 MNOK, med 49,23 MNOK i åpne forpliktelser (total eksponering 107,2 MNOK / 536 % av BAC). Styret anbefales å vedta 30 dagers Technical Hold for å redusere forpliktelsene med 18,2 MNOK.`;
       }
     }
   </script>

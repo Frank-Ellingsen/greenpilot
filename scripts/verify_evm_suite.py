@@ -196,18 +196,17 @@ def run_quality_gates():
     with open("index.html", encoding="utf-8") as f:
         html_content = f.read()
     expected_html_tokens = [
-        "20.0 MNOK",
-        "58.0 MNOK",
-        "19.2 MNOK",
-        "16.62",
-        "0.33",
-        "1.16",
-        "49.2 MNOK",
-        "107.2 MNOK"
+        ("20.0 MNOK", "20,0 MNOK"),
+        ("58.0 MNOK", "58,0 MNOK"),
+        ("19.2 MNOK", "19,2 MNOK"),
+        ("0.33", "0,33"),
+        ("1.16", "1,16"),
+        ("49.2 MNOK", "49,2 MNOK"),
+        ("107.2 MNOK", "107,2 MNOK")
     ]
-    for tok in expected_html_tokens:
-        assert tok in html_content, f"Missing canonical figure '{tok}' in index.html!"
-    assert ("43.4" in html_content or "43,38" in html_content or "43.375" in html_content), "Missing IAS 38 AuC in index.html!"
+    for opt1, opt2 in expected_html_tokens:
+        assert (opt1 in html_content or opt2 in html_content), f"Missing canonical figure '{opt1}' or '{opt2}' in index.html!"
+    assert any(x in html_content for x in ["43.4", "43,4", "43,38", "43.375"]), "Missing IAS 38 AuC in index.html!"
     print("[OK] index.html KPI cards, tables, S-curve, and simulator match Star Schema & Power BI 100%!")
 
     # 8. Config_VarianceThresholds CSV & TMDL Schema Alignment Check

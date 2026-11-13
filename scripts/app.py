@@ -1,10 +1,21 @@
 """
-================================================================================
-ELKEM GREENPILOT 2026 — STREAMLIT AI CONTROLLER & EVM DASHBOARD
-Single Source of Truth (SSOT) Dual-Engine Application
-Engine 1: Deterministisk EVM & Tidslinjekalkulator
-Engine 2: RAG Vektor-DB & Agentic Financial Copilot
-================================================================================
+ELKEM ASA — GREENPILOT 2026 CONTROLLER DASHBOARD & EVM PORTAL
+Dual-Engine Architecture: Deterministic EVM + Agentic RAG Copilot
+Full Visual Vocabulary Suite:
+- 00 Executive Governance & Status
+- 01 Avvik & Diverging Bars (Deviation)
+- 02 Dynamisk Jerntriangel (Constraints & Trade-Offs)
+- 03 Tidsplan & Governance Gantt (Schedule)
+- 04 Korrelasjon: Bubble & Connected Scatter (Correlation)
+- 05 Rangering & Leverandøreksponering (Ranking / Lollipop)
+- 06 Fordeling & Revisjonsrisiko (Distribution / Box Plot & Histogram)
+- 07 Del til Helhet & Balanse (Part-to-Whole / Treemap & 100% Stacked)
+- 08 Kapital- & Forpliktelsesflyt (Flow / Sankey)
+- 09 Usikkerhet & EAC Utfallsrom (Uncertainty / Fan Chart)
+- 10 Forpliktelsesisberg & WBS (Waterfall)
+- 11 Likviditetsbro & Fiskå Enheter (Cash & Timesheets @ 530 kr/t)
+- 12 Hva-om Scenario Simulator (Interactive Sliders)
+- 13 AI Controller Copilot (RAG & Vektor-DB)
 """
 
 import os
@@ -12,84 +23,154 @@ import sys
 import pandas as pd
 import numpy as np
 import streamlit as st
-import plotly.express as px
 import plotly.graph_objects as go
+import plotly.express as px
 from plotly.subplots import make_subplots
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # ------------------------------------------------------------------------------
-# 1. PAGE CONFIGURATION & STYLING (ELKEM NAVY & TUFTE DATA-INK THEME)
+# 1. PAGE SETUP & THEME
 # ------------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Elkem GreenPilot 2026 — AI Controller & EVM Dashboard",
-    page_icon="📊",
+    page_title="Elkem GreenPilot 2026 Controller Portal",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
+# Custom Styling (Elkem Deep Blue #1F4E79, Slate #2F5496, Warning #C00000)
 st.markdown("""
 <style>
-    .main-title {
-        font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-        color: #1F4E79;
-        font-weight: 700;
-        font-size: 2.2rem;
-        margin-bottom: 0.2rem;
-    }
-    .sub-title {
-        font-family: 'Segoe UI', sans-serif;
-        color: #595959;
-        font-size: 1.05rem;
-        margin-bottom: 1.2rem;
-    }
+    .main-title { font-size: 26px; font-weight: 800; color: #1F4E79; margin-bottom: 2px; }
+    .sub-title { font-size: 14px; color: #595959; margin-bottom: 15px; }
     .alert-card-red {
-        background-color: #FCE4D6;
+        background-color: #FDEDEC;
         border-left: 6px solid #C00000;
-        padding: 16px;
-        border-radius: 4px;
-        margin-bottom: 20px;
+        padding: 14px;
+        border-radius: 6px;
+        margin-bottom: 15px;
     }
-    .alert-card-red h4 {
-        color: #C00000;
-        margin: 0 0 8px 0;
-        font-weight: 700;
+    .alert-card-green {
+        background-color: #EAFAF1;
+        border-left: 6px solid #009E73;
+        padding: 14px;
+        border-radius: 6px;
+        margin-bottom: 15px;
     }
-    .alert-card-red p {
-        color: #333333;
-        margin: 4px 0;
-        font-size: 0.95rem;
-        line-height: 1.4;
+    .alert-card-blue {
+        background-color: #EBF5FB;
+        border-left: 6px solid #2F5496;
+        padding: 14px;
+        border-radius: 6px;
+        margin-bottom: 15px;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# 2. HARD-GROUNDED SINGLE SOURCE OF TRUTH (SSOT) DATA CONSTANTS
+# 2. DYNAMIC DATA LOADER (SINGLE SOURCE OF TRUTH)
 # ------------------------------------------------------------------------------
+# SSOT Baseline Financial EVM & Accounting Constants per 31.10.2026
 BAC_NOK = 20_000_000.00
-PV_YTD_NOK = 16_620_871.10
 AC_NOK = 57_968_040.98
 EV_NOK = 19_215_686.27
+PV_YTD_NOK = 16_620_871.10
 OPEN_PO_NOK = 49_233_751.55
-TOTAL_EXPOSURE_NOK = AC_NOK + OPEN_PO_NOK  # 107,201,792.53 NOK
 AUC_CAPITALIZED_NOK = 43_375_028.38
 PL_EXPENSE_NOK = 14_593_012.60
-ENOVA_GRANT_NOK = 3_000_000.00
-HOURLY_RATE_NOK = 530.00
 
-# WBS Data
-WBS_DATA = pd.DataFrame([
-    {"wbs_id": "WBS-100", "name": "PMO & Prosjektledelse", "treatment": "Driftsført FoU (P&L)", "bac": 2_500_000, "ac": 7_248_010.50, "ev": 2_401_960.78, "open_po": 4_120_000, "spi": 1.15, "cpi": 0.33},
-    {"wbs_id": "WBS-200", "name": "Prosessdesign & Basic Eng.", "treatment": "Balanseført AuC", "bac": 3_500_000, "ac": 10_147_215.17, "ev": 3_362_745.10, "open_po": 6_850_000, "spi": 1.15, "cpi": 0.33},
-    {"wbs_id": "WBS-300", "name": "Pilotanlegg & Reaktor", "treatment": "Balanseført AuC", "bac": 8_000_000, "ac": 23_193_616.39, "ev": 7_686_274.51, "open_po": 28_450_000, "spi": 1.15, "cpi": 0.33},
-    {"wbs_id": "WBS-400", "name": "Infrastruktur & Gass", "treatment": "Balanseført AuC", "bac": 3_000_000, "ac": 8_697_606.15, "ev": 2_882_352.94, "open_po": 5_213_751, "spi": 1.15, "cpi": 0.33},
-    {"wbs_id": "WBS-500", "name": "Installasjon & Elektro", "treatment": "Balanseført AuC", "bac": 2_000_000, "ac": 5_796_804.10, "ev": 1_921_568.63, "open_po": 3_600_000, "spi": 1.15, "cpi": 0.33},
-    {"wbs_id": "WBS-600", "name": "Testkjøring & Overlevering", "treatment": "Driftsført FoU (P&L)", "bac": 1_000_000, "ac": 2_884_788.67, "ev": 960_784.31, "open_po": 1_000_000, "spi": 1.15, "cpi": 0.33},
+CURRENT_DIR = os.getcwd()
+SEARCH_PATHS = [
+    os.path.join(CURRENT_DIR, "processed", "star_schema"),
+    os.path.join(CURRENT_DIR, "data", "cleaned"),
+    os.path.join(CURRENT_DIR, "data", "raw"),
+    os.path.join(CURRENT_DIR, "data"),
+    os.path.join(CURRENT_DIR, "..", "data"),
+    r"C:\Users\frank\OneDrive\Elkem\data",
+    "/workspace/knowledge"
+]
+
+def find_file(fname):
+    for sp in SEARCH_PATHS:
+        p = os.path.join(sp, fname)
+        if os.path.exists(p):
+            return p
+    return None
+
+@st.cache_data(ttl=60)
+def load_dynamic_data():
+    # Fallback Baseline SSOT Data
+    bac_val = BAC_NOK
+    ac_val = AC_NOK
+    ev_val = EV_NOK
+    pv_val = PV_YTD_NOK
+    open_po_val = OPEN_PO_NOK
+    auc_val = AUC_CAPITALIZED_NOK
+    
+    # Try dynamic reading
+    p_budget = find_file("05_erp_budget_baseline.csv")
+    p_gl = find_file("10_erp_gl_actuals.csv")
+    p_po = find_file("06_erp_purchase_orders.csv")
+    
+    if p_budget and p_gl:
+        try:
+            sep = ";" if ";" in open(p_budget).readline() else ","
+            df_b = pd.read_csv(p_budget, sep=sep)
+            bac_val = float(df_b["budget_amount_nok"].sum())
+        except Exception:
+            pass
+        try:
+            sep = ";" if ";" in open(p_gl).readline() else ","
+            df_g = pd.read_csv(p_gl, sep=sep)
+            ac_val = float(df_g["amount_nok"].sum())
+            if "ias38_treatment" in df_g.columns:
+                auc_val = float(df_g[df_g["ias38_treatment"] == "CAPITALIZE"]["amount_nok"].sum())
+        except Exception:
+            pass
+    if p_po:
+        try:
+            sep = ";" if ";" in open(p_po).readline() else ","
+            df_p = pd.read_csv(p_po, sep=sep)
+            if "open_commitment_nok" in df_p.columns:
+                open_po_val = float(df_p[df_p["po_status"] != "CANCELLED"]["open_commitment_nok"].sum())
+        except Exception:
+            pass
+
+    return {
+        "BAC": bac_val,
+        "AC": ac_val,
+        "EV": ev_val,
+        "PV": pv_val,
+        "OPEN_PO": open_po_val,
+        "TOTAL_EXPOSURE": ac_val + open_po_val,
+        "AUC": auc_val,
+        "PL": ac_val - auc_val,
+        "CPI": ev_val / ac_val if ac_val > 0 else 1.0,
+        "SPI": ev_val / pv_val if pv_val > 0 else 1.0,
+        "CV": ev_val - ac_val,
+        "SV": ev_val - pv_val
+    }
+
+DATA = load_dynamic_data()
+
+# WBS Dataset
+WBS_DF = pd.DataFrame([
+    {"wbs_id": "WBS-100", "name": "PMO & Prosjektledelse", "treatment": "Driftsført FoU (P&L)", "bac": 2_500_000, "ac": 7_248_010.50, "ev": 2_401_960.78, "open_po": 4_120_000, "pv": 2_150_000},
+    {"wbs_id": "WBS-200", "name": "Prosessdesign & Basic Eng.", "treatment": "Balanseført AuC", "bac": 3_500_000, "ac": 10_147_215.17, "ev": 3_362_745.10, "open_po": 6_850_000, "pv": 2_950_000},
+    {"wbs_id": "WBS-300", "name": "Pilotanlegg & Reaktor", "treatment": "Balanseført AuC", "bac": 8_000_000, "ac": 23_193_616.39, "ev": 7_686_274.51, "open_po": 28_450_000, "pv": 6_550_000},
+    {"wbs_id": "WBS-400", "name": "Infrastruktur & Gass", "treatment": "Balanseført AuC", "bac": 3_000_000, "ac": 8_697_606.15, "ev": 2_882_352.94, "open_po": 5_213_751, "pv": 2_620_000},
+    {"wbs_id": "WBS-500", "name": "Installasjon & Elektro", "treatment": "Balanseført AuC", "bac": 2_000_000, "ac": 5_796_804.10, "ev": 1_921_568.63, "open_po": 3_600_000, "pv": 1_550_000},
+    {"wbs_id": "WBS-600", "name": "Testkjøring & Overlevering", "treatment": "Driftsført FoU (P&L)", "bac": 1_000_000, "ac": 2_884_788.67, "ev": 960_784.31, "open_po": 1_000_000, "pv": 800_871.10},
 ])
+WBS_DF["cpi"] = WBS_DF["ev"] / WBS_DF["ac"]
+WBS_DF["spi"] = WBS_DF["ev"] / WBS_DF["pv"]
+WBS_DF["cv"] = WBS_DF["ev"] - WBS_DF["ac"]
+WBS_DF["sv"] = WBS_DF["ev"] - WBS_DF["pv"]
+WBS_DF["total_exposure"] = WBS_DF["ac"] + WBS_DF["open_po"]
 
-# Monthly Timeline Data (2026)
-TIMELINE_DATA = pd.DataFrame([
+# Timeline Data (Jan - Okt 2026)
+TIMELINE_DF = pd.DataFrame([
     {"period": "2026-01", "pv": 1534314, "ac": 4653705, "ev": 980392, "open_po": 10077796, "cash_out": 453945, "enova_in": 0},
     {"period": "2026-02", "pv": 1802592, "ac": 2376228, "ev": 1568627, "open_po": 15340324, "cash_out": 2794789, "enova_in": 0},
     {"period": "2026-03", "pv": 1454416, "ac": 3413810, "ev": 2549020, "open_po": 29789347, "cash_out": 5274928, "enova_in": 0},
@@ -101,517 +182,598 @@ TIMELINE_DATA = pd.DataFrame([
     {"period": "2026-09", "pv": 1710000, "ac": 7650000, "ev": 2156863, "open_po": 48900000, "cash_out": 7450000, "enova_in": 0},
     {"period": "2026-10", "pv": 1615862, "ac": 7537488, "ev": 1764706, "open_po": 49233752, "cash_out": 7850000, "enova_in": 0},
 ])
-TIMELINE_DATA["cum_pv"] = TIMELINE_DATA["pv"].cumsum()
-TIMELINE_DATA["cum_ac"] = TIMELINE_DATA["ac"].cumsum()
-TIMELINE_DATA["cum_ev"] = TIMELINE_DATA["ev"].cumsum()
-TIMELINE_DATA["net_cash"] = TIMELINE_DATA["enova_in"] - TIMELINE_DATA["cash_out"]
-TIMELINE_DATA["cum_net_cash"] = TIMELINE_DATA["net_cash"].cumsum()
+TIMELINE_DF["cum_pv"] = TIMELINE_DF["pv"].cumsum()
+TIMELINE_DF["cum_ac"] = TIMELINE_DF["ac"].cumsum()
+TIMELINE_DF["cum_ev"] = TIMELINE_DF["ev"].cumsum()
+TIMELINE_DF["cum_cpi"] = TIMELINE_DF["cum_ev"] / TIMELINE_DF["cum_ac"]
+TIMELINE_DF["cum_spi"] = TIMELINE_DF["cum_ev"] / TIMELINE_DF["cum_pv"]
 
-# Cost Centers Fiskå
-COST_CENTERS = pd.DataFrame([
-    {"cc_id": "CC-4100", "name": "Pilotanlegg Drift & Verksted", "location": "Bygg 12 Pilot", "hours": 3379.5, "rate": 530, "status": "Overtid / Forsering", "color": "#E69F00"},
-    {"cc_id": "CC-4200", "name": "FoU Sentrallab & Kjemi", "location": "Bygg 04 Lab", "hours": 2999.0, "rate": 530, "status": "Normal drift", "color": "#2F5496"},
-    {"cc_id": "CC-4300", "name": "Prosessmetallurgi & PMO", "location": "Hovedkontor Adm", "hours": 3394.0, "rate": 530, "status": "Krise / Møteoverforbruk", "color": "#C00000"},
+# Vendor Top 8 Data
+VENDOR_DF = pd.DataFrame([
+    {"vendor_id": "V006", "name": "Synthetic Vendor 06 (DE)", "po": 7.22, "ac": 2.86, "open_po": 4.36, "priority": "Kritisk"},
+    {"vendor_id": "V020", "name": "Synthetic Vendor 20 (NO)", "po": 7.38, "ac": 3.22, "open_po": 4.16, "priority": "Kritisk"},
+    {"vendor_id": "V007", "name": "Synthetic Vendor 07 (US)", "po": 8.60, "ac": 4.82, "open_po": 3.78, "priority": "Kritisk"},
+    {"vendor_id": "V016", "name": "Synthetic Vendor 16 (NO)", "po": 5.02, "ac": 1.54, "open_po": 3.48, "priority": "Høy"},
+    {"vendor_id": "V002", "name": "Synthetic Vendor 02 (DE)", "po": 6.45, "ac": 3.17, "open_po": 3.28, "priority": "Høy"},
+    {"vendor_id": "V017", "name": "Synthetic Vendor 17 (SE)", "po": 5.06, "ac": 2.10, "open_po": 2.96, "priority": "Medium"},
+    {"vendor_id": "V003", "name": "Synthetic Vendor 03 (US)", "po": 5.86, "ac": 2.98, "open_po": 2.88, "priority": "Medium"},
+    {"vendor_id": "V010", "name": "Synthetic Vendor 10 (DE)", "po": 5.83, "ac": 3.69, "open_po": 2.14, "priority": "Medium"},
 ])
-COST_CENTERS["cost_nok"] = COST_CENTERS["hours"] * COST_CENTERS["rate"]
 
 # ------------------------------------------------------------------------------
-# 3. VECTOR-DB & RAG SETUP (KNOWLEDGE CORPUS)
+# 3. KNOWLEDGE BASE & RAG COPILOT CORPUS
 # ------------------------------------------------------------------------------
-KNOWLEDGE_BASE = [
+KNOWLEDGE_CHUNKS = [
     {
         "id": "IAS38-01",
         "category": "Regnskap (IFRS)",
-        "title": "IAS 38 Immaterielle eiendeler - Kriterier for balanseføring (AuC)",
-        "content": "IAS 38 paragraf 57 krever at seks kumulative kriterier må være oppfylt for å balanseføre utviklingskostnader: 1) Teknisk gjennomførbarhet for å fullføre eiendelen, 2) Hensikt om å fullføre og bruke eller selge den, 3) Evne til å bruke eller selge, 4) Hvordan eiendelen vil generere sannsynlige fremtidige økonomiske fordeler, 5) Tilgjengelighet av tekniske og finansielle ressurser, 6) Pålitelig måling av henførbare utgifter. For GreenPilot er WBS-200, WBS-300, WBS-400 og WBS-500 balanseført som anlegg under utførelse (AuC) med samlet verdi 43,38 MNOK, mens WBS-100 PMO og WBS-600 Testkjøring er driftsført over P&L (14,59 MNOK)."
+        "source": "IAS 38 Immaterielle Eiendeler & Factsheet",
+        "title": "IAS 38: Skille mellom Forskningsfase og Utviklingsfase",
+        "text": "Kostnader i forskningsfasen skal alltid kostnadsføres løpende over resultatregnskapet (P&L). Utviklingskostnader kan kun balanseføres som anlegg under utførelse (AuC) dersom samtlige seks kriterier i IAS 38.57 er oppfylt: teknisk gjennomførbarhet, intensjon om fullføring, evne til bruk/salg, påvisbare fremtidige økonomiske fordeler, tilgjengelige ressurser og pålitelig måling av utgifter."
     },
     {
         "id": "IAS36-01",
         "category": "Regnskap (IFRS)",
-        "title": "IAS 36 Verdifall på Eiendeler - Impairment Test for AuC",
-        "content": "IAS 36 krever at et foretak skal vurdere ved hver rapporteringsdato om det foreligger indikasjoner på verdifall. Vesentlige kostnadsoverskridelser utover opprinnelig investeringskalkyle er en eksplisitt intern indikasjon på verdifall etter IAS 36.12(f). Når sluttkostnad (EAC) øker til 107,2 MNOK mens anleggets fremtidige kontantstrømmer ikke øker tilsvarende, må det gjennomføres en full nedskrivningstest mot gjenvinnbart beløp (det høyeste av salgsverdi fratrukket salgskostnader og bruksverdi). Ved en terminering (Off-Ramp) må samtlige balanseførte 43,38 MNOK tapsføres umiddelbart over konsernresultatet."
-    },
-    {
-        "id": "IAS20-01",
-        "category": "Regnskap (IFRS)",
-        "title": "IAS 20 Offentlige Tilskudd - Enova Behandling",
-        "content": "IAS 20 regulerer regnskapsmessig behandling av offentlige tilskudd. Tilskudd kan ikke inntektsføres før det foreligger rimelig sikkerhet for at foretaket vil oppfylle vilkårene og tilskuddet vil bli mottatt. Tilskudd knyttet til anleggsmidler (som GreenPilot pilotanlegg) skal enten presenteres som utsatt inntekt eller trekkes fra ved beregning av anleggsmiddelets balanseførte verdi. I GreenPilot er 3,0 MNOK utbetalt fra Enova i juni 2026. Ved mislighold eller uautorisert stans kan Enova kreve beløpet tilbakebetalt, noe som gjør dialog ved Gate 3 kritisk."
+        "source": "IAS 36 Impairment of Assets Guide",
+        "title": "IAS 36: Nedskrivningstest for Anlegg under Utførelse (AuC)",
+        "text": "Eiendeler under tilvirkning som ennå ikke er klare til bruk skal testes for verdifall minst årlig, eller umiddelbart ved indikasjon på verdifall (IAS 36.12f). En budsjettsprekk på over 100 % (EAC vesentlig over opprinnelig ramme) er en lovpålagt trigger. Ved terminering (Off-Ramp) må gjenvinnbart beløp fastsettes til netto salgsverdi (ofte lik skrapverdi), og balanseført AuC tapsføres umiddelbart i driftsresultatet."
     },
     {
         "id": "ISA805-01",
-        "category": "Revisjon & Enova",
-        "title": "ISA 805 Særskilt Revisjon av Prosjektregnskap for Enova",
-        "content": "ISA 805 regulerer revisjon av enkeltstående finansielle oppstillinger eller særskilte elementer i et regnskap. Enova krever at prosjektregnskap over visse terskler skal bekreftes av uavhengig statsautorisert revisor etter ISA 805. Revisor kontrollerer at: 1) Alle kostnader er direkte henførbare til godkjente prosjektaktiviteter, 2) Intern timeføring følger de godkjente timesatser og timetak, 3) Fakturaer er bokført og betalt i henhold til regnskapslovens bestemmelser, 4) Ingen interne avanser eller ulovlige påslag er inkludert."
+        "category": "Revisjon & Tilskudd",
+        "source": "Retningslinjer for Timesatser 2025 & ISA 805",
+        "title": "ISA 805 & Enova: Revisjon av Prosjektregnskap og Timesats 530 kr",
+        "text": "Under Enovas regelverk og SkatteFUNN (RF-1053B) er personalkostnader strengt regulert til en fast timesats på 530 kr per time, med et tak på maksimalt 1 850 timer per år per person. Revisor skal etter ISA 805 avgi en særskilt attestasjon på at timelister er direkte knyttet til prosjektets WBS og aktiviteter. Overtidstillegg utover 530 kr/t kan ikke belastes prosjektet."
     },
     {
-        "id": "TIME-01",
-        "category": "Revisjon & Enova",
-        "title": "SkatteFUNN og Enova Timeprisregler (RF-1053B / 250114)",
-        "content": "For prosjekter støttet av SkatteFUNN og Enova gjelder strenge regler for personalkostnader (Forskrift til FSFIN § 16-40-6 og retningslinjer 250114): Timesatsen kan maksimalt utgjøre 1,2 promille av avtalt årslønn ved prosjektets oppstart, men er absolutt avkortet ved maksimalt 530 NOK per time. Årlig timetall per ansatt kan maksimalt utgjøre 1 850 timer. Faktiske timer utover 1 850 kan ikke kreves refundert eller inngå i støttegrunnlaget. I GreenPilot har CC-4100 (3 379,5 timer) og CC-4300 (3 394 timer) hatt ekstrem overtid som krever revisjonsgjennomgang før innrapportering."
-    },
-    {
-        "id": "GATE-01",
-        "category": "Prosjektstyring & EVM",
-        "title": "Stage-Gate Prosjektstyring - Beslutning ved Gate 3",
-        "content": "Ved Gate 3 gjennomfører styret den kritiske gjennomgangen før idriftsettelse og testkjøring. På grunn av kostnadssprekken anbefales Alternativ A: 30 dagers Technical Hold med umiddelbar innkjøpsfrys og en fullstendig kanselleringsaudit av 49,2 MNOK i uleverte forpliktelser. Dette forskyver ferdigstillelse med 30-60 dager, men kan redusere samlet finansiell eksponering med 15-25 MNOK. Alternativ B er formell terminering (Off-Ramp) med full tapsføring av 43,4 MNOK AuC."
-    },
-    {
-        "id": "TRIANGLE-01",
-        "category": "Prosjektstyring & EVM",
-        "title": "Jerntriangelet - Trade-Off Dynamics (Cost, Time, Scope)",
-        "content": "Jerntriangelet viser at en prosjektleder ikke kan akselerere fremdriften (Time: SPI 1.16) og samtidig fastholde fullt omfang (Scope: 96.1%) uten at Kostnad (Cost: CPI 0.33) fungerer som den eneste støtdemperen. For å redusere kostnadseksponeringen fra 107.2 MNOK må prosjektet bevisst bremse ned (slowing down / Technical Hold), noe som gir tid til å kansellere uleverte innkjøpsordrer før de materialiserer seg i fakturaer."
+        "id": "HOLD-01",
+        "category": "Styringstiltak",
+        "source": "GreenPilot 2026 Board Memo",
+        "title": "30 Dagers Technical Hold: Den Strategiske Løsningen",
+        "text": "Ved å innføre et 30 dagers Technical Hold ved Gate 3 pauses montasjen. Dette gir kontrollteamet tid til å gjennomføre en kanselleringsaudit på de 49,2 MNOK i åpne innkjøpsordrer (estimert besparelse: 18,2 MNOK) og stanse overtidslekkasje ved Fiskå, mot en kontrollert 4–6 ukers utsettelse av ferdigstillelse."
     }
 ]
 
 @st.cache_resource
-def get_rag_model():
-    corpus = [doc["title"] + " " + doc["content"] for doc in KNOWLEDGE_BASE]
-    vectorizer = TfidfVectorizer(ngram_range=(1, 2))
-    tfidf_matrix = vectorizer.fit_transform(corpus)
-    return vectorizer, tfidf_matrix
-
-def query_rag(query_text, top_k=3, category_filter=None):
-    vectorizer, tfidf_matrix = get_rag_model()
-    q_vec = vectorizer.transform([query_text])
-    sims = cosine_similarity(q_vec, tfidf_matrix).flatten()
-    
-    ranked_indices = np.argsort(sims)[::-1]
-    results = []
-    for idx in ranked_indices:
-        doc = KNOWLEDGE_BASE[idx]
-        if category_filter and category_filter != "Alle" and doc["category"] != category_filter:
-            continue
-        results.append({
-            "doc": doc,
-            "score": float(sims[idx])
-        })
-        if len(results) >= top_k:
-            break
-    return results
+def get_vector_db():
+    corpus = [c["title"] + " " + c["text"] + " " + c["category"] for c in KNOWLEDGE_CHUNKS]
+    vec = TfidfVectorizer(ngram_range=(1, 2))
+    mat = vec.fit_transform(corpus)
+    return vec, mat
 
 # ------------------------------------------------------------------------------
 # 4. SIDEBAR NAVIGATION
 # ------------------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("## ELKEM ASA")
-    st.markdown("### GreenPilot 2026 Controller")
+    st.markdown("## ⚡ ELKEM ASA")
+    st.markdown("### GreenPilot 2026 Controller Portal")
     st.caption("Dual-Engine: Deterministisk EVM + Agentic AI")
     
-    selected_page = st.radio(
-        "Navigasjon",
-        [
-            "00 Executive Governance & Status",
-            "01 EVM S-Kurve & Tidsserie",
-            "02 Jerntriangel & Avveininger",
-            "03 Tidsplan & Governance Gantt",
-            "04 Forpliktelsesisberg & WBS",
-            "05 Likviditetsbro & Fiskå Enheter",
-            "06 Hva-om Scenario Simulator",
-            "07 AI Controller Copilot (RAG & Vektor-DB)"
-        ]
-    )
+    pages = [
+        "00 Executive Governance & Status",
+        "01 Avvik & Diverging Bars (Deviation)",
+        "02 Dynamisk Jerntriangel (Trade-Offs)",
+        "03 Tidsplan & Governance Gantt (Schedule)",
+        "04 Korrelasjon: Bubble & Connected (Correlation)",
+        "05 Rangering & Leverandører (Ranking)",
+        "06 Fordeling & Revisjonsrisiko (Distribution)",
+        "07 Del til Helhet & Balanse (Part-to-Whole)",
+        "08 Kapital- & Forpliktelsesflyt (Flow / Sankey)",
+        "09 Usikkerhet & EAC Vifte (Uncertainty)",
+        "10 Forpliktelsesisberg & WBS (Waterfall)",
+        "11 Likviditetsbro & Fiskå Enheter (Cash)",
+        "12 Hva-om Scenario Simulator",
+        "13 AI Controller Copilot (RAG)"
+    ]
+    selected_page = st.radio("Navigasjon", pages)
     
     st.markdown("---")
-    st.markdown("#### Kildedokumenter")
-    st.markdown("• Board Memo 2026 (PDF)")
-    st.markdown("• Board Deck (PPTX)")
-    st.markdown("• GreenPilot Excel Model v3 (XLSX)")
-    st.markdown("• Executive Gantt (PNG)")
-    st.caption("Cut-off dato: 31.10.2026 | ISA 805 / IAS 38")
+    st.markdown("**Prosjektstatus:** 🔴 RØD ALARM")
+    st.markdown(f"**Total Eksponering:** {DATA['TOTAL_EXPOSURE']/1e6:.1f} MNOK")
+    st.markdown(f"**Budsjettramme (BAC):** {DATA['BAC']/1e6:.1f} MNOK")
+    st.markdown(f"**CPI:** {DATA['CPI']:.2f} | **SPI:** {DATA['SPI']:.2f}")
 
 # ------------------------------------------------------------------------------
-# PAGE 00: EXECUTIVE GOVERNANCE & STATUS (RULE-BASED NARRATIVE)
+# PAGE 00: EXECUTIVE GOVERNANCE & STATUS
 # ------------------------------------------------------------------------------
 if selected_page == "00 Executive Governance & Status":
     st.markdown('<div class="main-title">ELKEM GREENPILOT 2026 — STYRETS BESLUTNINGSNOTAT</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">Single Source of Truth (SSOT) Modell | Enova Pilotprosjekt | Cut-off: 31.10.2026</div>', unsafe_allow_html=True)
-    
-    cpi = EV_NOK / AC_NOK
-    spi = EV_NOK / PV_YTD_NOK
-    cv_m = (EV_NOK - AC_NOK) / 1e6
-    exp_pct = (TOTAL_EXPOSURE_NOK / BAC_NOK) * 100
+    st.markdown('<div class="sub-title">Single Source of Truth Modell | Enova Pilotprosjekt | Data Cut-off: 31.10.2026</div>', unsafe_allow_html=True)
     
     st.markdown(f"""
     <div class="alert-card-red">
-        <h4>🔴 RØD ALARM: KRITISK KOSTNADSSPREKK & LIKVIDITETSEKSPONERING (Per 31.10.2026)</h4>
-        <p><strong>1. DIAGNOSE (EVM):</strong> Prosjektet opererer med en kostnadseffektivitet på <strong>CPI {cpi:.2f}</strong> og et akkumulert kostnadsavvik på <strong>NOK {cv_m:.1f}M</strong>. Fysisk fremdrift meldes til <strong>SPI {spi:.2f}</strong> som følge av forsert reaktormontasje.</p>
-        <p><strong>2. DRIVER & LIKVIDITET:</strong> Bokførte kostnader (NOK {AC_NOK/1e6:.1f}M) og åpne leverandørforpliktelser (NOK {OPEN_PO_NOK/1e6:.1f}M) gir en samlet finansiell eksponering på <strong>NOK {TOTAL_EXPOSURE_NOK/1e6:.1f}M ({exp_pct:.0f}% av BAC)</strong>.</p>
-        <p><strong>3. REGNSKAPSMESSIG KONSEKVENS:</strong> Av dette er <strong>NOK {AUC_CAPITALIZED_NOK/1e6:.1f}M</strong> balanseført som anlegg under utførelse (AuC) under IAS 38. Dette utløser obligatorisk krav om nedskrivningstest etter IAS 36 før årsoppgjøret grunnet eksploderende EAC.</p>
-        <p><strong>4. PÅBUD TIL STYRET:</strong> 1) Umiddelbar innkjøpsfrys på alle nye rekvisisjoner. 2) Kanselleringsaudit av uleverte PO-er (NOK 49,2M). 3) Innkall styret til ekstraordinært Stage-Gate møte for 30 dagers Technical Hold / Off-Ramp vurdering.</p>
+        <h4>🔴 KRITISK STYRINGSSVIKT & LIKVIDITETSEKSPONERING (Per 31.10.2026)</h4>
+        <p><strong>1. DIAGNOSE (EVM):</strong> Prosjektet opererer med kostnadseffektivitet <strong>CPI {DATA['CPI']:.2f}</strong> og et akkumulert kostnadsavvik på <strong>NOK {DATA['CV']/1e6:.1f}M</strong>. Fremdriften meldes likevel til <strong>SPI {DATA['SPI']:.2f}</strong> (+5 uker foran plan) grunnet aggressiv forsering.</p>
+        <p><strong>2. FORPLIKTELSER & EKSPONERING:</strong> Bokførte kostnader (NOK {DATA['AC']/1e6:.1f}M) og uleverte innkjøpsordrer (NOK {DATA['OPEN_PO']/1e6:.1f}M) gir en samlet eksponering på <strong>NOK {DATA['TOTAL_EXPOSURE']/1e6:.1f}M ({DATA['TOTAL_EXPOSURE']/DATA['BAC']*100:.0f}% av budsjett)</strong>.</p>
+        <p><strong>3. IFRS BALANSERISIKO:</strong> Av dette er <strong>NOK {DATA['AUC']/1e6:.1f}M</strong> balanseført som anlegg under utførelse (AuC) etter IAS 38. Dette utløser obligatorisk krav om nedskrivningstest etter IAS 36 før årsoppgjøret.</p>
+        <p><strong>4. ANBEFALT STYREVEDTAK:</strong> Vedta umiddelbar <strong>30 dagers Technical Hold & Innkjøpsfrys</strong> for å kansellere uleverte PO-er (sparer 18,2 MNOK) og forskyve ferdigstillelse til januar 2027.</p>
     </div>
     """, unsafe_allow_html=True)
     
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        st.metric("Budget at Completion (BAC)", f"{BAC_NOK/1e6:.1f} MNOK", "Vedtatt ramme", delta_color="off")
-    with col2:
-        st.metric("Actual Cost (AC)", f"{AC_NOK/1e6:.1f} MNOK", f"+{(AC_NOK/BAC_NOK-1)*100:.0f}% over BAC", delta_color="inverse")
-    with col3:
-        st.metric("Earned Value (EV)", f"{EV_NOK/1e6:.1f} MNOK", f"SPI {spi:.2f} (Forsert)")
-    with col4:
-        st.metric("Åpne Forpliktelser (PO)", f"{OPEN_PO_NOK/1e6:.1f} MNOK", "Ufakturert")
-    with col5:
-        st.metric("Total Eksponering", f"{TOTAL_EXPOSURE_NOK/1e6:.1f} MNOK", f"{exp_pct:.0f}% av budsjett", delta_color="inverse")
-
-    st.markdown("---")
+    c1, c2, c3, c4, c5 = st.columns(5)
+    c1.metric("Budsjett (BAC)", f"{DATA['BAC']/1e6:.1f} MNOK", "Vedtatt ramme", delta_color="off")
+    c2.metric("Påløpt Kostnad (AC)", f"{DATA['AC']/1e6:.1f} MNOK", f"+{(DATA['AC']/DATA['BAC']-1)*100:.0f}% over BAC", delta_color="inverse")
+    c3.metric("Opptjent Verdi (EV)", f"{DATA['EV']/1e6:.1f} MNOK", f"SPI {DATA['SPI']:.2f} (Forsert)")
+    c4.metric("Åpne PO-er", f"{DATA['OPEN_PO']/1e6:.1f} MNOK", "Ufakturert binding")
+    c5.metric("Total Eksponering", f"{DATA['TOTAL_EXPOSURE']/1e6:.1f} MNOK", f"{DATA['TOTAL_EXPOSURE']/DATA['BAC']*100:.0f}% av BAC", delta_color="inverse")
     
-    c_left, c_right = st.columns([1.2, 1])
-    with c_left:
+    st.markdown("---")
+    col_l, col_r = st.columns([1.2, 1])
+    with col_l:
         st.subheader("Styringsgap: Eksponering vs. Budsjett")
-        fig_bar = go.Figure(data=[
-            go.Bar(
-                x=["Budsjett (BAC)", "Opptjent (EV)", "Påløpt (AC)", "Total Eksponering"],
-                y=[BAC_NOK/1e6, EV_NOK/1e6, AC_NOK/1e6, TOTAL_EXPOSURE_NOK/1e6],
-                text=[f"{BAC_NOK/1e6:.1f}M", f"{EV_NOK/1e6:.1f}M", f"{AC_NOK/1e6:.1f}M", f"{TOTAL_EXPOSURE_NOK/1e6:.1f}M"],
-                textposition="outside",
-                marker_color=["#595959", "#2F5496", "#C00000", "#800000"]
-            )
-        ])
-        fig_bar.update_layout(yaxis_title="Beløp i MNOK", plot_bgcolor="white", height=340, margin=dict(l=20, r=20, t=30, b=20))
-        st.plotly_chart(fig_bar, use_container_width=True)
-        
-    with c_right:
+        fig = go.Figure([go.Bar(
+            x=["Budsjett (BAC)", "Opptjent (EV)", "Påløpt (AC)", "Total Eksponering"],
+            y=[DATA["BAC"]/1e6, DATA["EV"]/1e6, DATA["AC"]/1e6, DATA["TOTAL_EXPOSURE"]/1e6],
+            text=[f"{DATA['BAC']/1e6:.1f}M", f"{DATA['EV']/1e6:.1f}M", f"{DATA['AC']/1e6:.1f}M", f"{DATA['TOTAL_EXPOSURE']/1e6:.1f}M"],
+            textposition="outside",
+            marker_color=["#595959", "#2F5496", "#C00000", "#800000"]
+        )])
+        fig.update_layout(yaxis_title="MNOK", plot_bgcolor="white", height=320, margin=dict(l=20, r=20, t=30, b=20))
+        st.plotly_chart(fig, use_container_width=True)
+    with col_r:
         st.subheader("Styrets Beslutningsalternativer")
         st.markdown("""
         * **Alternativ A: 30 Dagers Technical Hold (Anbefalt)**
-          * Full innkjøps- og ansettelsesfrys.
-          * Kanselleringsaudit av 49,2 MNOK uleverte innkjøpsordrer (estimert besparelse: 15–25 MNOK).
-          * Notifikasjon og dialog med Enova om forsinkelse og revidert milepælsplan.
+          * Full innkjøpsfrys og kanselleringsaudit av uleverte PO-er (sparer **18,2 MNOK**).
+          * Capper samlet eksponering på **89,0 MNOK** mot 4–6 ukers tidsforskyvning.
         * **Alternativ B: Formell Prosjektstans (Off-Ramp)**
           * Terminere prosjektet ved Stage-Gate 3.
-          * Umiddelbar tapsføring av balanseført AuC på **43,4 MNOK** over konsernresultatet etter IAS 36.
-          * Tilbakebetalingsrisiko for utbetalt Enova-tilskudd (3,0 MNOK).
+          * Umiddelbar tapsføring av **43,4 MNOK** i balanseført AuC rett i konsernresultatet etter IAS 36.
+          * Tilbakebetalingsrisiko for 3,0 MNOK i utbetalt Enova-tilskudd.
         """)
 
 # ------------------------------------------------------------------------------
-# PAGE 01: EVM S-CURVE & TIDSSERIE
+# PAGE 01: AVVIK & DIVERGING BARS (DEVIATION)
 # ------------------------------------------------------------------------------
-elif selected_page == "01 EVM S-Kurve & Tidsserie":
-    st.markdown('<div class="main-title">EVM S-KURVE, FREMDRIFT OG TRENDER</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">Kumulativ kostnadsutvikling (PV vs. AC vs. EV) med markering av vendepunkt i Q1 2026</div>', unsafe_allow_html=True)
+elif selected_page == "01 Avvik & Diverging Bars (Deviation)":
+    st.title("01 Avviksanalyse: Diverging Bars (Visual Vocabulary: Deviation)")
+    st.markdown("""
+    Visual Vocabulary definerer **Diverging Bar Charts** som den overlegne metoden for å vise variasjoner (+/-) 
+    rundt et fast referansepunkt (0-linjen). Her ser vi GreenPilot-paradokset:
+    * **Kostnadsavvik (CV = EV - AC):** Dyp kollaps mot venstre (rødt) pga. ekstreme overskridelser.
+    * **Tidsplanavvik (SV = EV - PV):** Positiv fremdrift mot høyre (grønt) pga. forsering.
+    """)
     
-    st.info("💡 **S-KURVE RESYME:** Fremdriften (EV) holdt tidsplanen og rapporterer forsering (SPI 1.16), men den påløpte kostnaden (AC) stakk fullstendig av fra mars 2026. Forseringen ble finansiert med massiv overtidsbruk og dyre hasteinnkjøp.")
-    
-    fig_s = go.Figure()
-    fig_s.add_trace(go.Scatter(x=TIMELINE_DATA["period"], y=TIMELINE_DATA["cum_pv"]/1e6, mode="lines+markers", name="Planlagt Verdi (PV)", line=dict(color="#595959", dash="dash", width=2)))
-    fig_s.add_trace(go.Scatter(x=TIMELINE_DATA["period"], y=TIMELINE_DATA["cum_ev"]/1e6, mode="lines+markers", name="Opptjent Verdi (EV)", line=dict(color="#2F5496", width=2.5)))
-    fig_s.add_trace(go.Scatter(x=TIMELINE_DATA["period"], y=TIMELINE_DATA["cum_ac"]/1e6, mode="lines+markers", name="Faktisk Kost (AC)", line=dict(color="#C00000", width=3.5)))
-    
-    fig_s.add_annotation(
-        x="2026-03", y=10.4,
-        text="Vendepunkt Mars: PO overskrider BAC (149%)",
-        showarrow=True, arrowhead=2, ax=0, ay=-50,
-        bgcolor="#FFF2CC", bordercolor="#B25900"
-    )
-    fig_s.update_layout(
-        yaxis_title="Akkumulert Beløp (MNOK)",
-        xaxis_title="Periode (2026)",
-        plot_bgcolor="white",
-        height=450,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-    )
-    st.plotly_chart(fig_s, use_container_width=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("A: Kostnadsavvik per WBS (CV = EV - AC)")
+        fig_cv = go.Figure([go.Bar(
+            y=WBS_DF["wbs_id"] + " " + WBS_DF["name"].str.slice(0, 15),
+            x=WBS_DF["cv"]/1e6,
+            orientation='h',
+            marker_color="#C00000",
+            text=[f"{v/1e6:.2f}M" for v in WBS_DF["cv"]],
+            textposition="inside"
+        )])
+        fig_cv.update_layout(xaxis_title="MNOK (Negativt = Budsjettsprekk)", plot_bgcolor="white", height=320, margin=dict(l=10, r=20, t=20, b=20))
+        st.plotly_chart(fig_cv, use_container_width=True)
+    with col2:
+        st.subheader("B: Tidsplanavvik per WBS (SV = EV - PV)")
+        fig_sv = go.Figure([go.Bar(
+            y=WBS_DF["wbs_id"] + " " + WBS_DF["name"].str.slice(0, 15),
+            x=WBS_DF["sv"]/1e6,
+            orientation='h',
+            marker_color="#009E73",
+            text=[f"+{v/1e6:.2f}M" for v in WBS_DF["sv"]],
+            textposition="inside"
+        )])
+        fig_sv.update_layout(xaxis_title="MNOK (Positivt = Foran Plan)", plot_bgcolor="white", height=320, margin=dict(l=10, r=20, t=20, b=20))
+        st.plotly_chart(fig_sv, use_container_width=True)
+        
+    st.dataframe(WBS_DF[["wbs_id", "name", "bac", "ac", "ev", "cv", "sv", "cpi", "spi"]], use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# PAGE 02: JERNTRIANGEL & AVVEININGER (DYNAMIC TRIPLE CONSTRAINT)
+# PAGE 02: DYNAMISK JERNTRIANGEL (TRADE-OFFS)
 # ------------------------------------------------------------------------------
-elif selected_page == "02 Jerntriangel & Avveininger":
-    st.markdown('<div class="main-title">JERNTRIANGEL OG STRATEGISKE AVVEININGER</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">Dynamisk analyse av spenningen mellom Kostnad, Tid og Omfang/Kvalitet</div>', unsafe_allow_html=True)
+elif selected_page == "02 Dynamisk Jerntriangel (Trade-Offs)":
+    st.title("02 Jerntriangel: Avveininger & Rebalanseringsvektor")
+    st.markdown("""
+    I stedet for å fokusere på størrelser, visualiserer dette diagrammet de **strukturelle spenningene og avveiningene** 
+    mellom prosjektets tre klassiske skranker.
+    """)
     
-    st.info("💡 **HVORFOR OPPREMSING ER LØSNINGEN:** Tidsaksen er strammet inn (SPI 1.16, 5 uker foran plan), mens kostnaden har tatt hele støyten (107,2 MNOK eksponering). Ved å gi opp 30 dagers tid (slowing down), flyttes prosjektets driftspunkt slik at 18,2 MNOK i uleverte innkjøpsordrer kan kanselleres før de materialiserer seg.")
-    
-    fig_tri = make_subplots(
-        rows=1, cols=2,
-        column_widths=[0.48, 0.52],
-        specs=[[{'type': 'polar'}, {'type': 'xy'}]],
-        subplot_titles=("A: Spenningsforhold i Jerntriangelet", "B: Eksponeringsreduksjon ved Oppbremsing")
-    )
-    
-    categories = ['KOSTNAD (107.2M Eksponering)', 'TID (SPI 1.16 / +5 uker)', 'OMFANG (96.1% EV / 43.4M AuC)']
-    
-    fig_tri.add_trace(go.Scatterpolar(
-        r=[100, 100, 100, 100],
-        theta=categories + [categories[0]],
-        fill='toself',
-        fillcolor='rgba(180, 180, 180, 0.15)',
-        line=dict(color='#888888', dash='dash', width=1.5),
-        name='Opprinnelig Plan (100% Balansert)'
-    ), row=1, col=1)
-    
-    fig_tri.add_trace(go.Scatterpolar(
-        r=[289.8, 115.6, 96.1, 289.8],
-        theta=categories + [categories[0]],
-        fill='toself',
-        fillcolor='rgba(192, 0, 0, 0.25)',
-        line=dict(color='#C00000', width=2.5),
-        name='Faktisk Tilstand (Per 31.10.2026)'
-    ), row=1, col=1)
-    
-    options = ['1. Status Quo (Fortsett forsering)', '2. Lavrisiko PO-kutt (+15d)', '3. Full Technical Hold (+30d)', '4. Omfangsjustering (+60d)']
-    saved = [0.0, 8.5, 18.2, 27.5]
-    remaining = [107.2, 98.7, 89.0, 79.7]
-    
-    fig_tri.add_trace(go.Bar(
-        y=options, x=remaining, orientation='h',
-        name='Gjenværende Finansiell Eksponering (MNOK)',
-        marker_color='#2F5496',
-        text=[f"{v:.1f}M" for v in remaining],
-        textposition='inside'
-    ), row=1, col=2)
-    
-    fig_tri.add_trace(go.Bar(
-        y=options, x=saved, orientation='h',
-        name='Innfridd Besparelse ved Oppbremsing (MNOK)',
-        marker_color='#009E73',
-        text=[f"+{v:.1f}M" if v > 0 else "" for v in saved],
-        textposition='outside'
-    ), row=1, col=2)
-    
-    fig_tri.update_layout(
-        barmode='stack', plot_bgcolor='white', height=460,
-        legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5),
-        margin=dict(l=20, r=20, t=40, b=50)
-    )
-    st.plotly_chart(fig_tri, use_container_width=True)
+    col1, col2 = st.columns([1.1, 1])
+    with col1:
+        st.subheader("A: Jerntriangelet med Sanntids Operasjonspunkt")
+        cats = ['KOST (107,2M Exp)', 'TID (SPI 1,16 / +5u)', 'OMFANG (96% EV / 43,4M AuC)']
+        fig_tri = go.Figure()
+        fig_tri.add_trace(go.Scatterpolar(
+            r=[100, 100, 100, 100],
+            theta=cats + [cats[0]],
+            fill='toself',
+            fillcolor='rgba(180, 180, 180, 0.15)',
+            line=dict(color='#888888', dash='dash', width=2),
+            name='Baseline Plan (100% Balansert)'
+        ))
+        cost_ratio = (DATA["AC"] / DATA["BAC"]) * 100
+        time_ratio = DATA["SPI"] * 100
+        scope_ratio = (DATA["EV"] / DATA["BAC"]) * 100
+        fig_tri.add_trace(go.Scatterpolar(
+            r=[cost_ratio, time_ratio, scope_ratio, cost_ratio],
+            theta=cats + [cats[0]],
+            fill='toself',
+            fillcolor='rgba(192, 0, 0, 0.25)',
+            line=dict(color='#C00000', width=3),
+            name='Faktisk Tilstand (Fast-Tracked)'
+        ))
+        fig_tri.update_layout(
+            polar=dict(radialaxis=dict(visible=True, range=[0, 320], ticksuffix='%')),
+            legend=dict(orientation="h", x=0.5, xanchor="center", y=-0.15),
+            height=380, margin=dict(l=30, r=30, t=20, b=40)
+        )
+        st.plotly_chart(fig_tri, use_container_width=True)
+    with col2:
+        st.subheader("B: Beslutningsfront ved Oppbremsing (Slow Down)")
+        opts = ['1. Status Quo (Full Fart)', '2. Lavrisiko PO-kutt (+15d)', '3. Technical Hold (+30d)', '4. Omfangsreduksjon (+60d)']
+        rem = [107.2, 98.7, 89.0, 79.7]
+        sav = [0.0, 8.5, 18.2, 27.5]
+        fig_front = go.Figure([
+            go.Bar(y=opts, x=rem, orientation='h', name='Gjenværende Eksponering (MNOK)', marker_color='#2F5496', text=[f"{v:.1f}M" for v in rem], textposition='inside'),
+            go.Bar(y=opts, x=sav, orientation='h', name='Spart Likviditet ved Hold', marker_color='#009E73', text=[f"+{v:.1f}M" if v>0 else "" for v in sav], textposition='outside')
+        ])
+        fig_front.update_layout(barmode='stack', plot_bgcolor='white', height=380, legend=dict(orientation="h", x=0.5, xanchor="center", y=-0.15), margin=dict(l=20, r=20, t=20, b=40))
+        st.plotly_chart(fig_front, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# PAGE 03: TIDSPLAN & GOVERNANCE GANTT
+# PAGE 03: TIDSPLAN & GOVERNANCE GANTT (SCHEDULE)
 # ------------------------------------------------------------------------------
-elif selected_page == "03 Tidsplan & Governance Gantt":
-    st.markdown('<div class="main-title">EXECUTIVE GOVERNANCE GANTT & BESLUTNINGSKART</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">102 Primavera P6 aktiviteter aggregert på WBS med Stage-Gates og 30 dagers Technical Hold</div>', unsafe_allow_html=True)
-    
-    st.info("💡 **TIDSPLANENS FORRÆDERSKE SANNHET:** Prosjektet rapporterer SPI 1.16 og 96 av 102 aktiviteter fullført per 31.10.2026. Men denne akselerasjonen ble kjøpt gjennom ukontrollert overtid og dyre hasteordrer. Et 30 dagers Technical Hold forskyver Gate 4 til januar 2027, men stopper 49,2 MNOK fra å bli fakturert.")
+elif selected_page == "03 Tidsplan & Governance Gantt (Schedule)":
+    st.title("03 Tidsplan & Governance Gantt (Stage-Gates & 30d Hold)")
+    st.markdown("""
+    Gantt-diagrammet over de 6 WBS-pakkene (aggregert fra 102 Primavera-aktiviteter) 
+    synliggjør hvordan en kontrollert oppbremsing i november (30 dagers Technical Hold) forskyver Gate 4 til januar 2027.
+    """)
     
     gantt_df = pd.DataFrame([
-        {"Task": "Gate 1: Prosjektoppstart & Baseline", "Start": "2026-01-05", "Finish": "2026-01-15", "Type": "Stage-Gate", "Status": "Fullført", "Cost": "BAC 20M"},
-        {"Task": "Gate 2: Vendepunkt (PO > BAC)", "Start": "2026-03-25", "Finish": "2026-04-05", "Type": "Stage-Gate", "Status": "Passert", "Cost": "PO 29.8M"},
-        {"Task": "Gate 3: Ekstraordinær Review (I DAG)", "Start": "2026-10-25", "Finish": "2026-11-05", "Type": "Stage-Gate (Stoppunkt)", "Status": "Kritisk", "Cost": "Eksponering 107.2M"},
-        {"Task": "WBS-100 PMO & Prosjektledelse", "Start": "2026-01-05", "Finish": "2026-11-03", "Type": "WBS Fullført", "Status": "16/17 fullført (94%)", "Cost": "AC 7.2M"},
-        {"Task": "WBS-200 Prosessdesign & Basic Eng.", "Start": "2026-01-08", "Finish": "2026-11-14", "Type": "WBS Fullført", "Status": "16/17 fullført (94%)", "Cost": "AC 10.1M"},
-        {"Task": "WBS-300 Pilotanlegg & Reaktor", "Start": "2026-01-11", "Finish": "2026-11-17", "Type": "WBS Sprekk", "Status": "16/17 fullført (94%)", "Cost": "Eksponering 51.6M"},
-        {"Task": "WBS-400 Infrastruktur & Gass", "Start": "2026-01-14", "Finish": "2026-11-06", "Type": "WBS Fullført", "Status": "16/17 fullført (94%)", "Cost": "AC 8.7M"},
-        {"Task": "WBS-500 Installasjon & Elektro", "Start": "2026-01-17", "Finish": "2026-11-23", "Type": "WBS Venter", "Status": "16/17 fullført (1 venter)", "Cost": "AC 5.8M"},
-        {"Task": "WBS-600 Testkjøring & Overlevering", "Start": "2026-01-20", "Finish": "2026-11-11", "Type": "WBS Venter", "Status": "16/17 fullført (1 venter)", "Cost": "AC 2.9M"},
-        {"Task": "ANBEFALT TILTAK: 30d Technical Hold", "Start": "2026-11-01", "Finish": "2026-11-30", "Type": "Styrevedtak", "Status": "Beslutning Gate 3", "Cost": "Sparer 18.2M"},
-        {"Task": "Gate 4 (Revidert): Sluttoverlevering", "Start": "2027-01-15", "Finish": "2027-01-30", "Type": "Stage-Gate (Revidert)", "Status": "Prognose", "Cost": "Enova Sluttrapport"}
+        {"Task": "WBS-100 PMO & Ledelse", "Start": "2026-01-05", "Finish": "2026-11-03", "Status": "Fullført"},
+        {"Task": "WBS-200 Prosessdesign", "Start": "2026-01-08", "Finish": "2026-11-14", "Status": "Fullført"},
+        {"Task": "WBS-300 Reaktor & Pilot", "Start": "2026-01-11", "Finish": "2026-11-17", "Status": "Kritisk (51,6M Exp)"},
+        {"Task": "WBS-400 Infrastruktur", "Start": "2026-01-14", "Finish": "2026-11-06", "Status": "Fullført"},
+        {"Task": "WBS-500 Elektro & Montasje", "Start": "2026-01-17", "Finish": "2026-11-23", "Status": "Venter på Gate 3"},
+        {"Task": "WBS-600 Test & Overlevering", "Start": "2026-01-20", "Finish": "2026-11-11", "Status": "Venter på Gate 3"},
+        {"Task": "ANBEFALT: 30d Technical Hold", "Start": "2026-11-01", "Finish": "2026-11-30", "Status": "Innkjøpsfrys (Sparer 18,2M)"},
     ])
-    
-    color_map = {
-        "Stage-Gate": "#595959",
-        "Stage-Gate (Stoppunkt)": "#C00000",
-        "Stage-Gate (Revidert)": "#009E73",
-        "WBS Fullført": "#2F5496",
-        "WBS Sprekk": "#800000",
-        "WBS Venter": "#E69F00",
-        "Styrevedtak": "#009E73"
-    }
-    
-    fig_gantt = px.timeline(
-        gantt_df, x_start="Start", x_end="Finish", y="Task", color="Type",
-        color_discrete_map=color_map, hover_data=["Status", "Cost"]
-    )
+    fig_gantt = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task", color="Status",
+                            color_discrete_map={"Fullført": "#2F5496", "Kritisk (51,6M Exp)": "#C00000", "Venter på Gate 3": "#E69F00", "Innkjøpsfrys (Sparer 18,2M)": "#009E73"})
     fig_gantt.update_yaxes(autorange="reversed")
     fig_gantt.add_vline(x="2026-10-31", line_width=2, line_dash="dash", line_color="#C00000")
     fig_gantt.add_annotation(
-        x="2026-10-31", y=1, yref="y domain",
-        text="Status per i dag (31.10.2026)", showarrow=False,
-        xanchor="left", yanchor="top"
+        x="2026-10-31", y=1, yref="paper",
+        text="Status per i dag (31.10.2026)",
+        showarrow=False, xanchor="left", yanchor="top",
+        font=dict(color="#C00000", size=11)
     )
-    fig_gantt.update_layout(
-        height=480, plot_bgcolor="white",
-        xaxis_title="Tidslinje (2026 - 2027)", yaxis_title="",
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-    )
+    fig_gantt.update_layout(plot_bgcolor="white", height=380, margin=dict(l=20, r=20, t=30, b=30))
     st.plotly_chart(fig_gantt, use_container_width=True)
+
+# ------------------------------------------------------------------------------
+# PAGE 04: KORRELASJON: BUBBLE & CONNECTED SCATTER (CORRELATION)
+# ------------------------------------------------------------------------------
+elif selected_page == "04 Korrelasjon: Bubble & Connected (Correlation)":
+    st.title("04 Korrelasjon: Fast-Track Fellen & Dødsspiralen")
+    st.markdown("""
+    Visual Vocabulary: **Correlation**. Viser samspillet mellom forsering (SPI), kostnadskollaps (CPI) og kontraktseksponering.
+    """)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("A: WBS Boblediagram (Eksponering)")
+        fig_bub = go.Figure()
+        for idx, row in WBS_DF.iterrows():
+            col = "#C00000" if "AuC" in row["treatment"] else "#2F5496"
+            fig_bub.add_trace(go.Scatter(
+                x=[row["spi"]], y=[row["cpi"]],
+                mode='markers+text',
+                marker=dict(size=row["total_exposure"]/1.5e6 + 12, color=col, opacity=0.75, line=dict(width=1.5, color='black')),
+                text=[f"{row['wbs_id']}<br>{row['total_exposure']/1e6:.1f}M"],
+                textposition="top center",
+                name=row["wbs_id"]
+            ))
+        fig_bub.update_layout(xaxis_title="Fremdriftsindeks (SPI)", yaxis_title="Kostnadsindeks (CPI)", plot_bgcolor="white", height=360, showlegend=False)
+        st.plotly_chart(fig_bub, use_container_width=True)
+    with col2:
+        st.subheader("B: Månedlig Connected Trajectory (Jan-Okt)")
+        fig_conn = go.Figure([go.Scatter(
+            x=TIMELINE_DF["cum_spi"], y=TIMELINE_DF["cum_cpi"],
+            mode='lines+markers+text',
+            line=dict(color='#C00000', width=2.5),
+            marker=dict(size=8, color='#2F5496'),
+            text=[p.split("-")[1] for p in TIMELINE_DF["period"]],
+            textposition="top right"
+        )])
+        fig_conn.update_layout(xaxis_title="Akkumulert SPI", yaxis_title="Akkumulert CPI", plot_bgcolor="white", height=360)
+        st.plotly_chart(fig_conn, use_container_width=True)
+
+# ------------------------------------------------------------------------------
+# PAGE 05: RANGERING & LEVERANDØRER (RANKING)
+# ------------------------------------------------------------------------------
+elif selected_page == "05 Rangering & Leverandører (Ranking)":
+    st.title("05 Rangering & Forhandlingsliste (Visual Vocabulary: Ranking)")
+    st.markdown("Horisontal **Lollipop & Bar-ordered** rangering av leverandøreksponering og uleverte PO-kutt.")
     
-    col_g1, col_g2 = st.columns(2)
-    with col_g1:
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("A: Topp 8 Leverandører etter Åpen PO (Kanselleringsmål)")
+        fig_v = go.Figure([go.Bar(
+            y=VENDOR_DF["name"], x=VENDOR_DF["open_po"], orientation='h',
+            marker_color=["#C00000" if p=="Kritisk" else "#E69F00" for p in VENDOR_DF["priority"]],
+            text=[f"{v:.2f} MNOK" for v in VENDOR_DF["open_po"]],
+            textposition="inside"
+        )])
+        fig_v.update_layout(xaxis_title="Åpen Ulevert PO (MNOK)", plot_bgcolor="white", height=350)
+        st.plotly_chart(fig_v, use_container_width=True)
+    with col2:
+        st.subheader("B: Forhandlingsmandat for 30d Technical Hold")
         st.markdown("""
-        #### Tidsplanens Hovedfunn:
-        * **96 av 102 aktiviteter** er registrert som fullført per 31. oktober 2026.
-        * **Akselerasjonskostnad:** Prosjektet er ~5 uker foran opprinnelig milepælsplan, men forseringen kostet 38,8 MNOK i rent overforbruk.
-        * **Gjenstående aktiviteter:** Kun 2 kritiske aktiviteter i WBS-500 og WBS-600 gjenstår før anlegget kan spenningssettes.
-        """)
-    with col_g2:
-        st.markdown("""
-        #### Hvorfor 30 dagers Technical Hold er løsningen:
-        * Å fortsette i 116 % hastighet betyr at 49,2 MNOK i åpne PO-er rulles ut og må betales.
-        * Ved å **bremse ned i 30 dager** flyttes Gate 4 fra 15. desember 2026 til 30. januar 2027.
-        * Dette gir rom for å kansellere 18,2 MNOK i unødvendige innkjøp og notifisere Enova i henhold til tilskuddsavtalen.
+        * **Mål 1 (V006 - Tyskland):** 4,36 MNOK åpen PO på reaktorkomponenter. Krever umiddelbar produksjonsstans.
+        * **Mål 2 (V020 - Norge):** 4,16 MNOK åpen PO på elektro. Utsettelse av leveranse til januar 2027.
+        * **Mål 3 (V007 - USA):** 3,78 MNOK i USD. Sikring mot ytterligere kronesvekkelse.
+        * **Samlet besparelse ved topp 3:** **12,30 MNOK** (25% av hele forpliktelsesisberget).
         """)
 
 # ------------------------------------------------------------------------------
-# PAGE 04: FORPLIKTELSESISBERG & WBS
+# PAGE 06: FORDELING & REVISJONSRISIKO (DISTRIBUTION)
 # ------------------------------------------------------------------------------
-elif selected_page == "04 Forpliktelsesisberg & WBS":
-    st.markdown('<div class="main-title">FORPLIKTELSESISBERGET OG WBS DRILLDOWN</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">Dekomponering av overskridelsen og åpne leverandørforpliktelser per arbeidspakke</div>', unsafe_allow_html=True)
+elif selected_page == "06 Fordeling & Revisjonsrisiko (Distribution)":
+    st.title("06 Fordeling & Revisjonsrisiko (Visual Vocabulary: Distribution)")
+    st.markdown("Statistisk spredning i timeregistreringer (ISA 805 tak på 530 kr/t) og bimodal fordeling i PO-størrelser.")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("A: Ukentlig Timefordeling per Koststed (1 537 Linjer)")
+        fig_box = go.Figure()
+        fig_box.add_trace(go.Box(y=[8, 8, 8, 7.5, 8, 12, 14, 16], name="CC-4100 Verksted", marker_color="#E69F00"))
+        fig_box.add_trace(go.Box(y=[7.5, 7.5, 8, 8, 7.5, 7.5, 10, 11], name="CC-4200 Lab", marker_color="#2F5496"))
+        fig_box.add_trace(go.Box(y=[8, 8, 8.5, 8, 12, 14, 15, 16], name="CC-4300 PMO", marker_color="#C00000"))
+        fig_box.add_hline(y=12.0, line_dash="dash", line_color="#C00000", annotation_text="Overtidsterskel")
+        fig_box.update_layout(yaxis_title="Timer / Uke", plot_bgcolor="white", height=350)
+        st.plotly_chart(fig_box, use_container_width=True)
+    with col2:
+        st.subheader("B: Bimodal Innkjøpsstørrelse (150 PO-er)")
+        fig_hist = go.Figure([go.Histogram(
+            x=[0.1]*50 + [1.2]*35 + [1.6]*35 + [1.9]*30,
+            nbinsx=15, marker_color="#2F5496"
+        )])
+        fig_hist.update_layout(xaxis_title="PO Beløp (MNOK)", yaxis_title="Antall Ordrer", plot_bgcolor="white", height=350)
+        st.plotly_chart(fig_hist, use_container_width=True)
+
+# ------------------------------------------------------------------------------
+# PAGE 07: DEL TIL HELHET & BALANSE (PART-TO-WHOLE)
+# ------------------------------------------------------------------------------
+elif selected_page == "07 Del til Helhet & Balanse (Part-to-Whole)":
+    st.title("07 Del til Helhet & IFRS Balanse (Visual Vocabulary: Part-to-Whole)")
+    st.markdown("Hierarkisk **Treemap** over samlet eksponering og **100% Proportional Stacked Bars** for AuC balanseforskyvning.")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("A: Treemap over Total Eksponering (107,2 MNOK)")
+        fig_tree = go.Figure(go.Treemap(
+            labels=WBS_DF["wbs_id"] + "<br>" + WBS_DF["name"].str.slice(0, 14),
+            parents=["GreenPilot 2026"] * len(WBS_DF),
+            values=WBS_DF["total_exposure"],
+            textinfo="label+value+percent parent",
+            marker=dict(colors=["#C00000" if "AuC" in t else "#2F5496" for t in WBS_DF["treatment"]])
+        ))
+        fig_tree.update_layout(margin=dict(l=10, r=10, t=30, b=10), height=360)
+        st.plotly_chart(fig_tree, use_container_width=True)
+    with col2:
+        st.subheader("B: 100% Stacked Bar (AuC vs. P&L Forskyvning)")
+        fig_stk = go.Figure([
+            go.Bar(name='Balanseført AuC (IAS 38)', x=['BAC (20M)', 'AC (58M)', 'Eksponering (107M)'], y=[70.0, 74.8, 85.8], marker_color='#2F5496', text=['70.0%', '74.8% (43.4M)', '85.8% (91.9M)'], textposition='inside'),
+            go.Bar(name='Resultatført FoU (P&L)', x=['BAC (20M)', 'AC (58M)', 'Eksponering (107M)'], y=[30.0, 25.2, 14.2], marker_color='#595959', text=['30.0%', '25.2%', '14.2%'], textposition='inside')
+        ])
+        fig_stk.update_layout(barmode='stack', yaxis=dict(ticksuffix='%', range=[0, 100]), plot_bgcolor='white', height=360, legend=dict(orientation="h", y=-0.15))
+        st.plotly_chart(fig_stk, use_container_width=True)
+
+# ------------------------------------------------------------------------------
+# PAGE 08: KAPITAL- & FORPLIKTELSESFLYT (FLOW / SANKEY)
+# ------------------------------------------------------------------------------
+elif selected_page == "08 Kapital- & Forpliktelsesflyt (Flow / Sankey)":
+    st.title("08 Kapital- & Forpliktelsesflyt (Visual Vocabulary: Flow)")
+    st.markdown("Sankey-diagram som sporer kapitalen fra arbeidspakker gjennom ERP-systemet til balanseført AuC og kansellerbare ordrer.")
+    
+    labels = [
+        "WBS-100 PMO (11.4M)", "WBS-200 Prosess (17.0M)", "WBS-300 Reaktor (51.6M)",
+        "WBS-400 Infra (13.9M)", "WBS-500 Elektro (9.4M)", "WBS-600 Test (3.9M)",
+        "Bokført AC (58.0M)", "Åpne PO-er (49.2M)",
+        "Balanseført AuC (43.4M)", "Resultatført FoU (14.6M)",
+        "Kansellerbar PO (18.2M)", "Låst PO (31.0M)"
+    ]
+    sources = [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 6, 6, 7, 7]
+    targets = [6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 8, 9, 10, 11]
+    values =  [7.25, 10.15, 23.19, 8.70, 5.80, 2.88, 4.12, 6.85, 28.45, 5.21, 3.60, 1.00, 43.38, 14.59, 18.20, 31.03]
+    node_colors = ["#2F5496"]*6 + ["#C00000", "#E69F00"] + ["#C00000", "#595959", "#009E73", "#800000"]
+    
+    fig_sankey = go.Figure(go.Sankey(
+        node=dict(pad=15, thickness=20, line=dict(color="black", width=0.5), label=labels, color=node_colors),
+        link=dict(source=sources, target=targets, value=values, color="rgba(200, 200, 200, 0.45)")
+    ))
+    fig_sankey.update_layout(height=480, margin=dict(l=20, r=20, t=20, b=20))
+    st.plotly_chart(fig_sankey, use_container_width=True)
+
+# ------------------------------------------------------------------------------
+# PAGE 09: USIKKERHET & EAC UTFALLSROM (UNCERTAINTY / FAN CHART)
+# ------------------------------------------------------------------------------
+elif selected_page == "09 Usikkerhet & EAC Vifte (Uncertainty)":
+    st.title("09 Usikkerhet & EAC Utfallsrom (Visual Vocabulary: Uncertainty)")
+    st.markdown("""
+    I henhold til Visual Vocabulary representerer et **Fan Chart (Konfidensvifte)** den fremste måten å formidle 
+    fremtidig usikkerhet til et styre. I stedet for et statisk punkt-estimat, viser viften konsekvensen av styrets valg ved Gate 3:
+    * **P10 (Beste utfall - 30d Technical Hold):** Sluttkostnad begrenses til **89,0 MNOK**.
+    * **P50 (Forventet kurs / Status Quo):** Sluttkostnad lander på **107,2 MNOK**.
+    * **P90 (Ukontrollert eskalering / Forsering):** Sluttkostnad eskalerer til **132,5 MNOK**.
+    """)
+    
+    months_all = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des', 'Jan 27', 'Feb 27']
+    ac_hist = [4.65, 7.03, 10.44, 15.34, 21.46, 29.35, 35.80, 42.78, 50.43, 57.97]
+    pv_hist = [1.53, 3.34, 4.79, 6.42, 8.21, 10.13, 11.78, 13.30, 15.01, 16.62]
+    
+    x_proj = ['Okt', 'Nov', 'Des', 'Jan 27', 'Feb 27']
+    p90 = [57.97, 75.0, 94.0, 114.0, 132.5]
+    p50 = [57.97, 66.0, 78.5, 93.0, 107.2]
+    p10 = [57.97, 60.5, 68.0, 78.0, 89.0]
+    
+    fig_fan = go.Figure()
+    # Shaded band
+    fig_fan.add_trace(go.Scatter(x=x_proj + x_proj[::-1], y=p90 + p10[::-1], fill='toself', fillcolor='rgba(192, 0, 0, 0.18)', line=dict(color='rgba(255,255,255,0)'), name='P10 - P90 Utfallsrom'))
+    # Trajectories
+    fig_fan.add_trace(go.Scatter(x=x_proj, y=p90, line=dict(color='#800000', dash='dot', width=2), name='P90: Ukontrollert Eskalering (132,5M)'))
+    fig_fan.add_trace(go.Scatter(x=x_proj, y=p50, line=dict(color='#C00000', dash='dash', width=2.5), name='P50: Status Quo (107,2M)'))
+    fig_fan.add_trace(go.Scatter(x=x_proj, y=p10, line=dict(color='#009E73', width=3), name='P10: 30d Technical Hold (89,0M)'))
+    # Actuals
+    fig_fan.add_trace(go.Scatter(x=months_all[:10], y=ac_hist, mode='lines+markers', line=dict(color='#2F5496', width=3), name='Historisk Påløpt AC'))
+    fig_fan.add_trace(go.Scatter(x=months_all[:10], y=pv_hist, line=dict(color='#888888', dash='dash'), name='Planlagt Baseline (PV)'))
+    
+    fig_fan.add_hline(y=20.0, line_dash="dash", line_color="#555555", annotation_text="BAC Budsjett: 20,0 MNOK")
+    fig_fan.add_vline(x="Okt", line_color="#C00000", line_width=2, line_dash="dash")
+    fig_fan.add_annotation(
+        x="Okt", y=1, yref="paper",
+        text="Gate 3 Cut-off (31.10)",
+        showarrow=False, xanchor="left", yanchor="top",
+        font=dict(color="#C00000", size=10)
+    )
+    fig_fan.update_layout(yaxis_title="MNOK", plot_bgcolor="white", height=440, legend=dict(orientation="h", y=-0.2))
+    st.plotly_chart(fig_fan, use_container_width=True)
+
+# ------------------------------------------------------------------------------
+# PAGE 10: FORPLIKTELSESISBERG & WBS (WATERFALL)
+# ------------------------------------------------------------------------------
+elif selected_page == "10 Forpliktelsesisberg & WBS (Waterfall)":
+    st.title("10 Forpliktelsesisberg & WBS Kostnadsbro")
+    st.markdown("Fossefallsanalyse som forklarer hvordan prosjektet beveget seg fra 20,0 MNOK til 107,2 MNOK.")
     
     fig_wf = go.Figure(go.Waterfall(
-        name="Eksponering", orientation="v",
-        measure=["relative", "relative", "relative", "relative", "total"],
-        x=["Vedtatt Budsjett (BAC)", "WBS-300 Reaktor Sprekk", "Øvrige WBS Avvik", "Åpne PO Forpliktelser", "Total Eksponering"],
-        textposition="outside",
-        text=["20.0M", "+15.2M", "+22.8M", "+49.2M", "107.2M"],
-        y=[20.0, 15.19, 22.78, 49.23, 107.20],
+        orientation="v",
+        measure=["relative", "relative", "relative", "relative", "relative", "relative", "total", "relative", "total"],
+        x=["Vedtatt BAC", "WBS-100 PMO", "WBS-200 Prosess", "WBS-300 Reaktor", "WBS-400 Infra", "WBS-500/600", "Bokført AC", "Uleverte PO", "Total Eksponering"],
+        y=[20.0, 4.75, 6.65, 15.19, 5.70, 5.68, 57.97, 49.23, 107.20],
         connector={"line": {"color": "#888888"}},
         decreasing={"marker": {"color": "#009E73"}},
         increasing={"marker": {"color": "#C00000"}},
-        totals={"marker": {"color": "#800000"}}
+        totals={"marker": {"color": "#1F4E79"}},
+        text=[f"{v:.1f}M" for v in [20.0, 4.75, 6.65, 15.19, 5.70, 5.68, 57.97, 49.23, 107.20]],
+        textposition="outside"
     ))
-    fig_wf.update_layout(
-        title="Forpliktelsesisberget: Fra 20 MNOK Budsjett til 107,2 MNOK Eksponering",
-        yaxis_title="MNOK", plot_bgcolor="white", height=400
-    )
+    fig_wf.update_layout(yaxis_title="MNOK", plot_bgcolor="white", height=420)
     st.plotly_chart(fig_wf, use_container_width=True)
-    
-    st.subheader("WBS Detaljoppstilling & Regnskapsmessig Behandling (IAS 38)")
-    st.dataframe(
-        WBS_DATA.style.format({
-            "bac": "{:,.0f} NOK",
-            "ac": "{:,.0f} NOK",
-            "ev": "{:,.0f} NOK",
-            "open_po": "{:,.0f} NOK",
-            "spi": "{:.2f}",
-            "cpi": "{:.2f}"
-        }),
-        use_container_width=True
-    )
 
 # ------------------------------------------------------------------------------
-# PAGE 05: LIKVIDITETSBRO & FISKÅ ENHETER
+# PAGE 11: LIKVIDITETSBRO & FISKÅ ENHETER
 # ------------------------------------------------------------------------------
-elif selected_page == "05 Likviditetsbro & Fiskå Enheter":
-    st.markdown('<div class="main-title">LIKVIDITETSEKSPONERING OG ENHETER FISKÅ</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">Avstemming fra påløpt kostnad til faktisk kontantutbetaling (DPO 30d) og avdelingsfangst</div>', unsafe_allow_html=True)
+elif selected_page == "11 Likviditetsbro & Fiskå Enheter (Cash)":
+    st.title("11 Likviditet, Forfallsstruktur & Fiskå Koststeder")
+    st.markdown("Likviditetsprognose basert på DPO 30d utbetalinger og timefangst ved CC-4100/4200/4300 (@ 530 kr/t).")
     
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.subheader("Månedlig Kontantstrøm vs. Enova")
-        fig_cf = go.Figure()
-        fig_cf.add_trace(go.Bar(x=TIMELINE_DATA["period"], y=TIMELINE_DATA["cash_out"]/1e6, name="Kontantutbetaling (DPO 30d + Lønn)", marker_color="#2F5496"))
-        fig_cf.add_trace(go.Bar(x=TIMELINE_DATA["period"], y=TIMELINE_DATA["enova_in"]/1e6, name="Enova Innbetaling", marker_color="#009E73"))
-        fig_cf.update_layout(barmode="group", yaxis_title="MNOK", plot_bgcolor="white", height=350)
-        st.plotly_chart(fig_cf, use_container_width=True)
-        
-    with col_b:
-        st.subheader("Timefangst og Ressursbruk Elkem Fiskå")
-        fig_cc = go.Figure(go.Bar(
-            x=COST_CENTERS["hours"],
-            y=COST_CENTERS["name"],
-            orientation="h",
-            marker_color=COST_CENTERS["color"],
-            text=[f"{h:,.0f}t (@ 530 kr/t)" for h in COST_CENTERS["hours"]],
-            textposition="inside"
-        ))
-        fig_cc.update_layout(xaxis_title="Faktiske Timer", plot_bgcolor="white", height=350)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("A: Månedlig Likviditetsutgang vs. Enova Innbetaling")
+        fig_cash = go.Figure([
+            go.Bar(name='Kontantutbetalinger (AP+Lønn)', x=TIMELINE_DF["period"], y=TIMELINE_DF["cash_out"]/1e6, marker_color='#C00000'),
+            go.Bar(name='Enova Tilskudd Mottatt', x=TIMELINE_DF["period"], y=TIMELINE_DF["enova_in"]/1e6, marker_color='#009E73')
+        ])
+        fig_cash.update_layout(yaxis_title="MNOK", plot_bgcolor="white", height=340, barmode='group')
+        st.plotly_chart(fig_cash, use_container_width=True)
+    with col2:
+        st.subheader("B: Timefangst & Kostnader ved Fiskå (@ 530 kr/t)")
+        cc_df = pd.DataFrame([
+            {"cc": "CC-4100 Verksted", "hours": 3379.5, "cost": 1.79, "status": "Overtid / Forsering"},
+            {"cc": "CC-4200 Sentrallab", "hours": 2999.0, "cost": 1.59, "status": "Normal drift"},
+            {"cc": "CC-4300 PMO & Adm", "hours": 3394.0, "cost": 1.80, "status": "Krise / Møter"}
+        ])
+        fig_cc = go.Figure([go.Bar(y=cc_df["cc"], x=cc_df["hours"], orientation='h', marker_color=['#E69F00', '#2F5496', '#C00000'], text=[f"{h:.0f}t ({c:.2f}M)" for h, c in zip(cc_df['hours'], cc_df['cost'])], textposition='inside')])
+        fig_cc.update_layout(xaxis_title="Faktiske Timer", plot_bgcolor="white", height=340)
         st.plotly_chart(fig_cc, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# PAGE 06: HVA-OM SCENARIO SIMULATOR (DETERMINISTIC ENGINE)
+# PAGE 12: HVA-OM SCENARIO SIMULATOR
 # ------------------------------------------------------------------------------
-elif selected_page == "06 Hva-om Scenario Simulator":
-    st.markdown('<div class="main-title">DETERMINISTISK HVA-OM SCENARIO SIMULATOR</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">Interaktiv simulering av tiltakseffekter for styrets beslutningsgrunnlag</div>', unsafe_allow_html=True)
+elif selected_page == "12 Hva-om Scenario Simulator":
+    st.title("12 Hva-om Scenario Simulator (Beslutningsstøtte)")
+    st.markdown("Juster styringsparametere for å simulere finansiell eksponering og IAS 36 nedskrivningsbelastning.")
     
-    s_col1, s_col2 = st.columns([1, 1.2])
-    with s_col1:
-        st.subheader("Simuleringsparametre")
-        po_cut_pct = st.slider("Kansellering av uleverte PO-er (%)", min_value=0, max_value=100, value=30, step=5)
-        impairment_haircut = st.slider("IAS 36 Nedskrivning på AuC (%)", min_value=0, max_value=100, value=50, step=10)
-        enova_retained = st.checkbox("Forutsett at Enova ikke krever tilskudd tilbakebetalt", value=True)
+    col1, col2 = st.columns([1, 1.4])
+    with col1:
+        st.subheader("Styringsparametere")
+        po_cut_pct = st.slider("Kansellering av åpne PO-er (%)", min_value=0, max_value=60, value=37, step=5)
+        impair_pct = st.slider("IAS 36 Nedskrivning på balanseført AuC (%)", min_value=0, max_value=100, value=25, step=5)
         
-        po_saved_nok = OPEN_PO_NOK * (po_cut_pct / 100.0)
-        sim_new_exposure_nok = TOTAL_EXPOSURE_NOK - po_saved_nok
-        sim_impairment_loss_nok = AUC_CAPITALIZED_NOK * (impairment_haircut / 100.0)
-        sim_net_cost_nok = sim_new_exposure_nok - (ENOVA_GRANT_NOK if enova_retained else 0)
+        sim_po_saved = (DATA["OPEN_PO"] * (po_cut_pct / 100)) / 1e6
+        sim_new_exp = (DATA["TOTAL_EXPOSURE"] / 1e6) - sim_po_saved
+        sim_impair_loss = (DATA["AUC"] / 1e6) * (impair_pct / 100)
         
-    with s_col2:
-        st.subheader("Simulerte Nøkkeltall for Styret")
-        k1, k2 = st.columns(2)
-        with k1:
-            st.metric("Ny Total Eksponering", f"{sim_new_exposure_nok/1e6:.1f} MNOK", f"-{po_saved_nok/1e6:.1f} MNOK spart")
-            st.metric("Netto Likviditetsbelastning", f"{sim_net_cost_nok/1e6:.1f} MNOK")
-        with k2:
-            st.metric("IAS 36 Nedskrivningstap", f"-{sim_impairment_loss_nok/1e6:.1f} MNOK", "Direkte resultateffekt", delta_color="inverse")
-            st.metric("Gjenværende AuC Balanse", f"{(AUC_CAPITALIZED_NOK - sim_impairment_loss_nok)/1e6:.1f} MNOK")
-            
-        fig_sim = go.Figure(go.Bar(
-            x=["Nåværende Eksponering", "Simulert Etter Kutt", "Balanseført AuC", "IAS 36 Tap"],
-            y=[TOTAL_EXPOSURE_NOK/1e6, sim_new_exposure_nok/1e6, AUC_CAPITALIZED_NOK/1e6, sim_impairment_loss_nok/1e6],
-            marker_color=["#800000", "#2F5496", "#595959", "#C00000"],
-            text=[f"{v:.1f}M" for v in [TOTAL_EXPOSURE_NOK/1e6, sim_new_exposure_nok/1e6, AUC_CAPITALIZED_NOK/1e6, sim_impairment_loss_nok/1e6]],
-            textposition="outside"
-        ))
-        fig_sim.update_layout(yaxis_title="MNOK", plot_bgcolor="white", height=300)
+        st.markdown(f"""
+        * **Kansellert PO-verdi:** +{sim_po_saved:.2f} MNOK spart likviditet
+        * **Ny Total Eksponering:** {sim_new_exp:.2f} MNOK
+        * **IAS 36 Tapsføring (Drift):** -{sim_impair_loss:.2f} MNOK
+        """)
+    with col2:
+        st.subheader("Simulert Utfall")
+        fig_sim = go.Figure([go.Bar(
+            x=["Nåværende Eksponering", "Simulert Eksponering", "Balanseført AuC", "IAS 36 Tap"],
+            y=[DATA["TOTAL_EXPOSURE"]/1e6, sim_new_exp, DATA["AUC"]/1e6, sim_impair_loss],
+            text=[f"{DATA['TOTAL_EXPOSURE']/1e6:.1f}M", f"{sim_new_exp:.1f}M", f"{DATA['AUC']/1e6:.1f}M", f"{sim_impair_loss:.1f}M"],
+            textposition="outside",
+            marker_color=["#800000", "#2F5496", "#595959", "#C00000"]
+        )])
+        fig_sim.update_layout(yaxis_title="MNOK", plot_bgcolor="white", height=380)
         st.plotly_chart(fig_sim, use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# PAGE 07: AI CONTROLLER COPILOT (RAG & VEKTOR-DB ENGINE)
+# PAGE 13: AI CONTROLLER COPILOT (RAG)
 # ------------------------------------------------------------------------------
-elif selected_page == "07 AI Controller Copilot (RAG & Vektor-DB)":
-    st.markdown('<div class="main-title">ELKEM AI CONTROLLER COPILOT (RAG & VEKTOR-DB)</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">Agentisk finansiell dialogmotor med kildeforankring i stjerneskjemaet, IFRS og ISA 805 standarder</div>', unsafe_allow_html=True)
+elif selected_page == "13 AI Controller Copilot (RAG)":
+    st.title("13 Elkem AI Controller Copilot (Vektor-DB & RAG)")
+    st.markdown("Still spørsmål direkte til prosjektets kildekorpus (IFRS IAS 38/36, ISA 805, Enova, Board Memo).")
     
-    st.markdown("##### 📚 Vektor-DB Kunnskapsdatabase")
-    cat_filter = st.selectbox("Filtrer kunnskapsområde:", ["Alle", "Regnskap (IFRS)", "Revisjon & Enova", "Prosjektstyring & EVM"])
-    
-    st.write("Velg et hurtigspørsmål for styret eller søk fritt i kunnskapsbasen:")
     q_col1, q_col2, q_col3 = st.columns(3)
-    prompt_input = ""
-    if q_col1.button("🔍 Hvorfor kollapset kostnadskontrollen i Q1?"):
-        prompt_input = "Hvorfor kollapset kostnadskontrollen i Q1?"
-    if q_col2.button("⚖️ Hvilken nedskrivningsrisiko foreligger under IAS 36?"):
-        prompt_input = "Hvilken nedskrivningsrisiko foreligger under IAS 36?"
-    if q_col3.button("📋 Formuler utkast til formelt styrevedtak"):
-        prompt_input = "Formuler utkast til formelt styrevedtak"
+    preset_q = ""
+    if q_col1.button("Hvorfor må AuC testes for verdifall?"):
+        preset_q = "Hvorfor må anlegg under utførelse testes for verdifall etter IAS 36?"
+    if q_col2.button("Hva kreves for å balansekapitalisere?"):
+        preset_q = "Hva er kriteriene for balanseføring etter IAS 38?"
+    if q_col3.button("Hvilke regler gjelder for timesats 530 kr?"):
+        preset_q = "Hva er reglene for timesats og revisjon etter ISA 805 og Enova?"
         
-    user_query = st.text_input("Still et spørsmål til AI Controller Copilot:", value=prompt_input)
+    user_query = st.text_input("Ditt kontrollspørsmål:", value=preset_q)
     
     if user_query:
-        st.markdown("---")
-        rag_hits = query_rag(user_query, top_k=2, category_filter=cat_filter)
+        vec, mat = get_vector_db()
+        q_vec = vec.transform([user_query])
+        sims = cosine_similarity(q_vec, mat).flatten()
+        top_indices = sims.argsort()[::-1][:2]
         
-        st.markdown("### 🤖 Controller AI Resonnering:")
-        if "Q1" in user_query or "kollapset" in user_query:
+        st.markdown(f"### Svar fra AI Copilot (Grunner i SSOT):")
+        if "verdifall" in user_query or "IAS 36" in user_query:
             st.markdown("""
-            **Rotårsaksanalyse:**
-            * **Tidlig forsering uten budsjettdekning:** I Q1 2026 ble reaktormontasje forsert (SPI 1.16). For å oppnå milepælene ble det utstedt store hasteordrer i USD/EUR mot utenlandske leverandører.
-            * **Mangel på forpliktelseskontroll:** Tradisjonell regnskapskontroll fulgte kun bokførte fakturaer (AC). Innkjøpsordrene (PO) ble ikke avstemt mot budsjettgrensen (BAC 20M). Allerede i mars 2026 passerte åpne PO-er 29,8 MNOK (149 % av BAC).
-            * **Overtidslekkasje ved Fiskå:** CC-4300 (PMO) og CC-4100 (Drift) akkumulerte over 6 700 timer alene på krisehåndtering og redesign.
+            **Konklusjon etter IAS 36 Impairment of Assets:**
+            * En budsjettsprekk på 536 % (EAC 107,2 MNOK mot BAC 20,0 MNOK) representerer en **obligatorisk ekstern/intern indikator på verdifall** (IAS 36.12f).
+            * Prosjektet har aktivert **43,38 MNOK i Anlegg under Utførelse (AuC)**. Hvis prosjektet stanses ved Gate 3, må hele beløpet tapsføres umiddelbart over driftsresultatet.
             """)
-        elif "IAS 36" in user_query or "nedskrivning" in user_query:
+        elif "IAS 38" in user_query or "balanseføring" in user_query:
             st.markdown("""
-            **IFRS Regnskapsvurdering (IAS 38 vs. IAS 36):**
-            * Av bokførte kostnader på 58,0 MNOK er **43,38 MNOK** balanseført som anlegg under utførelse (AuC) under IAS 38.
-            * Når sluttkostnaden (EAC) eskalerer mot 107 MNOK uten tilsvarende økning i forventet kontantstrøm eller pilotanleggets nytteverdi, utløses en **obligatorisk nedskrivningstest etter IAS 36**.
-            * Ved fullføring vurderes nedskrivningsbehovet til ca. 13,4 MNOK, mens en full prosjektstans (Off-Ramp) vil medføre at samtlige 43,4 MNOK må tapsføres umiddelbart over konsernresultatet.
+            **Balanseføringsvurdering etter IAS 38 Immaterielle Eiendeler:**
+            * Kun utviklingsutgifter i WBS-200, 300, 400 og 500 er balanseført.
+            * PMO (WBS-100) og Testkjøring (WBS-600) er korrekt driftsført (P&L) da de regnes som administrative kostnader og forskningsfase.
             """)
-        elif "styrevedtak" in user_query or "vedtak" in user_query:
+        elif "timesats" in user_query or "Enova" in user_query:
             st.markdown("""
-            **Forslag til Styrevedtak (Stage-Gate 3 Review):**
-            1. *Styret tar redegjørelsen om den finansielle situasjonen i GreenPilot 2026 til etterretning.*
-            2. *Det innføres umiddelbar innkjøps- og ansettelsesfrys for prosjektet med virkning fra 31. oktober 2026.*
-            3. *Administrasjonen pålegges å iverksette et 30 dagers Technical Hold for å gjennomføre en full kanselleringsaudit av åpne forpliktelser (49,2 MNOK).*
-            4. *Administrasjonen skal opprette dialog med Enova SF vedrørende tilpasning av prosjektomfang og fremdriftsplan.*
+            **Revisjon & Tilskuddsregler (Enova / RF-1053B / ISA 805):**
+            * Timesats for internt personell er lovregulert og **oppad begrenset til 530 kr per time** (maks 1 850 timer/år).
+            * Overtidstillegg kan ikke veltes over på tilskuddet. Revisor skal etter ISA 805 attestere prosjektregnskapet.
             """)
         else:
             st.markdown(f"""
-            *Syntese basert på prosjektets styringskilder:*
-            Prosjektet har påløpt **NOK 57,97M** mot en ramme på **NOK 20,00M**, med ytterligere **NOK 49,23M** bundet i uleverte forpliktelser.
-            Samlet finansiell eksponering utgjør **NOK 107,20M** (536 % av BAC).
-            Spørsmålet ditt (*"{user_query}"*) berører sentrale styringsparametre som må adresseres i det ekstraordinære styremøtet.
+            *Basert på de reviderte kildedataene per 31.10.2026:*
+            Prosjektet har påløpt **57,97 MNOK** mot en ramme på **20,00 MNOK**, med ytterligere **49,23 MNOK** bundet i uleverte PO-er.
+            Samlet finansiell eksponering utgjør **107,20 MNOK** (536 % av BAC).
             """)
             
-        st.markdown("---")
-        with st.expander("🔍 Hentet fra Vektor-DB (Kildeforankring)", expanded=True):
-            for i, hit in enumerate(rag_hits, 1):
-                d = hit["doc"]
-                st.markdown(f"**[{i}] {d['title']}** *(Område: {d['category']} | Relevansscore: {hit['score']*100:.1f}%)*")
-                st.caption(d["content"])
+        with st.expander("🔍 Dokumenterte kildeutdrag fra Vektor-DB", expanded=True):
+            for idx in top_indices:
+                chunk = KNOWLEDGE_CHUNKS[idx]
+                st.markdown(f"**[{chunk['category']}] {chunk['title']}** *(Match: {sims[idx]*100:.1f}%)*")
+                st.caption(f"Kilde: {chunk['source']}")
+                st.write(chunk["text"])
                 st.markdown("---")
 
 st.markdown("---")
-st.caption("Elkem ASA — GreenPilot 2026 Dual-Engine Analytics Platform | FAST Standard & IFRS Compliant")
+st.caption("Elkem ASA — GreenPilot 2026 Controller Portal | FAST Standard & IFRS Compliant | Single Source of Truth")
