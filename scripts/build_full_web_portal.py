@@ -95,6 +95,12 @@ full_html = f"""<!DOCTYPE html>
         <div class="border-l border-slate-700 pl-3"><span class="text-slate-400 block text-[10px]">Åpen PO</span><span class="font-bold text-sm text-amber-400">49,2 MNOK</span></div>
         <div class="border-l border-slate-700 pl-3"><span class="text-slate-400 block text-[10px]">Total Eksponering</span><span class="font-bold text-sm text-purple-300">107,2 MNOK</span></div>
         <div class="border-l border-slate-700 pl-3"><span class="text-slate-400 block text-[10px]">CPI / SPI</span><span class="font-bold text-sm text-red-400">0,33 / 1,16</span></div>
+        <div class="border-l border-slate-700 pl-3">
+          <a href="http://localhost:8501" target="_blank" rel="noopener noreferrer" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow border border-emerald-400/40 flex items-center gap-1.5 transition hover:scale-105">
+            <span>⚡ Streamlit App</span>
+            <span class="text-[10px] bg-emerald-800/80 px-1 py-0.5 rounded font-mono">:8501 ↗</span>
+          </a>
+        </div>
       </div>
     </div>
   </header>
@@ -103,7 +109,7 @@ full_html = f"""<!DOCTYPE html>
   <!-- HORIZONTAL FAST JUMP NAVIGATION (ALL 14 MODULES + ORIGINAL ARCHIVE) -->
   <!-- ========================================================================= -->
   <nav class="bg-white border-b border-slate-200 sticky top-[73px] z-40 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2 overflow-x-auto py-2.5 text-xs font-semibold scrollbar-thin">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center space-x-2 overflow-x-auto py-2.5 text-xs font-semibold scrollbar-thin">
       <a href="#mod-00" class="nav-pill px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 whitespace-nowrap">00 Styringsnotat</a>
       <a href="#mod-01" class="nav-pill px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 whitespace-nowrap">01 Avvik (Bars)</a>
       <a href="#mod-02" class="nav-pill px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 whitespace-nowrap">02 Jerntriangel</a>
@@ -119,6 +125,10 @@ full_html = f"""<!DOCTYPE html>
       <a href="#mod-12" class="nav-pill px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 whitespace-nowrap">12 Simulator</a>
       <a href="#mod-13" class="nav-pill px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 whitespace-nowrap">13 AI Copilot</a>
       <a href="#original-archive-section" class="nav-pill px-3 py-1.5 rounded-lg bg-blue-100 text-blue-900 font-bold whitespace-nowrap border border-blue-200">📁 Opprinnelig Arkiv (Bunn)</a>
+      <a href="http://localhost:8501" target="_blank" rel="noopener noreferrer" class="nav-pill px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold whitespace-nowrap shadow-sm flex items-center gap-1.5 ml-2">
+        <span>⚡ Åpne Streamlit App</span>
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+      </a>
     </div>
   </nav>
 
@@ -139,8 +149,12 @@ full_html = f"""<!DOCTYPE html>
             i et dedikert referansearkiv nederst på siden.
           </p>
         </div>
-        <div class="flex gap-2">
-          <a href="#original-archive-section" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs px-3.5 py-2 rounded-lg font-medium transition">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <a href="http://localhost:8501" target="_blank" rel="noopener noreferrer" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow flex items-center gap-1.5 border border-emerald-400/30">
+            <span>⚡ Start / Åpne Streamlit App Cockpit</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+          </a>
+          <a href="#original-archive-section" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs px-3.5 py-2.5 rounded-xl font-medium transition">
             Gå til Opprinnelig Arkiv ↓
           </a>
         </div>
@@ -177,6 +191,18 @@ full_html = f"""<!DOCTYPE html>
         <div class="metric-card"><span class="text-xs text-slate-500 block">Opptjent Verdi (EV)</span><span class="text-xl font-bold text-blue-600">19,2 MNOK</span><span class="text-[10px] text-blue-500 font-semibold block mt-0.5">SPI 1,16 (Forsert)</span></div>
         <div class="metric-card"><span class="text-xs text-slate-500 block">Åpne PO-er</span><span class="text-xl font-bold text-amber-600">49,2 MNOK</span><span class="text-[10px] text-amber-500 block mt-0.5">Ufakturert binding</span></div>
         <div class="metric-card"><span class="text-xs text-slate-500 block">Total Eksponering</span><span class="text-xl font-bold text-purple-700">107,2 MNOK</span><span class="text-[10px] text-purple-600 font-semibold block mt-0.5">536% av budsjett</span></div>
+      </div>
+
+      <!-- Streamlit Launcher Callout Card -->
+      <div class="p-3.5 bg-gradient-to-r from-slate-900 via-slate-800 to-blue-950 text-slate-100 rounded-xl text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-slate-700 mb-6 shadow-sm">
+        <div class="flex items-center gap-3">
+          <span class="bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded tracking-wide uppercase">Streamlit App</span>
+          <span class="text-slate-300">Dedikert Python Styringscockpit: <code class="bg-slate-950 text-amber-300 px-2 py-0.5 rounded font-mono text-[11px] border border-slate-700">streamlit run scripts/app.py</code></span>
+        </div>
+        <a href="http://localhost:8501" target="_blank" rel="noopener noreferrer" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-3.5 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 shadow">
+          <span>Åpne Streamlit Cockpit (Port 8501)</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+        </a>
       </div>
 
       <!-- Charts & Decision Cards -->
