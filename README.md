@@ -104,14 +104,18 @@ A primary deliverable of this project is ensuring that all stakeholders—from p
 * **Inline Sheet Charts:** WBS cost variance column charts, 12-month S-curve lines, working capital cash flow bars, and department resource allocation charts placed directly beneath tables to eliminate horizontal scrolling.
 
 ### 2. Microsoft Power BI Project (`pbi/GreenPilotProject.pbip`)
-* **Version-Controlled Fabric PBIP Structure:** Cleanly separated semantic model (`_Measures.tmdl`) and report definitions (`pages.json`).
-* **6 Specialized Report Pages:**
+* **Version-Controlled Fabric PBIP Structure:** Cleanly separated semantic model (`_Measures.tmdl`, star schema tables in TMDL) and PBIR visual definitions (`pages.json`, `visual.json`).
+* **Dynamic Cut-Off Date Architecture:** Zero hardcoded dates in DAX measures; dynamically driven by `MAX(Dim_Project[data_date])`.
+* **8 Specialized Report Pages & 50 PBIR Visuals:**
   1. `00 Executive Narrative & Governance`: Dynamic headline banner, 4 narrative DAX cards, executive KPI scorecards, and exposure waterfall.
-  2. `01 Executive Summary`: Core EVM performance matrix and in-cell bar indicators.
-  3. `02 EVM S-Curve & Trends`: Continuous date line charts with linear trendlines, ETS forecasting (6 months out), anomaly detection (highlighting the March 2026 blowout), and dynamic RAG markers.
-  4. `03 IFRS Accounting & WBS Drilldown`: Interactive Decomposition Tree drilling from total cost variance into WBS, cost elements, vendors, and cost centers.
+  2. `01 Executive Summary`: Core EVM performance matrix and in-cell conditional data bars.
+  3. `02 EVM S-Curve & Trends`: Continuous date line charts with linear trendlines, ETS forecasting, anomaly detection, and dynamic RAG markers.
+  4. `03 IFRS Accounting & WBS Drilldown`: Interactive Decomposition Tree visual drilling from total cost variance into WBS, accounting classification (AuC vs P&L), and suppliers.
   5. `04 Likviditet & Koststeder Fiskå`: Working capital cash flow bridge and departmental labor tracking.
-  6. `05 AI Analytics & Key Influencers`: Machine learning visual identifying currency exposure and WBS-300 procurement as primary drivers of project distress, alongside natural language Q&A.
+  6. `05 AI Analytics & Key Influencers`: Machine learning visual identifying currency exposure and WBS-300 procurement as primary drivers of project distress.
+  7. `06 Procurement & Vendor Commitments`: Supplier concentration, top unbilled purchase orders, and foreign currency exposure.
+  8. `07 Risk & Scenario Analysis`: Sensitivity matrix, impairment exposure simulator, and technical hold impact analysis.
+* **Conditional Formatting Standards:** 24 conditionally formatted visuals utilizing dynamic hex RAG rules (`#009E73` Green, `#E69F00` Amber, `#C00000` Red) aligned with Edward Tufte Data-Ink principles.
 
 ### 3. Board Decision Deck (`GreenPilot_2026_Board_Deck.pptx` & `.pdf`)
 * **Executive Presentation:** 8 widescreen 16:9 slides built in corporate Elkem Navy typography.
@@ -126,10 +130,17 @@ A primary deliverable of this project is ensuring that all stakeholders—from p
 * **3-Page Statutory Executive Memorandum:** Authoritative document drafted for the Extraordinary Stage-Gate 3 Review.
 * **Actionable 4-Point Board Resolution:** Formal mandate establishing an immediate procurement freeze, a cancellation audit of open purchase orders, technical hold parameters, and Enova notification protocols.
 
-### 5. Streamlit Dual-Engine Application (`app.py`) & Web Portal
-* **Live What-If Simulation Engine:** Interactive sliders allowing executives to test purchase order cancellation rates (0–100%) and impairment haircuts, recalculating Net Financial Exposure in real time.
-* **In-Memory Vector DB (RAG Chatbot):** Semantic search engine indexing project sources, IFRS standards (IAS 38, IAS 36, IAS 20), ISA 805, and Enova grant guidelines, providing cited answers to ad-hoc governance inquiries.
-* **Interactive Web Application:** Configured for deployment to GitHub Pages.
+### 5. Streamlit Dual-Engine Application (`scripts/app.py`) & Web Portal (`index.html`)
+* **Streamlit Portal (`scripts/app.py`):** Multi-page decision cockpit with interactive Gantt timeline (px.timeline with 31.10.2026 status line), Iron Triangle trade-off frontier, fan chart uncertainty corridors (P10/P50/P90), what-if scenario simulator, and an in-memory TF-IDF semantic Copilot grounded in IFRS/Enova statutes.
+* **Full Visual Vocabulary Executive Dashboard (`index.html`):** Single-page cockpit structured around the **Financial Times Visual Vocabulary** (`Visual-vocabulary-en.pdf`):
+  - *Deviation:* Diverging bars comparing cost variance (CV) against schedule variance (SV).
+  - *Correlation:* WBS exposure bubble chart and monthly connected scatter trajectory.
+  - *Ranking:* Lollipop chart ranking top 8 suppliers for cancellation negotiations.
+  - *Distribution:* Boxplot of departmental weekly hours and bimodal PO size histogram.
+  - *Part-to-Whole & Flow:* Treemap of capital commitments and Sankey diagram of funding flows.
+  - *Spatial / Triangle:* Radar/polar Iron Triangle and decision frontier for project slowdown.
+  - *Uncertainty & Change:* Fan chart forecasting P10/P50/P90 outcomes and S-curve progression.
+  - *Interactive Simulator & Copilot:* Real-time cancellation/impairment recalculation and RAG Q&A.
 
 ---
 
@@ -251,6 +262,13 @@ Start the local interactive decision dashboard and vector-backed AI chatbot:
 ```powershell
 streamlit run .\scripts\app.py
 # Opens automatically at http://localhost:8501
+```
+
+### Step 7: Run Automated EVM & Cross-Platform Verification Suite
+Execute the comprehensive automated test suite verifying all 8 quality gates across the Star Schema, Power BI semantic model, PBIR visuals, Streamlit constants, and `index.html`:
+```powershell
+python .\scripts\verify_evm_suite.py
+# Expected output: ALL QUALITY GATES PASSED SUCCESSFULLY (100% SPEC COMPLIANCE)
 ```
 
 ---
