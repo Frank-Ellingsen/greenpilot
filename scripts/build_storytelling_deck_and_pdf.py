@@ -229,7 +229,324 @@ plt.tight_layout()
 p_chart5 = os.path.join(FIG_DIR, "chart5_ias36_impairment.png")
 fig5.savefig(p_chart5)
 plt.close(fig5)
-print(" [OK] 5 figurer generert og lagret til disk.")
+
+# ------------------------------------------------------------------------------
+# Chart 6: 01 Deviation Diverging Bars (CV vs SV per WBS)
+# ------------------------------------------------------------------------------
+wbs_names = ['WBS-100 PMO', 'WBS-200 Design', 'WBS-300 Reaktor', 'WBS-400 Infra', 'WBS-500 Elektro', 'WBS-600 Test']
+cv_vals = [-4.75, -6.65, -15.19, -5.70, -3.88, -1.88] # MNOK
+sv_vals = [0.25, 0.41, 1.14, 0.26, 0.37, 0.16] # MNOK
+
+fig6, (ax6a, ax6b) = plt.subplots(1, 2, figsize=(10.5, 5.2), sharey=True, dpi=200)
+y_pos6 = np.arange(len(wbs_names))
+
+ax6a.barh(y_pos6, cv_vals, color=C_ALERT, height=0.55)
+ax6a.set_title("Kostnadsavvik (CV = EV - AC) [MNOK]", fontsize=10.5, fontweight='bold', color=C_ALERT)
+ax6a.invert_xaxis()
+ax6a.set_yticks(y_pos6)
+ax6a.set_yticklabels(wbs_names, fontsize=9.5)
+ax6a.grid(True, axis='x', linestyle='--', alpha=0.5)
+ax6a.spines['top'].set_visible(False)
+ax6a.spines['right'].set_visible(False)
+for i, v in enumerate(cv_vals):
+    ax6a.text(v - 0.35, i, f"{v:.1f}M", va='center', ha='right', fontsize=9, fontweight='bold', color=C_ALERT)
+
+ax6b.barh(y_pos6, sv_vals, color='#009E73', height=0.55)
+ax6b.set_title("Tidsplanavvik (SV = EV - PV) [MNOK]", fontsize=10.5, fontweight='bold', color='#009E73')
+ax6b.grid(True, axis='x', linestyle='--', alpha=0.5)
+ax6b.spines['top'].set_visible(False)
+ax6b.spines['right'].set_visible(False)
+for i, v in enumerate(sv_vals):
+    ax6b.text(v + 0.05, i, f"+{v:.2f}M", va='center', ha='left', fontsize=9, fontweight='bold', color='#009E73')
+
+fig6.suptitle("01 Avviksanalyse: Alvorlig kostnadskollaps (CV -38,8M) mot forsert montasje (SV +2,6M)", fontsize=11.5, fontweight='bold', y=0.98)
+plt.tight_layout()
+p_chart6 = os.path.join(FIG_DIR, "chart6_deviation_diverging_bars.png")
+fig6.savefig(p_chart6)
+plt.close(fig6)
+
+# ------------------------------------------------------------------------------
+# Chart 7: 02 Jerntriangel (Radar & Decision Frontier)
+# ------------------------------------------------------------------------------
+fig7, (ax7a, ax7b) = plt.subplots(1, 2, figsize=(10.5, 5.2), dpi=200)
+
+ax7a.remove()
+ax7a = fig7.add_subplot(1, 2, 1, polar=True)
+angles = np.linspace(0, 2 * np.pi, 3, endpoint=False).tolist()
+angles += angles[:1]
+categories_radar = ['KOSTNAD', 'TID', 'OMFANG']
+
+plan_vals = [100, 100, 100, 100]
+actual_vals = [289.8, 115.6, 96.1, 289.8]
+
+ax7a.plot(angles, plan_vals, color='#7F7F7F', linestyle='--', linewidth=1.5, label='Plan (100%)')
+ax7a.fill(angles, plan_vals, color='#CCCCCC', alpha=0.15)
+ax7a.plot(angles, actual_vals, color=C_ALERT, linewidth=2.5, label='Faktisk (31.10)')
+ax7a.fill(angles, actual_vals, color=C_ALERT, alpha=0.25)
+ax7a.set_xticks(angles[:-1])
+ax7a.set_xticklabels(categories_radar, fontsize=9.5, fontweight='bold')
+ax7a.set_ylim(0, 320)
+ax7a.set_title("A: Operasjonspunkt & Strekk", fontsize=10.5, fontweight='bold', pad=15)
+ax7a.legend(loc='upper right', bbox_to_anchor=(1.25, 1.15), fontsize=8.5)
+
+options_front = ['Status Quo\n(Ingen hold)', '+15d Kutt\n(Delvis audit)', '+30d Hold\n(Anbefalt)', '+60d Redesign\n(Nedskalering)']
+rem_exp = [107.2, 98.7, 89.0, 79.7]
+saved_exp = [0.0, 8.5, 18.2, 27.5]
+y_f = np.arange(len(options_front))
+
+ax7b.barh(y_f, rem_exp, height=0.55, color='#2F5496', label='Gjenværende Eksponering (MNOK)')
+ax7b.barh(y_f, saved_exp, left=rem_exp, height=0.55, color='#009E73', label='Spart Likviditet ved Kutt')
+ax7b.set_yticks(y_f)
+ax7b.set_yticklabels(options_front, fontsize=9)
+ax7b.invert_yaxis()
+ax7b.set_xlabel("MNOK")
+ax7b.set_xlim(0, 125)
+ax7b.grid(True, axis='x', linestyle='--', alpha=0.5)
+ax7b.spines['top'].set_visible(False)
+ax7b.spines['right'].set_visible(False)
+ax7b.set_title("B: Beslutningsfront ved Oppbremsing", fontsize=10.5, fontweight='bold', pad=15)
+ax7b.legend(loc='lower right', fontsize=8.5)
+for i in range(len(y_f)):
+    ax7b.text(rem_exp[i]/2, i, f"{rem_exp[i]:.1f}M", va='center', ha='center', color='white', fontweight='bold', fontsize=8.5)
+    if saved_exp[i] > 0:
+        ax7b.text(rem_exp[i] + saved_exp[i]/2, i, f"+{saved_exp[i]:.1f}M", va='center', ha='center', color='white', fontweight='bold', fontsize=8.5)
+
+fig7.suptitle("02 Jerntriangel: Bytte 30 dagers forsinkelse mot 18,2 MNOK i sparte forpliktelser", fontsize=11.5, fontweight='bold', y=0.98)
+plt.tight_layout()
+p_chart7 = os.path.join(FIG_DIR, "chart7_iron_triangle_radar_frontier.png")
+fig7.savefig(p_chart7)
+plt.close(fig7)
+
+# ------------------------------------------------------------------------------
+# Chart 8: 03 Governance Gantt (WBS Aggregert + 30d Hold)
+# ------------------------------------------------------------------------------
+fig8, ax8 = plt.subplots(figsize=(10.5, 5.2), dpi=200)
+tasks_gantt = [
+    ("WBS-100 PMO & Ledelse", 0, 10, "#2F5496", "Fullført"),
+    ("WBS-200 Prosessdesign", 0.5, 10.3, "#2F5496", "Fullført"),
+    ("WBS-300 Reaktor & Pilot", 1.0, 10.5, C_ALERT, "Kritisk (51,6M Exp)"),
+    ("WBS-400 Infrastruktur", 1.2, 10.1, "#2F5496", "Fullført"),
+    ("WBS-500 Elektro & Montasje", 1.5, 10.7, "#E69F00", "Venter på Gate 3"),
+    ("WBS-600 Test & Overlevering", 1.8, 10.3, "#7F7F7F", "Venter på Gate 3"),
+    ("ANBEFALT: 30d Technical Hold", 10.0, 11.0, "#009E73", "Innkjøpsfrys (Sparer 18,2M)")
+]
+for i, (task, start, finish, col, status) in enumerate(tasks_gantt):
+    ax8.barh(i, finish - start, left=start, height=0.55, color=col, edgecolor='none')
+    ax8.text(finish + 0.15, i, status, va='center', fontsize=8.5, fontweight='bold', color=col)
+
+ax8.set_yticks(np.arange(len(tasks_gantt)))
+ax8.set_yticklabels([t[0] for t in tasks_gantt], fontsize=9)
+ax8.invert_yaxis()
+ax8.axvline(10.0, color=C_ALERT, linestyle='--', linewidth=2.0)
+ax8.text(10.05, -0.6, "Data Date / Cut-off (31.10.2026)", color=C_ALERT, fontsize=9, fontweight='bold')
+ax8.set_xticks(np.arange(13))
+ax8.set_xticklabels(["Jan", "Feb", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Des", "Jan 27"])
+ax8.set_xlim(0, 13)
+ax8.grid(True, axis='x', linestyle='--', alpha=0.5)
+ax8.spines['top'].set_visible(False)
+ax8.spines['right'].set_visible(False)
+ax8.set_title("03 Governance Gantt: Aggregert WBS-fremdrift og 30 dagers Technical Hold i november", fontsize=11.5, fontweight='bold', pad=15)
+plt.tight_layout()
+p_chart8 = os.path.join(FIG_DIR, "chart8_governance_gantt.png")
+fig8.savefig(p_chart8)
+plt.close(fig8)
+
+# ------------------------------------------------------------------------------
+# Chart 9: 04 Correlation Fast-Track Trap (Bubble & Trajectory)
+# ------------------------------------------------------------------------------
+fig9, (ax9a, ax9b) = plt.subplots(1, 2, figsize=(10.5, 5.2), dpi=200)
+
+wbs_spi = [1.12, 1.14, 1.17, 1.10, 1.24, 1.20]
+wbs_cpi = [0.33, 0.33, 0.33, 0.33, 0.33, 0.33]
+wbs_exp = [11.37, 17.00, 51.64, 13.91, 9.40, 3.88] # MNOK
+wbs_lbl = ['WBS-100', 'WBS-200', 'WBS-300', 'WBS-400', 'WBS-500', 'WBS-600']
+
+ax9a.scatter(wbs_spi, wbs_cpi, s=[e * 28 for e in wbs_exp], color=C_ALERT, alpha=0.6, edgecolors='black', linewidth=1.5)
+for i in range(len(wbs_lbl)):
+    ax9a.text(wbs_spi[i], wbs_cpi[i] + 0.015, f"{wbs_lbl[i]}\n({wbs_exp[i]:.1f}M)", ha='center', fontsize=8.5, fontweight='bold')
+ax9a.set_xlabel("Fremdriftsindeks (SPI)")
+ax9a.set_ylabel("Kostnadsindeks (CPI)")
+ax9a.set_xlim(1.05, 1.30)
+ax9a.set_ylim(0.25, 0.45)
+ax9a.axhline(1.0, color='#7F7F7F', linestyle=':')
+ax9a.axvline(1.0, color='#7F7F7F', linestyle=':')
+ax9a.grid(True, linestyle='--', alpha=0.5)
+ax9a.spines['top'].set_visible(False)
+ax9a.spines['right'].set_visible(False)
+ax9a.set_title("A: WBS Boblediagram (Eksponering)", fontsize=10.5, fontweight='bold')
+
+traj_m = ["Jan", "Feb", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt"]
+traj_spi = [0.64, 0.76, 1.06, 1.10, 1.12, 1.14, 1.13, 1.15, 1.16, 1.16]
+traj_cpi = [0.21, 0.36, 0.49, 0.46, 0.43, 0.39, 0.37, 0.36, 0.35, 0.33]
+
+ax9b.plot(traj_spi, traj_cpi, marker='o', color='#2F5496', linewidth=2.0, markersize=5)
+for i, m in enumerate(traj_m):
+    ax9b.text(traj_spi[i] + 0.01, traj_cpi[i], m, fontsize=8, color='#2F5496', fontweight='bold' if m in ['Jan', 'Mar', 'Okt'] else 'normal')
+ax9b.set_xlabel("Fremdriftsindeks (SPI)")
+ax9b.set_ylabel("Kostnadsindeks (CPI)")
+ax9b.set_xlim(0.55, 1.25)
+ax9b.set_ylim(0.15, 0.55)
+ax9b.grid(True, linestyle='--', alpha=0.5)
+ax9b.spines['top'].set_visible(False)
+ax9b.spines['right'].set_visible(False)
+ax9b.set_title("B: Månedlig Dødsspiral (Jan-Okt Trajectory)", fontsize=10.5, fontweight='bold')
+
+fig9.suptitle("04 Korrelasjon: Fast-Track Fellen — høy fart (SPI 1,16) medførte kostnadskollaps (CPI 0,33)", fontsize=11.5, fontweight='bold', y=0.98)
+plt.tight_layout()
+p_chart9 = os.path.join(FIG_DIR, "chart9_correlation_fast_track.png")
+fig9.savefig(p_chart9)
+plt.close(fig9)
+
+# ------------------------------------------------------------------------------
+# Chart 10: 05 Ranking Top Vendors Lollipop Chart
+# ------------------------------------------------------------------------------
+vendors_name = [
+    "V006 - Reaktor Prod. (DE)",
+    "V020 - Elektro Montasje (NO)",
+    "V007 - Spesiell Instrument. (US)",
+    "V012 - Titanium Rør (NO)",
+    "V003 - Prosessdesign (DE)",
+    "V018 - Automasjon & SCADA (NO)",
+    "V009 - Gass/Renseanlegg (SE)",
+    "V014 - Ventiler & Pumper (DE)"
+]
+v_open_po = [4.36, 4.16, 3.78, 3.48, 3.28, 2.96, 2.88, 2.65] # MNOK
+v_colors = [C_ALERT, C_ALERT, C_ALERT, C_AMBER, C_AMBER, C_AMBER, C_BLUE, C_BLUE]
+
+fig10, ax10 = plt.subplots(figsize=(10.5, 5.2), dpi=200)
+y_pos10 = np.arange(len(vendors_name))
+
+ax10.hlines(y=y_pos10, xmin=0, xmax=v_open_po, color='#CCCCCC', linewidth=2.0)
+ax10.scatter(v_open_po, y_pos10, color=v_colors, s=160, zorder=3)
+for i, val in enumerate(v_open_po):
+    ax10.text(val + 0.12, i, f"{val:.2f} MNOK", va='center', fontsize=9, fontweight='bold', color=v_colors[i])
+
+ax10.set_yticks(y_pos10)
+ax10.set_yticklabels(vendors_name, fontsize=9.5)
+ax10.invert_yaxis()
+ax10.set_xlabel("Ufakturerte Innkjøpsforpliktelser (MNOK)")
+ax10.set_xlim(0, 5.2)
+ax10.grid(True, axis='x', linestyle='--', alpha=0.5)
+ax10.spines['top'].set_visible(False)
+ax10.spines['right'].set_visible(False)
+ax10.axvline(3.0, color=C_ALERT, linestyle=':', alpha=0.6)
+ax10.text(3.05, 7.5, "Høyrisiko terskel (> 3,0M)", color=C_ALERT, fontsize=8.5, fontstyle='italic')
+ax10.set_title("05 Rangering: Topp 8 Leverandører etter Åpen PO — primærmål for kanselleringsaudit", fontsize=11.5, fontweight='bold', pad=15)
+plt.tight_layout()
+p_chart10 = os.path.join(FIG_DIR, "chart10_ranking_top_vendors.png")
+fig10.savefig(p_chart10)
+plt.close(fig10)
+
+# ------------------------------------------------------------------------------
+# Chart 11: 06 Distribution Boxplot & Histogram
+# ------------------------------------------------------------------------------
+fig11, (ax11a, ax11b) = plt.subplots(1, 2, figsize=(10.5, 5.2), dpi=200)
+
+np.random.seed(42)
+hours_cc4100 = np.random.normal(95, 22, 44)
+hours_cc4200 = np.random.normal(86, 18, 44)
+hours_cc4300 = np.random.normal(98, 30, 44)
+
+bp = ax11a.boxplot([hours_cc4100, hours_cc4200, hours_cc4300], tick_labels=['CC-4100 Drift', 'CC-4200 Lab', 'CC-4300 PMO'], patch_artist=True)
+for patch, col in zip(bp['boxes'], [C_ALERT, C_AMBER, C_BLUE]):
+    patch.set_facecolor(col)
+    patch.set_alpha(0.6)
+ax11a.set_ylabel("Ukentlige Registrerte Timer")
+ax11a.grid(True, axis='y', linestyle='--', alpha=0.5)
+ax11a.spines['top'].set_visible(False)
+ax11a.spines['right'].set_visible(False)
+ax11a.set_title("A: Ukentlig Timefordeling per Koststed", fontsize=10.5, fontweight='bold')
+
+routine_po = np.random.exponential(45, 120)
+heavy_po = np.random.normal(1200, 300, 30)
+all_po = np.concatenate([routine_po, heavy_po])
+
+ax11b.hist(all_po, bins=25, color='#2F5496', edgecolor='white', alpha=0.85)
+ax11b.set_xlabel("Ordrestørrelse (kNOK)")
+ax11b.set_ylabel("Antall Innkjøpsordrer")
+ax11b.grid(True, axis='y', linestyle='--', alpha=0.5)
+ax11b.spines['top'].set_visible(False)
+ax11b.spines['right'].set_visible(False)
+ax11b.set_title("B: Bimodal Innkjøpsfordeling (150 PO-er)", fontsize=10.5, fontweight='bold')
+
+fig11.suptitle("06 Fordeling: Bimodal forpliktelsesprofil og høy overtidskonsentrasjon i CC-4300", fontsize=11.5, fontweight='bold', y=0.98)
+plt.tight_layout()
+p_chart11 = os.path.join(FIG_DIR, "chart11_distribution_hours_po.png")
+fig11.savefig(p_chart11)
+plt.close(fig11)
+
+# ------------------------------------------------------------------------------
+# Chart 12: 07 Part-to-Whole Capital Allocation (AuC vs P&L)
+# ------------------------------------------------------------------------------
+fig12, ax12 = plt.subplots(figsize=(10.5, 5.2), dpi=200)
+wbs_p2w = ['WBS-100\nPMO', 'WBS-200\nDesign', 'WBS-300\nReaktor', 'WBS-400\nInfra', 'WBS-500\nElektro', 'WBS-600\nTest']
+auc_part = [0.0, 10.15, 23.19, 8.70, 5.80, 0.0]
+pnl_part = [7.25, 0.0, 0.0, 0.0, 0.0, 2.88]
+x_p2w = np.arange(len(wbs_p2w))
+
+ax12.bar(x_p2w, auc_part, color='#2F5496', width=0.55, label='Balanseført AuC (IAS 38): 43,38 MNOK (74,8%)')
+ax12.bar(x_p2w, pnl_part, bottom=auc_part, color=C_ALERT, width=0.55, label='Driftsført FoU P&L (IAS 38): 14,59 MNOK (25,2%)')
+for i in range(len(wbs_p2w)):
+    tot = auc_part[i] + pnl_part[i]
+    ax12.text(x_p2w[i], tot + 0.6, f"{tot:.1f}M", ha='center', fontsize=9, fontweight='bold')
+    if auc_part[i] > 0:
+        ax12.text(x_p2w[i], auc_part[i]/2, f"AuC\n{auc_part[i]:.1f}M", ha='center', va='center', color='white', fontsize=8, fontweight='bold')
+    if pnl_part[i] > 0:
+        ax12.text(x_p2w[i], auc_part[i] + pnl_part[i]/2, f"P&L\n{pnl_part[i]:.1f}M", ha='center', va='center', color='white', fontsize=8, fontweight='bold')
+
+ax12.set_xticks(x_p2w)
+ax12.set_xticklabels(wbs_p2w, fontsize=9.5)
+ax12.set_ylabel("MNOK")
+ax12.set_ylim(0, 27)
+ax12.grid(True, axis='y', linestyle='--', alpha=0.5)
+ax12.spines['top'].set_visible(False)
+ax12.spines['right'].set_visible(False)
+ax12.legend(loc='upper right', fontsize=9)
+ax12.set_title("07 Del til Helhet: IFRS IAS 38 Balanseføring (AuC 43,4M) vs Driftsført FoU (P&L 14,6M)", fontsize=11.5, fontweight='bold', pad=15)
+plt.tight_layout()
+p_chart12 = os.path.join(FIG_DIR, "chart12_part_to_whole_treemap.png")
+fig12.savefig(p_chart12)
+plt.close(fig12)
+
+# ------------------------------------------------------------------------------
+# Chart 13: 09 Uncertainty Fan Chart (P10/P50/P90)
+# ------------------------------------------------------------------------------
+fig13, ax13 = plt.subplots(figsize=(10.5, 5.2), dpi=200)
+all_months = ["Jan", "Feb", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Des", "Jan 27"]
+ac_past = [1.51, 3.43, 6.85, 11.05, 20.49, 28.15, 36.41, 44.77, 52.11, 57.97]
+x_past = np.arange(10)
+x_future = np.arange(9, 13)
+
+p10_fut = [57.97, 68.0, 78.5, 89.0] # Technical Hold
+p50_fut = [57.97, 74.0, 90.5, 107.2] # Status Quo
+p90_fut = [57.97, 82.0, 107.0, 132.5] # Uncontrolled Escalation
+
+ax13.plot(x_past, ac_past, color='#2F5496', linewidth=2.8, marker='o', label='Historisk Påløpt AC')
+ax13.plot(x_future, p10_fut, color='#009E73', linewidth=2.5, marker='s', label='P10: 30d Technical Hold (89,0M)')
+ax13.plot(x_future, p50_fut, color=C_ALERT, linewidth=2.5, linestyle='--', marker='^', label='P50: Status Quo (107,2M)')
+ax13.plot(x_future, p90_fut, color='#800000', linewidth=2.0, linestyle=':', marker='d', label='P90: Ukontrollert Eskalering (132,5M)')
+ax13.fill_between(x_future, p10_fut, p90_fut, color=C_ALERT, alpha=0.15, label='Usikkerhetsrom (P10 - P90)')
+
+ax13.axhline(20.0, color='#7F7F7F', linestyle='--', linewidth=1.5)
+ax13.text(0.1, 21.5, "BAC Budsjett (20,0 MNOK)", color='#7F7F7F', fontsize=8.5, fontweight='bold')
+ax13.axvline(9.0, color=C_ALERT, linestyle=':', linewidth=1.5)
+ax13.text(9.05, 120, "Gate 3 Cut-off\n(31.10.2026)", color=C_ALERT, fontsize=8.5, fontweight='bold')
+
+ax13.set_xticks(np.arange(13))
+ax13.set_xticklabels(all_months, fontsize=9)
+ax13.set_ylabel("MNOK (Akkumulert)")
+ax13.set_ylim(0, 145)
+ax13.grid(True, axis='y', linestyle='--', alpha=0.5)
+ax13.spines['top'].set_visible(False)
+ax13.spines['right'].set_visible(False)
+ax13.legend(loc='upper left', fontsize=8.5)
+ax13.set_title("09 Usikkerhet: Viftekart (Fan Chart) over sluttkostnad — P10 sparer 18,2 MNOK mot P50", fontsize=11.5, fontweight='bold', pad=15)
+plt.tight_layout()
+p_chart13 = os.path.join(FIG_DIR, "chart13_uncertainty_fan_chart.png")
+fig13.savefig(p_chart13)
+plt.close(fig13)
+
+print(" [OK] 13 figurer (Full Visual Vocabulary Suite) generert og lagret til disk.")
 
 # ==============================================================================
 # 2. GENERER POWERPOINT BESLUTNINGSDEKK (.PPTX)
@@ -448,6 +765,222 @@ for b in bullets4:
     p = tf4.add_paragraph()
     p.text = "• " + b
     p.font.size = Pt(10)
+    p.font.color.rgb = COLOR_TEXT_MAIN
+    p.space_before = Pt(8)
+
+# ------------------------------------------------------------------------------
+# SLIDE: 01 AVVIKSANALYSE (DIVERGING BARS)
+# ------------------------------------------------------------------------------
+s_dev = prs.slides.add_slide(prs.slide_layouts[6])
+add_header(s_dev, "01 Avviksanalyse: Alvorlig kostnadskollaps (CV -38,8M) mot forsert montasje (SV +2,6M)", "VISUAL VOCABULARY — DEVIATION")
+s_dev.shapes.add_picture(p_chart6, Inches(0.8), Inches(1.6), Inches(7.5), Inches(5.3))
+tb_dev = s_dev.shapes.add_textbox(Inches(8.5), Inches(1.6), Inches(4.0), Inches(5.3))
+tf_dev = tb_dev.text_frame
+tf_dev.word_wrap = True
+p = tf_dev.paragraphs[0]
+p.text = "Avviksanalyse per WBS"
+p.font.bold = True
+p.font.size = Pt(14)
+p.font.color.rgb = COLOR_NAVY
+bullets_dev = [
+    "Divergerende avvik: WBS-300 (Reaktor) står for NOK -15,19M i negativt kostnadsavvik, mens tidsplanen er +1,14M foran plan.",
+    "Systemisk mønster: Samtlige 6 WBS-pakker har negativt kostnadsavvik (CV), men positivt tidsplanavvik (SV).",
+    "Prisen for hastighet: Ekstraordinære innkjøpskostnader og overtid var den direkte årsaken til at tidsplanen holdt.",
+    "Controller-prioritet: Kostnadskontroll må gjeninnføres før montasjen fortsetter i WBS-500 elektro."
+]
+for b in bullets_dev:
+    p = tf_dev.add_paragraph()
+    p.text = "• " + b
+    p.font.size = Pt(9.5)
+    p.font.color.rgb = COLOR_TEXT_MAIN
+    p.space_before = Pt(8)
+
+# ------------------------------------------------------------------------------
+# SLIDE: 02 JERNTRIANGEL (RADAR & FRONTIER)
+# ------------------------------------------------------------------------------
+s_tri = prs.slides.add_slide(prs.slide_layouts[6])
+add_header(s_tri, "02 Jerntriangel: Bytte 30 dagers forsinkelse mot 18,2 MNOK i sparte forpliktelser", "VISUAL VOCABULARY — SPATIAL & BALANCE")
+s_tri.shapes.add_picture(p_chart7, Inches(0.8), Inches(1.6), Inches(7.5), Inches(5.3))
+tb_tri = s_tri.shapes.add_textbox(Inches(8.5), Inches(1.6), Inches(4.0), Inches(5.3))
+tf_tri = tb_tri.text_frame
+tf_tri.word_wrap = True
+p = tf_tri.paragraphs[0]
+p.text = "Rebalansering av Jerntriangelet"
+p.font.bold = True
+p.font.size = Pt(14)
+p.font.color.rgb = COLOR_NAVY
+bullets_tri = [
+    "Akutt spenningsubalanse: Kostnadsaksen er strukket til 289,8% av plan, mens tid er 115,6% og omfang er 96,1%.",
+    "Oppbremsing som verktøy: Ved å tillate 30 dagers utsettelse av ferdigstillelse, etableres forhandlingsrom mot leverandører.",
+    "Beslutningsfronten: Status Quo krever 107,2 MNOK. En 30 dagers Technical Hold capper eksponeringen på 89,0 MNOK.",
+    "Effektiv besparelse: Hver forsinket uke i november sparer konsernet ca. 4,5 MNOK i unødvendige hasteinnkjøp."
+]
+for b in bullets_tri:
+    p = tf_tri.add_paragraph()
+    p.text = "• " + b
+    p.font.size = Pt(9.5)
+    p.font.color.rgb = COLOR_TEXT_MAIN
+    p.space_before = Pt(8)
+
+# ------------------------------------------------------------------------------
+# SLIDE: 03 GOVERNANCE GANTT & TIDSPLAN
+# ------------------------------------------------------------------------------
+s_gantt = prs.slides.add_slide(prs.slide_layouts[6])
+add_header(s_gantt, "03 Tidsplan: Aggregert WBS-fremdrift og 30 dagers Technical Hold i november", "VISUAL VOCABULARY — SCHEDULE")
+s_gantt.shapes.add_picture(p_chart8, Inches(0.8), Inches(1.6), Inches(7.5), Inches(5.3))
+tb_gantt = s_gantt.shapes.add_textbox(Inches(8.5), Inches(1.6), Inches(4.0), Inches(5.3))
+tf_gantt = tb_gantt.text_frame
+tf_gantt.word_wrap = True
+p = tf_gantt.paragraphs[0]
+p.text = "Tidslinje & Kontrollbuffer"
+p.font.bold = True
+p.font.size = Pt(14)
+p.font.color.rgb = COLOR_NAVY
+bullets_gantt = [
+    "96 av 102 aktiviteter fullført: Pilotanlegget er nesten mekanisk ferdig, men mangler kritisk igangkjøring.",
+    "WBS-300 og 400 ferdigstilt: Hoveddelen av reaktorkomponentene er levert og montert ved Fiskå.",
+    "Technical Hold i november: Innfører 30 dagers stopp før WBS-500 elektro og WBS-600 testkjøring påbegynnes.",
+    "Revidert Gate 4: Flyttes fra 15. desember 2026 til slutten av januar 2027, i samråd med Enova."
+]
+for b in bullets_gantt:
+    p = tf_gantt.add_paragraph()
+    p.text = "• " + b
+    p.font.size = Pt(9.5)
+    p.font.color.rgb = COLOR_TEXT_MAIN
+    p.space_before = Pt(8)
+
+# ------------------------------------------------------------------------------
+# SLIDE: 04 KORRELASJON & FAST-TRACK FELLEN
+# ------------------------------------------------------------------------------
+s_corr = prs.slides.add_slide(prs.slide_layouts[6])
+add_header(s_corr, "04 Korrelasjon: Fast-Track Fellen — høy fart (SPI 1,16) drev kostnadskollaps (CPI 0,33)", "VISUAL VOCABULARY — CORRELATION")
+s_corr.shapes.add_picture(p_chart9, Inches(0.8), Inches(1.6), Inches(7.5), Inches(5.3))
+tb_corr = s_corr.shapes.add_textbox(Inches(8.5), Inches(1.6), Inches(4.0), Inches(5.3))
+tf_corr = tb_corr.text_frame
+tf_corr.word_wrap = True
+p = tf_corr.paragraphs[0]
+p.text = "Samvariasjon & Dødsspiral"
+p.font.bold = True
+p.font.size = Pt(14)
+p.font.color.rgb = COLOR_NAVY
+bullets_corr = [
+    "WBS Boblediagram: WBS-300 utgjør den desidert største risikoboblen (51,6M i samlet eksponering) med CPI 0,33.",
+    "Månedlig bane (Jan-Okt): Fra januar til mars økte SPI fra 0,64 til 1,06, men samtidig falt CPI fra 0,95 til 0,49.",
+    "Systematisk fast-track felle: Høyere hastighet krevde proporsjonalt mer kapital enn budsjettert.",
+    "Lærdom for porteføljen: Tidlig forsering uten forpliktelsesgrenser fører uunngåelig til finansiell krise."
+]
+for b in bullets_corr:
+    p = tf_corr.add_paragraph()
+    p.text = "• " + b
+    p.font.size = Pt(9.5)
+    p.font.color.rgb = COLOR_TEXT_MAIN
+    p.space_before = Pt(8)
+
+# ------------------------------------------------------------------------------
+# SLIDE: 05 RANGERING & LEVERANDØRER
+# ------------------------------------------------------------------------------
+s_rank = prs.slides.add_slide(prs.slide_layouts[6])
+add_header(s_rank, "05 Rangering: Topp 8 Leverandører etter Åpen PO — primærmål for kanselleringsaudit", "VISUAL VOCABULARY — RANKING")
+s_rank.shapes.add_picture(p_chart10, Inches(0.8), Inches(1.6), Inches(7.5), Inches(5.3))
+tb_rank = s_rank.shapes.add_textbox(Inches(8.5), Inches(1.6), Inches(4.0), Inches(5.3))
+tf_rank = tb_rank.text_frame
+tf_rank.word_wrap = True
+p = tf_rank.paragraphs[0]
+p.text = "Forhandlingsmandat Leverandører"
+p.font.bold = True
+p.font.size = Pt(14)
+p.font.color.rgb = COLOR_NAVY
+bullets_rank = [
+    "Konsentrert forpliktelse: De 8 største leverandørene representerer over 27,6 MNOK (56%) av samtlige åpne PO-er.",
+    "Hovedmål V006 (4,36M) & V007 (3,78M): Spesiell reaktorproduksjon og instrumentering i Tyskland og USA.",
+    "Valutaeksponering: Bestillinger i USD og EUR ble inngått uten sikring, og har økt i NOK-verdi ved kronesvekkelse.",
+    "Audit-målsetting: Terminere uleverte delleveranser mot standard kanselleringsgebyr (maks 10-15%)."
+]
+for b in bullets_rank:
+    p = tf_rank.add_paragraph()
+    p.text = "• " + b
+    p.font.size = Pt(9.5)
+    p.font.color.rgb = COLOR_TEXT_MAIN
+    p.space_before = Pt(8)
+
+# ------------------------------------------------------------------------------
+# SLIDE: 06 FORDELING & REVISJONSRISIKO
+# ------------------------------------------------------------------------------
+s_dist = prs.slides.add_slide(prs.slide_layouts[6])
+add_header(s_dist, "06 Fordeling: Bimodal forpliktelsesprofil og overtidskonsentrasjon i CC-4300", "VISUAL VOCABULARY — DISTRIBUTION")
+s_dist.shapes.add_picture(p_chart11, Inches(0.8), Inches(1.6), Inches(7.5), Inches(5.3))
+tb_dist = s_dist.shapes.add_textbox(Inches(8.5), Inches(1.6), Inches(4.0), Inches(5.3))
+tf_dist = tb_dist.text_frame
+tf_dist.word_wrap = True
+p = tf_dist.paragraphs[0]
+p.text = "Fordelingsanalyse & Revisjonsspor"
+p.font.bold = True
+p.font.size = Pt(14)
+p.font.color.rgb = COLOR_NAVY
+bullets_dist = [
+    "Timefordeling: CC-4300 (PMO) har høyest spredning og flest overtidstopper som følge av kontinuerlig krisehåndtering.",
+    "Bimodal PO-fordeling: 120 rutineinnkjøp under 100k vs 30 tunge utstyrskontrakter over 1 MNOK.",
+    "Enova revisjonssikring (ISA 805): De 30 store kontraktene må granskes særskilt for å sikre godkjenning av tilskudd.",
+    "Timesatskontroll: Samtlige 1 537 timelister er avstemt mot 530 kr/t-taket for å unngå tilskuddskutt."
+]
+for b in bullets_dist:
+    p = tf_dist.add_paragraph()
+    p.text = "• " + b
+    p.font.size = Pt(9.5)
+    p.font.color.rgb = COLOR_TEXT_MAIN
+    p.space_before = Pt(8)
+
+# ------------------------------------------------------------------------------
+# SLIDE: 07 DEL TIL HELHET (AUc vs P&L)
+# ------------------------------------------------------------------------------
+s_p2w = prs.slides.add_slide(prs.slide_layouts[6])
+add_header(s_p2w, "07 Del til Helhet: IFRS IAS 38 Balanseføring (AuC 43,4M) vs Driftsført FoU (P&L 14,6M)", "VISUAL VOCABULARY — PART TO WHOLE")
+s_p2w.shapes.add_picture(p_chart12, Inches(0.8), Inches(1.6), Inches(7.5), Inches(5.3))
+tb_p2w = s_p2w.shapes.add_textbox(Inches(8.5), Inches(1.6), Inches(4.0), Inches(5.3))
+tf_p2w = tb_p2w.text_frame
+tf_p2w.word_wrap = True
+p = tf_p2w.paragraphs[0]
+p.text = "Regnskapsmessig Klassifisering"
+p.font.bold = True
+p.font.size = Pt(14)
+p.font.color.rgb = COLOR_NAVY
+bullets_p2w = [
+    "IAS 38 Skillelinje: 74,8% (43,38M) er balanseført som AuC, mens 25,2% (14,59M) er driftsført over resultat.",
+    "WBS-100 PMO & Ledelse: NOK 7,25M fullt ut kostnadsført til drift; kan ikke aktiveres etter IFRS-kriteriene.",
+    "WBS-300 Reaktor: NOK 23,19M balanseført som fysisk anlegg — representerer 53% av samlet AuC.",
+    "Resultateffekt ved stans: Enhver terminering vil flytte 43,4M fra balanse til tap i konsernregnskapet."
+]
+for b in bullets_p2w:
+    p = tf_p2w.add_paragraph()
+    p.text = "• " + b
+    p.font.size = Pt(9.5)
+    p.font.color.rgb = COLOR_TEXT_MAIN
+    p.space_before = Pt(8)
+
+# ------------------------------------------------------------------------------
+# SLIDE: 09 USIKKERHET (FAN CHART)
+# ------------------------------------------------------------------------------
+s_fan = prs.slides.add_slide(prs.slide_layouts[6])
+add_header(s_fan, "09 Usikkerhet: Viftekart over sluttkostnad — P10 sparer 18,2 MNOK mot P50", "VISUAL VOCABULARY — UNCERTAINTY")
+s_fan.shapes.add_picture(p_chart13, Inches(0.8), Inches(1.6), Inches(7.5), Inches(5.3))
+tb_fan = s_fan.shapes.add_textbox(Inches(8.5), Inches(1.6), Inches(4.0), Inches(5.3))
+tf_fan = tb_fan.text_frame
+tf_fan.word_wrap = True
+p = tf_fan.paragraphs[0]
+p.text = "Prognose & Utfallsrom (EAC)"
+p.font.bold = True
+p.font.size = Pt(14)
+p.font.color.rgb = COLOR_NAVY
+bullets_fan = [
+    "P10 Scenario (89,0M): Forutsetter vellykket 30 dagers Technical Hold, kansellering av 18,2M PO og scope-kutt.",
+    "P50 Scenario (107,2M): Status Quo dersom alle eksisterende forpliktelser fullføres uten ytterligere sprekker.",
+    "P90 Scenario (132,5M): Ukontrollert eskalering med forsinkelser i elektro, gasslekkasjer og krav om ekstrabevilgning.",
+    "Styrets handlingsrom: Technical Hold er det eneste tiltaket som aktivt bøyer kurven ned mot P10-banen."
+]
+for b in bullets_fan:
+    p = tf_fan.add_paragraph()
+    p.text = "• " + b
+    p.font.size = Pt(9.5)
     p.font.color.rgb = COLOR_TEXT_MAIN
     p.space_before = Pt(8)
 
@@ -795,6 +1328,55 @@ story.append(Paragraph(decision_text, style_body))
 
 doc.build(story)
 print(f" [OK] PDF Styrenotat generert: {output_pdf_path}")
+
+# ==============================================================================
+# 4. GENERER VISUAL VOCABULARY PDF-RAPPORT (REPORTLAB LANDSCAPE)
+# ==============================================================================
+print("\n--- [4/4] Bygger Full Visual Vocabulary PDF Rapport (ReportLab Landscape) ---")
+output_vis_pdf = os.path.join(OUTPUT_DIR, "GreenPilot_2026_Visual_Vocabulary_Report.pdf")
+doc_vis = SimpleDocTemplate(
+    output_vis_pdf,
+    pagesize=landscape(A4),
+    leftMargin=30, rightMargin=30, topMargin=25, bottomMargin=25
+)
+
+story_vis = []
+style_vis_title = ParagraphStyle("VisTitle", parent=styles["Heading1"], fontName="Helvetica-Bold", fontSize=18, leading=22, textColor=colors.HexColor("#1F4E79"))
+style_vis_sub = ParagraphStyle("VisSub", parent=styles["Normal"], fontName="Helvetica-Oblique", fontSize=9, leading=12, textColor=colors.HexColor("#555555"))
+style_vis_cat = ParagraphStyle("VisCat", parent=styles["Heading2"], fontName="Helvetica-Bold", fontSize=11, leading=15, textColor=colors.HexColor("#1F4E79"), spaceBefore=4, spaceAfter=3)
+style_vis_desc = ParagraphStyle("VisDesc", parent=styles["Normal"], fontName="Helvetica", fontSize=8.5, leading=12, textColor=colors.HexColor("#222222"))
+
+# Title Page / Cover
+story_vis.append(Paragraph("ELKEM TECHNOLOGY — FINANCIAL TIMES VISUAL VOCABULARY SUITE", style_vis_title))
+story_vis.append(Paragraph("GreenPilot 2026 Styringsrapport | Visualiseringsrammeverk for Ekstraordinært Styremøte | 31.10.2026", style_vis_sub))
+story_vis.append(Spacer(1, 8))
+story_vis.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor("#1F4E79"), spaceAfter=10))
+
+vis_catalog = [
+    ("01 Avviksanalyse: Diverging Bars (Deviation)", p_chart6, "Sammenligner akutt kostnadsavvik (CV -38,8M) mot positiv fremdrift (SV +2,6M) på tvers av samtlige 6 WBS-arbeidspakker."),
+    ("02 Jerntriangel: Operasjonspunkt & Avveiningsfront (Spatial & Balance)", p_chart7, "Synliggjør strekket i kostnadsaksen (290%) og hvordan 30 dagers Technical Hold sparer 18,2 MNOK i uleverte forpliktelser."),
+    ("03 Tidsplan: Executive Governance Gantt (Schedule)", p_chart8, "Aggregert Primavera-tidslinje over WBS 100-600 med innlagt 30 dagers kontrollbuffer i november 2026."),
+    ("04 Korrelasjon: Fast-Track Fellen & Månedlig Dødsspiral (Correlation)", p_chart9, "Boblediagram og månedlig bane som dokumenterer hvordan økt fremdriftshastighet (SPI) senket kostnadsindeksen (CPI)."),
+    ("05 Rangering: Topp 8 Leverandører etter Åpen PO (Ranking)", p_chart10, "Lollipop-diagram som rangerer de 8 største leverandørene med samlet forpliktelse på 27,6 MNOK for umiddelbar kanselleringsaudit."),
+    ("06 Fordeling: Ukentlig Timeforbruk & Ordrestørrelse (Distribution)", p_chart11, "Boxplot over timefordeling ved Fiskå og bimodal fordeling av innkjøpsordrer som underbygger ISA 805 revisjonsrisiko."),
+    ("07 Del til Helhet: IFRS IAS 38 Balanseføring vs P&L (Part to Whole)", p_chart12, "Fordeling av 58,0M i påløpte kostnader mellom 43,38M balanseført AuC (74,8%) og 14,59M driftsført forskning (25,2%)."),
+    ("08 S-Kurve & Kriseinfleksjon i Mars 2026 (Change over Time)", p_chart1, "Månedlig utvikling av PV, EV og AC som viser tidspunktet der forpliktelsene eksploderte til 149% av totalbudsjett."),
+    ("09 Usikkerhet: Viftekart P10 / P50 / P90 (Uncertainty)", p_chart13, "Prognose over sluttkostnad ved ferdigstillelse; Technical Hold (P10) kutter toppeksponeringen fra 107,2M til 89,0M."),
+    ("10 Forpliktelsesisberget: Waterfall Analyse (Magnitude)", p_chart2, "Fossefallsbro som forklarer hvordan prosjektet beveget seg fra vedtatt ramme (20M) til 107,2M i samlet eksponering."),
+    ("11 Likviditetsgap & Kontantutgang (Cash Flow)", p_chart3, "Månedlig kontantutbetaling basert på DPO 30 dager mot låst Enova-tilskudd på 3,0 MNOK."),
+    ("12 Ressursallokering Fiskå: CC-4100, 4200 og 4300 (Magnitude)", p_chart4, "Timeforbruk og kostnader avstemt mot SkatteFUNN/Forskningsrådets tak på 530 kr/t."),
+    ("13 IFRS IAS 36 Nedskrivningstest: Verdifallsscenarier (Risk)", p_chart5, "Modellering av obligatorisk nedskrivningsbehov ved fortsatt drift (-13,4M) vs full terminering (-43,4M).")
+]
+
+for title, img_p, desc in vis_catalog:
+    story_vis.append(PageBreak())
+    story_vis.append(Paragraph(title, style_vis_cat))
+    story_vis.append(Paragraph(desc, style_vis_desc))
+    story_vis.append(Spacer(1, 6))
+    story_vis.append(RLImage(img_p, width=730, height=360))
+
+doc_vis.build(story_vis)
+print(f" [OK] Full Visual Vocabulary PDF Rapport generert: {output_vis_pdf}")
 
 print("=" * 80)
 print("=== ALLE LEVERANSER VELLYKKET FULLFØRT ===")

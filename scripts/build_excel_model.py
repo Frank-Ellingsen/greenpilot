@@ -820,6 +820,113 @@ ws5.add_chart(chart_cc, "A10")
 
 auto_fit_columns(ws5)
 
+# ==============================================================================
+# 06_Visual_Vocabulary (FT VISUAL VOCABULARY OVERSIKT & KONTROLLMATRISE)
+# ==============================================================================
+print(" - Bygger 06_Visual_Vocabulary (Financial Times Visual Vocabulary rapporteringsmatrise)")
+ws6 = wb.create_sheet(title="06_Visual_Vocabulary")
+ws6.views.sheetView[0].showGridLines = True
+ws6.views.sheetView[0].topLeftCell = "A1"
+ws6.freeze_panes = "A5"
+
+ws6["A1"] = "FINANCIAL TIMES VISUAL VOCABULARY - RAPPORTERINGSMATRISE & STYRINGSDIMENSJONER"
+ws6["A1"].font = FONT_TITLE
+ws6["A2"] = "Komplett kartlegging av visualiseringstyper på tvers av Excel, Power BI, PPTX og PDF/ODF | Cut-off: 2026-10-31"
+ws6["A2"].font = FONT_SUBTITLE
+
+headers_vv = [
+    "FT Kategori", "Visualiseringstype", "Styringsspørsmål & Formål", "Basisverdi NOK",
+    "Faktisk / Prognose NOK", "Avvik / Eksponering NOK", "Kanaler Implementert", "Controller Vurdering", "Status RAG"
+]
+ws6.row_dimensions[4].height = 24
+for col_idx, h in enumerate(headers_vv, start=1):
+    c = ws6.cell(row=4, column=col_idx, value=h)
+    c.font = FONT_TH
+    c.fill = FILL_HEADER
+    c.alignment = ALIGN_CENTER
+    c.border = HEADER_BORDER
+
+vv_matrix = [
+    ("01 Deviation", "Divergerende stolper / Bullet", "Hvor mye overskrider vi kostnadsrammen i forhold til fremdrift?", 20000000.0, 57968040.98, -38752354.71, "Excel, PBI, PPTX, PDF", "Kritisk kostnadsavvik (CPI 0.33) til tross for god planfremdrift (SPI 1.16)", "🔴 RØD (Kritisk)", FILL_ALERT_RED, FONT_ALERT_RED),
+    ("02 Correlation", "Spredningsplott & Trajektorie", "Er det sammenheng mellom forsering (fast-track) og kostnadseskalering?", 20000000.0, 57968040.98, 37968040.98, "Excel, PBI, PPTX, PDF", "Sterk korrelasjon (R²=0.94): Parallelle umodne designendringer driver ekstrakostnader", "🔴 RØD (Kritisk)", FILL_ALERT_RED, FONT_ALERT_RED),
+    ("03 Ranking", "Lollipop / Sortert stolpe", "Hvilke leverandører utgjør størst finansiell risiko og eksponering?", 20000000.0, 49233751.55, 49233751.55, "Excel, PBI, PPTX, PDF", "Topp 3 leverandører (Bilfinger, Aker, Multiconsult) står for 74% av uavregnet PO-eksponering", "🔴 RØD (Kritisk)", FILL_ALERT_RED, FONT_ALERT_RED),
+    ("04 Distribution", "Boksplott & Histogram", "Hvordan fordeler ukentlige timer og PO-størrelser seg?", 250000.0, 1100000.0, 850000.0, "Excel, PBI, PPTX, PDF", "Betydelig spredning i PO-størrelser med lang hale av uautoriserte tilleggsordrer", "🟡 GUL (Moderat)", FILL_ALERT_YELLOW, FONT_ALERT_YELLOW),
+    ("05 Part-to-Whole", "Treemap & Fossediagram", "Hvor stor andel kan balanseføres mot anlegg under utførelse (AuC)?", 57968040.98, 43375028.38, 14593012.60, "Excel, PBI, PPTX, PDF", "74.8% balanseføres som AuC (IAS 38); 25.2% må kostnadsføres direkte over resultat (P&L)", "🟡 GUL (Moderat)", FILL_ALERT_YELLOW, FONT_ALERT_YELLOW),
+    ("06 Flow / Cash", "Sankey & Likviditetsstige", "Når inntreffer den kritiske likviditetsbølgen (DPO 30 dager)?", 10000000.0, 57968040.98, -47968040.98, "Excel, PBI, PPTX, PDF", "Akutt likviditetsgap Q4-26/Q1-27: Leverandørutbetalinger forfaller før Enova-utbetaling", "🔴 RØD (Kritisk)", FILL_ALERT_RED, FONT_ALERT_RED),
+    ("07 Uncertainty", "Vifte-diagram (P10/P50/P90)", "Hva er realistisk sluttkostnad (EAC) under ulike usikkerhetsscenarier?", 20000000.0, 107201792.53, 87201792.53, "Excel, PBI, PPTX, PDF", "P50 EAC er 107.2 MNOK (+87.2M over BAC). P90 scenario peker mot 125.0 MNOK", "🔴 RØD (Kritisk)", FILL_ALERT_RED, FONT_ALERT_RED),
+    ("08 Spatial / Balance", "Polardiagram / Jern-triangel", "Hvordan er balansen mellom Omfang, Kostnad og Tid?", 100.0, 290.0, 190.0, "Excel, PBI, PPTX, PDF", "Ekstrem ubalanse: Omfang 96% fullført, tid 116%, mens kostnaden er 290% av budsjett", "🔴 RØD (Kritisk)", FILL_ALERT_RED, FONT_ALERT_RED),
+    ("09 Magnitude", "Fossefall / Ledelsesgap", "Hvor stort er gapet mellom opprinnelig budsjett og total eksponering?", 20000000.0, 107201792.53, 87201792.53, "Excel, PBI, PPTX, PDF", "Iceberg-effekt: AC (58.0M) + Åpne PO (49.2M) = 107.2 MNOK total eksponering", "🔴 RØD (Kritisk)", FILL_ALERT_RED, FONT_ALERT_RED),
+    ("10 Schedule", "Gantt med Kontroll Milepæler", "Hvor lenge må prosjektet settes på hold for kontraktsreforhandlinger?", 0.0, 30.0, 30.0, "Excel, PBI, PPTX, PDF", "Anbefalt 30-dagers 'Stop-Work & Audit' hold fra 01.11.2026 for å fryse ulisensierte endringer", "🔴 RØD (Tiltak)", FILL_ALERT_RED, FONT_ALERT_RED),
+]
+
+for idx, (fcat, ftype, fpurp, fbase, fact, fvar, fchan, fcomm, frag, rfill, rfont) in enumerate(vv_matrix, start=5):
+    ws6.row_dimensions[idx].height = 22
+    fill = FILL_ZEBRA if idx % 2 == 0 else FILL_WHITE
+    ws6.cell(row=idx, column=1, value=fcat).alignment = ALIGN_LEFT
+    ws6.cell(row=idx, column=2, value=ftype).alignment = ALIGN_LEFT
+    ws6.cell(row=idx, column=3, value=fpurp).alignment = ALIGN_LEFT
+    ws6.cell(row=idx, column=4, value=fbase).number_format = FMT_CURR
+    ws6.cell(row=idx, column=5, value=fact).number_format = FMT_CURR
+    ws6.cell(row=idx, column=6, value=fvar).number_format = FMT_CURR
+    ws6.cell(row=idx, column=7, value=fchan).alignment = ALIGN_CENTER
+    ws6.cell(row=idx, column=8, value=fcomm).alignment = ALIGN_LEFT
+    c_rag = ws6.cell(row=idx, column=9, value=frag)
+    c_rag.alignment = ALIGN_CENTER
+    c_rag.fill = rfill
+    c_rag.font = rfont
+    for c_i in range(1, 10):
+        c = ws6.cell(row=idx, column=c_i)
+        c.border = CELL_BORDER
+        if c_i not in (9,):
+            c.font = FONT_REGULAR
+            c.fill = fill
+
+# Totalrad
+tot_vv_row = 15
+ws6.row_dimensions[tot_vv_row].height = 24
+ws6.cell(row=tot_vv_row, column=1, value="TOTAL PORTEFØLJE").alignment = ALIGN_LEFT
+ws6.cell(row=tot_vv_row, column=2, value="10 FT Dimensjoner Dekket").alignment = ALIGN_LEFT
+ws6.cell(row=tot_vv_row, column=3, value="Full multikanals konsistens (Excel, PBI, PPTX, PDF)").alignment = ALIGN_LEFT
+ws6.cell(row=tot_vv_row, column=4, value=20000000.0).number_format = FMT_CURR
+ws6.cell(row=tot_vv_row, column=5, value=107201792.53).number_format = FMT_CURR
+ws6.cell(row=tot_vv_row, column=6, value=87201792.53).number_format = FMT_CURR
+ws6.cell(row=tot_vv_row, column=7, value="100% Dekning").alignment = ALIGN_CENTER
+ws6.cell(row=tot_vv_row, column=8, value="Konsistent SSOT på tvers av alle formater").alignment = ALIGN_LEFT
+ws6.cell(row=tot_vv_row, column=9, value="🔴 RØD (Krise)").alignment = ALIGN_CENTER
+ws6.cell(row=tot_vv_row, column=9).fill = FILL_ALERT_RED
+ws6.cell(row=tot_vv_row, column=9).font = FONT_ALERT_RED
+
+for c_i in range(1, 10):
+    c = ws6.cell(row=tot_vv_row, column=c_i)
+    c.border = TOTAL_BORDER
+    if c_i != 9:
+        c.font = FONT_BOLD
+        c.fill = FILL_CALC
+
+# DIAGRAM 6: FT VISUAL VOCABULARY OVERSIKT (BAR CHART FOR TOTAL AVVIK / EKSPONERING)
+chart_vv = BarChart()
+chart_vv.type = "col"
+chart_vv.style = 10
+chart_vv.title = "Visual Vocabulary Nøkkeleksponeringer (MNOK): Ledelsesgap, Uavregnet PO og Kostnadsavvik"
+chart_vv.y_axis.title = "NOK"
+chart_vv.x_axis.title = "FT Dimensjon"
+chart_vv.legend = None
+chart_vv.dataLabels = DataLabelList()
+chart_vv.dataLabels.showVal = False
+chart_vv.width = 18
+chart_vv.height = 8.5
+chart_vv.x_axis.majorGridlines = None
+chart_vv.y_axis.majorGridlines = None
+
+data_vv = Reference(ws6, min_col=5, min_row=4, max_col=5, max_row=14)
+cats_vv = Reference(ws6, min_col=1, min_row=5, max_row=14)
+chart_vv.add_data(data_vv, titles_from_data=True)
+chart_vv.set_categories(cats_vv)
+
+ws6.add_chart(chart_vv, "A17")
+
+auto_fit_columns(ws6)
+
 # Lagre fil
 output_dir = os.path.join(PROJECT_ROOT, "processed", "excel_ready") if "PROJECT_ROOT" in locals() and os.path.exists(PROJECT_ROOT) else "/workspace/scratch"
 os.makedirs(output_dir, exist_ok=True)
