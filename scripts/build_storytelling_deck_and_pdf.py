@@ -113,6 +113,41 @@ p_chart1 = os.path.join(FIG_DIR, "chart1_evm_scurve.png")
 fig1.savefig(p_chart1)
 plt.close(fig1)
 
+# Chart 1b: Primavera P6 Banana Chart (Envelope)
+pv_early = [1.5, 3.5, 6.0, 8.5, 11.0, 13.5, 15.0, 16.0, 16.4, 16.62]
+pv_late = [0.8, 2.0, 3.8, 5.8, 8.0, 10.5, 12.5, 14.0, 15.2, 16.62]
+
+fig1b, ax1b = plt.subplots(figsize=(10, 5.2), dpi=200)
+ax1b.fill_between(m_labels, pv_late, pv_early, color="#2E75B6", alpha=0.18, label="P6 Tidsbuffersone (Early vs. Late Envelope)")
+ax1b.plot(m_labels, pv_early, label="Tidlig Plan (Early Dates PV)", color="#2E75B6", linestyle="--", linewidth=1.8)
+ax1b.plot(m_labels, pv_late, label="Sen Plan (Late Dates PV)", color=C_MUTE, linestyle=":", linewidth=1.8)
+ax1b.plot(m_labels, ev_cum, label="Opptjent Verdi (EV - Fysisk fremdrift 96%)", color="#00805A", linewidth=2.5, marker="o", markersize=5)
+ax1b.plot(m_labels, ac_cum, label="Faktisk Kostnad (AC - Sprenger buffersonen)", color=C_ALERT, linewidth=3.2, marker="s", markersize=6)
+
+ax1b.annotate("AC sprenger bananen i mars 2026:\nTotal Float kollapser fra +22d til -14d",
+            xy=("Mar", 6.85), xytext=("Jan", 28.0),
+            arrowprops=dict(facecolor=C_ALERT, edgecolor=C_ALERT, arrowstyle="->", lw=1.2),
+            fontsize=9, fontweight='bold', color=C_ALERT,
+            bbox=dict(boxstyle="round,pad=0.3", fc="#FFF0F0", ec=C_ALERT, lw=0.8))
+ax1b.annotate("Fysisk fremdrift følger Early Dates (SPI 1,16),\nmen til eksplosiv merkostnad (CPI 0,33)",
+            xy=("Okt", 19.22), xytext=("Mai", 5.0),
+            arrowprops=dict(facecolor="#00805A", edgecolor="#00805A", arrowstyle="->", lw=1.2),
+            fontsize=8.5, fontweight='bold', color="#00805A",
+            bbox=dict(boxstyle="round,pad=0.3", fc="#F0FFF0", ec="#00805A", lw=0.8))
+ax1b.axhline(20.0, color="#1F4E79", linestyle=":", linewidth=1.2)
+ax1b.text(0.1, 20.6, "BAC: 20,0 MNOK", color="#1F4E79", fontsize=8.5, fontstyle='italic')
+ax1b.set_title("Primavera P6 Banana Chart: Fremdriften holdt Early Dates, mens AC sprengte buffersonen", pad=15)
+ax1b.set_ylabel("MNOK (Akkumulert)")
+ax1b.set_ylim(0, 65)
+ax1b.grid(True, axis='y')
+ax1b.spines['top'].set_visible(False)
+ax1b.spines['right'].set_visible(False)
+ax1b.legend(loc="upper left", frameon=True, facecolor="white", edgecolor="#DDD", fontsize=8.5)
+plt.tight_layout()
+p_chart1b = os.path.join(FIG_DIR, "chart1b_banana_chart.png")
+fig1b.savefig(p_chart1b)
+plt.close(fig1b)
+
 # Chart 2: Waterfall Iceberg
 categories = ["Totalbudsjett\n(BAC)", "WBS-100\nPMO", "WBS-200\nDesign", "WBS-300\nReaktor", "WBS-400\nMekanisk", "WBS-500/600\nTest/Slutt", "Bokført AC\n(Faktisk)", "Åpne PO\nForpliktelser", "Total Finansiell\nEksponering"]
 bar_colors = [C_NAVY, C_ALERT, C_ALERT, C_ALERT, C_ALERT, C_ALERT, "#800000", C_AMBER, "#4A0000"]
@@ -738,6 +773,37 @@ for b in bullets3:
     p.space_before = Pt(8)
 
 # ------------------------------------------------------------------------------
+# SLIDE 3B: PRIMAVERA P6 BANANA CHART & FLOAT COLLAPSE
+# ------------------------------------------------------------------------------
+s3b = prs.slides.add_slide(prs.slide_layouts[6])
+add_header(s3b, "Primavera P6 Banana Chart: Fremdriften holdt Early Dates, mens AC sprengte konvolutten")
+
+s3b.shapes.add_picture(p_chart1b, Inches(0.8), Inches(1.6), Inches(7.5), Inches(5.3))
+
+tb3b = s3b.shapes.add_textbox(Inches(8.5), Inches(1.6), Inches(4.0), Inches(5.3))
+tf3b = tb3b.text_frame
+tf3b.word_wrap = True
+
+p = tf3b.paragraphs[0]
+p.text = "Funn fra Banana-analysen"
+p.font.bold = True
+p.font.size = Pt(14)
+p.font.color.rgb = COLOR_NAVY
+
+bullets3b = [
+    "P6 Tidsbufferkonvolutt (Early vs Late Dates): En sunn prosjektgjennomføring holder seg innenfor banansonen mellom tidligste og seneste planlagte milepæler.",
+    "Fast-track forsering: Fysisk fremdrift (EV 19,22M) beveget seg langs den øvre Early-kurven på grunn av aggressiv forsering og overtid i Q1/Q2.",
+    "Float-kollaps: Prosjektets totale bufferslakk (Total Float) kollapset fra +22 til -14 dager da kritiske reaktorkomponenter krevde ombygging.",
+    "AC sprenger konvolutten: Faktisk kostnad (AC 57,97M) brøt fullstendig ut av buffersonen og beviser at fremdriften ble kjøpt til uholdbar overpris (CPI 0,33)."
+]
+for b in bullets3b:
+    p = tf3b.add_paragraph()
+    p.text = "• " + b
+    p.font.size = Pt(10)
+    p.font.color.rgb = COLOR_TEXT_MAIN
+    p.space_before = Pt(8)
+
+# ------------------------------------------------------------------------------
 # SLIDE 4: THE EXPOSURE ICEBERG (WATERFALL)
 # ------------------------------------------------------------------------------
 s4 = prs.slides.add_slide(prs.slide_layouts[6])
@@ -1289,6 +1355,13 @@ story.append(Spacer(1, 6))
 story.append(RLImage(p_chart1, width=500, height=240))
 story.append(Spacer(1, 14))
 
+# Visuals Section: Banana Chart
+story.append(Paragraph("2b. Tidsbufferkonvolutt (Primavera P6 Banana Chart)", style_h2))
+story.append(Paragraph("Konvolutten mellom tidlig og sen fremdriftskurve (Early vs. Late Dates) dokumenterer at fysisk fremdrift (EV) beveget seg langs den øvre kurven som følge av forsert montasje, mens påløpt kostnad (AC) sprengte buffersonen fullstendig fra mars 2026. Bufferslakk (Float) kollapset fra +22 til -14 dager.", style_body))
+story.append(Spacer(1, 6))
+story.append(RLImage(p_chart1b, width=500, height=230))
+story.append(Spacer(1, 14))
+
 # Page Break til side 2
 story.append(PageBreak())
 
@@ -1365,7 +1438,8 @@ vis_catalog = [
     ("10 Forpliktelsesisberget: Waterfall Analyse (Magnitude)", p_chart2, "Fossefallsbro som forklarer hvordan prosjektet beveget seg fra vedtatt ramme (20M) til 107,2M i samlet eksponering."),
     ("11 Likviditetsgap & Kontantutgang (Cash Flow)", p_chart3, "Månedlig kontantutbetaling basert på DPO 30 dager mot låst Enova-tilskudd på 3,0 MNOK."),
     ("12 Ressursallokering Fiskå: CC-4100, 4200 og 4300 (Magnitude)", p_chart4, "Timeforbruk og kostnader avstemt mot SkatteFUNN/Forskningsrådets tak på 530 kr/t."),
-    ("13 IFRS IAS 36 Nedskrivningstest: Verdifallsscenarier (Risk)", p_chart5, "Modellering av obligatorisk nedskrivningsbehov ved fortsatt drift (-13,4M) vs full terminering (-43,4M).")
+    ("13 IFRS IAS 36 Nedskrivningstest: Verdifallsscenarier (Risk)", p_chart5, "Modellering av obligatorisk nedskrivningsbehov ved fortsatt drift (-13,4M) vs full terminering (-43,4M)."),
+    ("14 Tidsbufferkonvolutt: Primavera P6 Banana Chart (Change over Time / Envelope)", p_chart1b, "Early vs. Late Dates tidsbufferkonvolutt som synliggjør at fremdriften holdt planlagt tidlig løp (SPI 1,16) mens faktiske kostnader sprengte konvolutten fullstendig (CPI 0,33).")
 ]
 
 for title, img_p, desc in vis_catalog:
@@ -1377,6 +1451,11 @@ for title, img_p, desc in vis_catalog:
 
 doc_vis.build(story_vis)
 print(f" [OK] Full Visual Vocabulary PDF Rapport generert: {output_vis_pdf}")
+
+import shutil
+shutil.copy2(output_pptx_path, os.path.join(PROJECT_ROOT, "GreenPilot_2026_Board_Deck.pptx"))
+shutil.copy2(output_pdf_path, os.path.join(PROJECT_ROOT, "GreenPilot_2026_Board_Memo.pdf"))
+print(" [OK] Synkronisert PowerPoint og PDF til rotmappen!")
 
 print("=" * 80)
 print("=== ALLE LEVERANSER VELLYKKET FULLFØRT ===")
