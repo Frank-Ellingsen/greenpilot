@@ -111,6 +111,7 @@ full_html = f"""<!DOCTYPE html>
   <nav class="bg-white border-b border-slate-200 sticky top-[73px] z-40 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center space-x-2 overflow-x-auto py-2.5 text-xs font-semibold scrollbar-thin">
       <a href="#mod-00" class="nav-pill px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 whitespace-nowrap">00 Styringsnotat</a>
+      <a href="#mod-scurve" class="nav-pill px-3 py-1.5 rounded-lg bg-blue-50 text-blue-900 font-bold whitespace-nowrap border border-blue-300">📈 S-Kurve & Banana Chart</a>
       <a href="#mod-01" class="nav-pill px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 whitespace-nowrap">01 Avvik (Bars)</a>
       <a href="#mod-02" class="nav-pill px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 whitespace-nowrap">02 Jerntriangel</a>
       <a href="#mod-03" class="nav-pill px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 whitespace-nowrap">03 Tidsplan (Gantt)</a>
@@ -268,6 +269,36 @@ full_html = f"""<!DOCTYPE html>
             </tr>
           </tfoot>
         </table>
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------------------------- -->
+    <!-- MODUL S-KURVE & PRIMAVERA P6 BANANA CHART -->
+    <!-- ----------------------------------------------------------------------- -->
+    <section id="mod-scurve" class="section-card scroll-mt-28">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+          <span class="bg-blue-900 text-white text-xs px-2 py-0.5 rounded font-mono">📈</span>
+          EVM S-Kurve & Primavera P6 Banana Chart (Tidsbuffer & Konvolutt)
+        </h3>
+        <span class="text-xs text-slate-500 font-medium">Kumulativ PV, EV, AC og Early/Late Envelope</span>
+      </div>
+      <p class="text-xs text-slate-600 mb-4 leading-relaxed">
+        <strong>S-kurven og Banana-diagrammet</strong> dokumenterer prosjektets kritiske vendepunkt: Fysisk fremdrift (EV) ble aggressivt forsert langs den øvre tidlige kurven (Early Dates) for å nå milepæler (SPI 1,16). Men faktiske kostnader (AC) eksploderte fullstendig ut av den tillatte P6 bufferslakk-konvolutten (289,8% av BAC), og prosjektets totale bufferslakk (float) kollapset fra +22 til -14 dager.
+      </p>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Chart 1: Classic EVM S-Curve -->
+        <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+          <h4 class="text-xs font-bold text-slate-800 mb-2">Klassisk EVM S-Kurve (med Vendepunkt Mars 2026)</h4>
+          <div id="full-chart-scurve" style="height: 330px;"></div>
+        </div>
+
+        <!-- Chart 2: Primavera P6 Banana Chart -->
+        <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+          <h4 class="text-xs font-bold text-slate-800 mb-2">🍌 Primavera P6 Banana Chart (Early vs. Late Envelope)</h4>
+          <div id="full-chart-banana" style="height: 330px;"></div>
+        </div>
       </div>
     </section>
 
@@ -674,6 +705,44 @@ full_html = f"""<!DOCTYPE html>
         text: ["20.0M", "19.2M", "58.0M", "107.2M"],
         textposition: 'outside'
       }}], {{ yaxis: {{ title: 'MNOK' }}, plot_bgcolor: 'white', margin: {{ l: 40, r: 20, t: 20, b: 30 }} }}, {{ responsive: true }});
+
+      // S-Curve & Banana Chart
+      const sPeriods = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10'];
+      const pvEarly = [1.5, 3.5, 6.0, 8.5, 11.0, 13.5, 15.0, 16.0, 16.4, 16.62];
+      const pvLate = [0.8, 2.0, 3.8, 5.8, 8.0, 10.5, 12.5, 14.0, 15.2, 16.62];
+      const evVals = [0.96, 2.67, 6.34, 9.22, 12.31, 15.44, 16.92, 18.17, 18.88, 19.22];
+      const acVals = [4.5, 7.5, 13.0, 20.5, 28.5, 38.5, 46.0, 51.5, 55.5, 57.97];
+
+      Plotly.newPlot('full-chart-scurve', [
+        {{ x: sPeriods, y: pvEarly, mode: 'lines+markers', name: 'Planlagt Verdi (PV)', line: {{ color: '#595959', dash: 'dash', width: 2 }} }},
+        {{ x: sPeriods, y: evVals, mode: 'lines+markers', name: 'Opptjent Verdi (EV)', line: {{ color: '#2F5496', width: 2.5 }} }},
+        {{ x: sPeriods, y: acVals, mode: 'lines+markers', name: 'Faktisk Kostnad (AC)', line: {{ color: '#C00000', width: 3 }} }}
+      ], {{
+        yaxis: {{ title: 'MNOK' }}, plot_bgcolor: 'white',
+        shapes: [{{ type: 'line', x0: '2026-01', x1: '2026-10', y0: 20.0, y1: 20.0, line: {{ color: '#888888', dash: 'dot', width: 1.5 }} }}],
+        annotations: [
+          {{ x: '2026-03', y: 13.0, text: 'Vendepunkt Mars: PO sprenger BAC', showarrow: true, arrowhead: 2, ax: 0, ay: -35, bgcolor: '#FFF2CC', bordercolor: '#B25900', font: {{ size: 9 }} }},
+          {{ x: '2026-05', y: 20.0, text: 'BAC: 20,0 MNOK', showarrow: false, yanchor: 'bottom', font: {{ color: '#595959', size: 10 }} }}
+        ],
+        legend: {{ orientation: 'h', y: 1.15, x: 0 }},
+        margin: {{ l: 40, r: 20, t: 30, b: 30 }}
+      }}, {{ responsive: true }});
+
+      Plotly.newPlot('full-chart-banana', [
+        {{ x: [...sPeriods, ...sPeriods.slice().reverse()], y: [...pvEarly, ...pvLate.slice().reverse()], fill: 'toself', fillcolor: 'rgba(47, 84, 150, 0.15)', line: {{ color: 'rgba(255,255,255,0)' }}, name: 'P6 Tidsbuffersone (Envelope)', hoverinfo: 'skip' }},
+        {{ x: sPeriods, y: pvEarly, mode: 'lines', name: 'Tidlig Plan (Early PV)', line: {{ color: '#2F5496', dash: 'dash', width: 1.5 }} }},
+        {{ x: sPeriods, y: pvLate, mode: 'lines', name: 'Sen Plan (Late PV)', line: {{ color: '#595959', dash: 'dot', width: 1.5 }} }},
+        {{ x: sPeriods, y: evVals, mode: 'lines+markers', name: 'Opptjent Verdi (EV)', line: {{ color: '#009E73', width: 2.5 }} }},
+        {{ x: sPeriods, y: acVals, mode: 'lines+markers', name: 'Faktisk Kostnad (AC)', line: {{ color: '#C00000', width: 3 }} }}
+      ], {{
+        yaxis: {{ title: 'MNOK' }}, plot_bgcolor: 'white',
+        annotations: [
+          {{ x: '2026-10', y: 57.97, text: 'AC: 57,97M (+190%)', showarrow: true, arrowhead: 2, ax: -40, ay: -15, bgcolor: '#FCE4D6', bordercolor: '#C00000', font: {{ size: 9 }} }},
+          {{ x: '2026-10', y: 19.22, text: 'EV: 19,22M (96%)', showarrow: true, arrowhead: 2, ax: -40, ay: 20, bgcolor: '#E2EFDA', bordercolor: '#385723', font: {{ size: 9 }} }}
+        ],
+        legend: {{ orientation: 'h', y: 1.15, x: 0 }},
+        margin: {{ l: 40, r: 20, t: 30, b: 30 }}
+      }}, {{ responsive: true }});
 
       // 01 CV & SV Bars
       Plotly.newPlot('full-chart-cv-bars', [{{
